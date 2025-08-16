@@ -16,7 +16,7 @@ class LogoutController: BaseController<LogoutRequest, Unit>() {
     lateinit var phoneService: PhoneService
 
     override fun execute(request: LogoutRequest){
-        request.tokenModel?.let {
+        request.firebaseTokenModel?.let {
             phoneService.deletePhone(it)
         }
     }

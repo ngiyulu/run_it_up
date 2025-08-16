@@ -22,7 +22,7 @@ class UserRestController {
     fun verifyUser(@RequestBody model: VerifyUserRequest,
                    @RequestHeader(HeaderConstants.TYPE)
                    type:String = HeaderConstants.ANDROID_TYPE): VerifyUserResponse? {
-        model.tokenModel?.type = type
+        model.firebaseTokenModel?.type = type
         return userControllersProvider.verifyUserController.execute(model)
     }
 
@@ -68,7 +68,7 @@ class UserRestController {
     fun init(@RequestBody model: InitializeRequest,
              @RequestHeader(HeaderConstants.TYPE)
              type:String = HeaderConstants.ANDROID_TYPE): InitializeResponse {
-        model.tokenModel?.type = type
+        model.firebaseTokenModel?.type = type
         return userControllersProvider.initializeController.execute(model)
     }
 

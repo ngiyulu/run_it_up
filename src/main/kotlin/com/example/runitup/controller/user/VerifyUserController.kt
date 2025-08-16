@@ -4,9 +4,7 @@ import com.example.runitup.controller.BaseController
 import com.example.runitup.dto.VerifyUserRequest
 import com.example.runitup.dto.VerifyUserResponse
 import com.example.runitup.extensions.mapToUserPayment
-import com.example.runitup.model.User
 import com.example.runitup.repository.UserRepository
-import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.JwtService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
@@ -32,7 +30,7 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
         val user = userRepository.findByPhone(request.phone)
         var response: VerifyUserResponse? = null
         if(user != null){
-            request.tokenModel?.let {
+            request.firebaseTokenModel?.let {
                 phoneService.createPhone(it)
             }
             user.stripeId?.let { it ->

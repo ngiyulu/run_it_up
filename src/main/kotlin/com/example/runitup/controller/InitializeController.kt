@@ -35,7 +35,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 user = dbRes.get()
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
-            request.tokenModel?.let {
+            request.firebaseTokenModel?.let {
                 phoneService.createPhone(it)
             }
         }

@@ -10,12 +10,11 @@ import com.example.runitup.repository.service.OtpRepositoryService
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.JwtService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
 //login controller
-class VerifyPhoneNumber: BaseController<VerifyPhoneNumberRequest, VerifyPhoneNumberResponse?>() {
+class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, VerifyPhoneNumberResponse?>() {
     @Autowired
     lateinit var userRepository: UserRepository
 
