@@ -1,11 +1,11 @@
 package com.example.runitup.dto.initialize
 
 import com.example.runitup.dto.FirebaseTokenModel
+import com.example.runitup.dto.MyLocationModel
 
 class InitializeRequest(
     val userId: String?,
     val firebaseTokenModel: FirebaseTokenModel?,
-    val location: Location?
+    val location: MyLocationModel?
 
 )
-class Location(val longitude: Long, val latitude: Long)

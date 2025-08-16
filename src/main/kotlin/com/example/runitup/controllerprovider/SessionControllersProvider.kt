@@ -18,6 +18,9 @@ class SessionControllersProvider {
     lateinit var getRunSessionController: GetRunSessionController
 
     @Autowired
+    lateinit var getRunSessionListController: GetRunSessionListController
+
+    @Autowired
     lateinit var joinSessionController: JoinSessionController
 
     @Autowired

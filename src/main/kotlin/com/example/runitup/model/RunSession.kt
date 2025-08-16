@@ -4,6 +4,9 @@ import com.example.runitup.dto.RunUser
 import com.example.runitup.enum.RunStatus
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.*
 
@@ -11,6 +14,8 @@ import java.time.*
 data class RunSession(
     @Id var id: String? = ObjectId().toString(),
     var gym:Gym? = null,
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    var location: GeoJsonPoint?,
     val date: LocalDate,      // local calendar date at the venue
     var time: LocalTime,      // local time at the venue
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
