@@ -1,23 +1,49 @@
-# Use a base image with Java installed
-FROM openjdk:17-jdk-slim
+# syntax=docker/dockerfile:1.7
 
-# Set the working directory inside the container
+########################
+# 1) Build stage (JDK 17)
+########################
+FROM eclipse-temurin:17-jdk AS build
+WORKDIR /workspace
+
+# Copy wrapper + config first for caching (supports Groovy or Kotlin DSL)
+COPY gradlew ./gradlew
+COPY gradle ./gradle
+COPY build.gradle* settings.gradle* gradle.properties* ./
+
+# Fix Windows line endings and ensure wrapper is executable
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
+
+# Warm Gradle and verify environment (cached between builds)
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew --no-daemon --version
+
+# Copy sources
+COPY src ./src
+# If you need extra resources at build time, copy them here (example):
+# COPY firebase/firebase-dev.json src/main/resources/firebase-dev.json
+
+# Build fat jar (skip tests to avoid build-time secrets), show more logs for debugging
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew --no-daemon clean bootJar -x test --stacktrace --info
+
+# Normalize jar name for the runtime stage
+RUN sh -c 'JAR=$(ls build/libs/*.jar | head -n1) && cp "$JAR" /workspace/app.jar'
+
+########################
+# 2) Runtime stage (JRE 17)
+########################
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# Copy the Gradle wrapper and build files
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle .
-COPY settings.gradle .
+# Run as non-root
+RUN useradd -ms /bin/bash spring
+USER spring
 
-# Copy the source code
-COPY src src
+COPY --from=build /workspace/app.jar ./app.jar
 
-# Build the Spring Boot application
-RUN ./gradlew bootJar
+ENV SPRING_PROFILES_ACTIVE=prod \
+    JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom"
 
-# Expose the port your Spring Boot application runs on (e.g., 8080)
 EXPOSE 8080
-
-# Specify the command to run the application when the container starts
-ENTRYPOINT ["java", "-jar", "build/libs/*.jar"]
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
