@@ -1,10 +1,10 @@
 package com.example.runitup.dto.initialize
 
-import com.example.runitup.dto.TokenModel
+import com.example.runitup.dto.FirebaseTokenModel
 
 class InitializeRequest(
     val userId: String?,
-    val tokenModel: TokenModel?,
+    val firebaseTokenModel: FirebaseTokenModel?,
     val location: Location?
 
 )
