@@ -29,14 +29,14 @@ class CreateUserController: BaseController<CreateUserRequest, User>() {
         if(existingUser != null){
             throw  ApiRequestException(text("user_exist"))
         }
-        if(!passwordValidator.isValid(request.user.auth)){
-            throw  ApiRequestException(text("invalid_password"))
-        }
+//        if(!passwordValidator.isValid(request.user.auth)){
+//            throw  ApiRequestException(text("invalid_password"))
+//        }
         val user = request.user
+        user.verifiedPhone = false
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
         user.stripeId = stripeId
         return cacheManager.updateUser(user)
     }
-
 
 }

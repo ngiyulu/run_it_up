@@ -13,7 +13,7 @@ data class User(
     var firstName: String,
     var lastName: String,
     var dob: String,
-    var verifiedPhone: Boolean,
+    var verifiedPhone: Boolean = false,
     var email: String,
     var loggedInAt: Long,
     var internalNotes: Long,
@@ -23,7 +23,7 @@ data class User(
     var rating: Double? = null,
     var payments: List<UserPayment>?,
     var sex: Sex,
-    var auth:String,
+    var auth:String = "",
     var runSessions:MutableList<RunSession>,
     var skillLevel: SkillLevel
 ): BaseModel(){
