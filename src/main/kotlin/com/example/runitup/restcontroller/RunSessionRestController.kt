@@ -1,6 +1,9 @@
 package com.example.runitup.restcontroller
 
 import com.example.runitup.controllerprovider.SessionControllersProvider
+import com.example.runitup.dto.CreateRunSessionRequest
+import com.example.runitup.dto.MyLocationModel
+import com.example.runitup.dto.SessionListModel
 import com.example.runitup.dto.session.CancelSessionModel
 import com.example.runitup.dto.session.ConfirmSessionModel
 import com.example.runitup.dto.session.JoinSessionModel
@@ -16,7 +19,7 @@ class RunSessionRestController {
     @Autowired
     lateinit var sessionControllersProvider: SessionControllersProvider
     @PostMapping("/create")
-    fun create(@RequestBody model: RunSession):RunSession {
+    fun create(@RequestBody model: CreateRunSessionRequest):RunSession {
         return sessionControllersProvider.createSessionController.execute(model)
     }
 
@@ -38,6 +41,13 @@ class RunSessionRestController {
     @GetMapping("/retrieve/{id}")
     fun getSession(@PathVariable id:String):RunSession {
         return sessionControllersProvider.getRunSessionController.execute(id)
+    }
+
+    @GetMapping("/list")
+    fun getSessionList( @RequestParam(required = true) long: Double,
+                        @RequestParam(required = true) lat: Double):List<RunSession> {
+
+        return sessionControllersProvider.getRunSessionListController.execute(SessionListModel(longitude = long, latitude = lat))
     }
 
     @PostMapping("/check-in")
