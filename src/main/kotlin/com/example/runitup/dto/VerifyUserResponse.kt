@@ -1,3 +1,6 @@
 package com.example.runitup.dto
 
-class VerifyUserResponse (val exist: Boolean)
+import com.example.runitup.model.User
+
+
+class VerifyUserResponse (val user: User, val token: String?)

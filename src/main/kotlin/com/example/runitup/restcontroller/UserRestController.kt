@@ -5,6 +5,7 @@ import com.example.runitup.controllerprovider.UserControllersProvider
 import com.example.runitup.dto.CreateUserRequest
 import com.example.runitup.dto.LogoutRequest
 import com.example.runitup.dto.VerifyUserRequest
+import com.example.runitup.dto.VerifyUserResponse
 import com.example.runitup.dto.initialize.InitializeRequest
 import com.example.runitup.dto.initialize.InitializeResponse
 import com.example.runitup.dto.user.*
@@ -22,7 +23,7 @@ class UserRestController {
     @PostMapping("/verify")
     fun verifyUser(@RequestBody model: VerifyUserRequest,
                    @RequestHeader(HeaderConstants.TYPE)
-                   type:String = HeaderConstants.ANDROID_TYPE): User? {
+                   type:String = HeaderConstants.ANDROID_TYPE): VerifyUserResponse? {
         model.tokenModel?.type = type
         return userControllersProvider.verifyUserController.execute(model)
     }
