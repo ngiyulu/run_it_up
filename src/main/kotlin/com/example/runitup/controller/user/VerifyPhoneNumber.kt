@@ -1,7 +1,7 @@
 package com.example.runitup.controller.user
 
 import com.example.runitup.controller.BaseController
-import com.example.runitup.dto.VerifyPhoneNumber
+import com.example.runitup.dto.VerifyPhoneNumberRequest
 import com.example.runitup.dto.VerifyPhoneNumberResponse
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 
 @Service
 //login controller
-class VerifyPhoneNumber: BaseController<VerifyPhoneNumber, VerifyPhoneNumberResponse?>() {
+class VerifyPhoneNumber: BaseController<VerifyPhoneNumberRequest, VerifyPhoneNumberResponse?>() {
     @Autowired
     lateinit var userRepository: UserRepository
 
@@ -25,9 +25,8 @@ class VerifyPhoneNumber: BaseController<VerifyPhoneNumber, VerifyPhoneNumberResp
     @Autowired
     lateinit var jwtService: JwtService
 
-    override fun execute(request: VerifyPhoneNumber): VerifyPhoneNumberResponse? {
-        val auth =  SecurityContextHolder.getContext().authentication as UserPrincipal
-        val user: User = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
+    override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse? {
+        val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpRepositoryService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
         if(otp.code == request.otp){
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
