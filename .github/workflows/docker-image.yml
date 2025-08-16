@@ -15,4 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: |
+        docker login  --username ngiyulu --password ${{ secrets.PASSWORD }} ghcr.io
+        docker build -t ghcr.io/ngiyulu/runitup:1.0.0
+        docker push ghcr.io/tintwork/runitup:1.0.0
