@@ -42,8 +42,7 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
                     }
                 }
             }
-            val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
-            response = VerifyUserResponse(user, token)
+            response = VerifyUserResponse(null, null, user.id.orEmpty(), user.phoneNumber)
 
         }
         return  response
