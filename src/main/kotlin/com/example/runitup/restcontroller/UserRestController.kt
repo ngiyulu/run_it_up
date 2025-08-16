@@ -2,13 +2,11 @@ package com.example.runitup.restcontroller
 
 import com.example.runitup.constants.HeaderConstants
 import com.example.runitup.controllerprovider.UserControllersProvider
-import com.example.runitup.dto.CreateUserRequest
-import com.example.runitup.dto.LogoutRequest
-import com.example.runitup.dto.VerifyUserRequest
-import com.example.runitup.dto.VerifyUserResponse
+import com.example.runitup.dto.*
 import com.example.runitup.dto.initialize.InitializeRequest
 import com.example.runitup.dto.initialize.InitializeResponse
 import com.example.runitup.dto.user.*
+import com.example.runitup.model.Otp
 import com.example.runitup.model.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
@@ -53,6 +51,9 @@ class UserRestController {
         return userControllersProvider.generateTokenController.execute(id)
     }
 
+
+
+
     @PostMapping("/update/name")
     fun updateName(@RequestBody model: UpdateNameModel): User {
         return userControllersProvider.updateNameController.execute(model)
@@ -79,6 +80,16 @@ class UserRestController {
     @PostMapping("/update/dob")
     fun updateDob(@RequestBody model: UpdateDob): User {
         return userControllersProvider.updateDobController.execute(model)
+    }
+
+    @PostMapping("/otp/send")
+    fun sendOtp(@RequestBody model: SendOtpRequest): OtpResponse {
+        return userControllersProvider.sendOtpController.execute(model)
+    }
+
+    @GetMapping("/otp/get/{id}")
+    fun getOtp(@PathVariable id:String): Otp {
+        return userControllersProvider.getOtpController.execute(id)
     }
 
     @PostMapping("/logout")

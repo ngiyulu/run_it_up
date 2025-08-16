@@ -1,3 +1,3 @@
 package com.example.runitup.dto
 
-class OtpResponse(isError:Boolean)
+class OtpResponse(val isError:Boolean)

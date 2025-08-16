@@ -2,10 +2,12 @@ package com.example.runitup.repository.service
 
 import com.example.runitup.model.Otp
 import com.example.runitup.repository.OtpRepository
+import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
@@ -18,6 +20,9 @@ class OtpRepositoryService {
     lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
+    lateinit var mongo: MongoTemplate
+
+    @Autowired
     lateinit var otpRepository: OtpRepository
 
     fun getOtp(userId: String): Otp?{
@@ -28,6 +33,10 @@ class OtpRepositoryService {
     }
 
     fun generateOtp(userId: String, phone: String): Otp {
+        val q = Query(Criteria.where("userId").`is`(userId))
+        val u = Update().set("isActive", false)
+        mongo.updateFirst(q, u, Otp::class.java)
+
         val code: String = ThreadLocalRandom.current()
             .ints(6, 0, 10)
             .mapToObj(java.lang.String::valueOf)
