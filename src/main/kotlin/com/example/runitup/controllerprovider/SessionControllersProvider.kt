@@ -1,6 +1,7 @@
 package com.example.runitup.controllerprovider
 
 import com.example.runitup.controller.runsession.*
+import com.example.runitup.controller.user.VerifyPhoneNumberController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

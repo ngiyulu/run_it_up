@@ -50,4 +50,7 @@ class UserControllersProvider {
 
     @Autowired
     lateinit var getOtpController: GetOtpController
+
+    @Autowired
+    lateinit var verifyPhoneNumController: VerifyPhoneNumberController
 }

@@ -87,6 +87,11 @@ class UserRestController {
         return userControllersProvider.sendOtpController.execute(model)
     }
 
+    @PostMapping("/otp/verify")
+    fun verifyOtp(@RequestBody model: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse {
+        return userControllersProvider.verifyPhoneNumController.execute(model)
+    }
+
     @GetMapping("/otp/get/{id}")
     fun getOtp(@PathVariable id:String): Otp {
         return userControllersProvider.getOtpController.execute(id)
@@ -96,4 +101,6 @@ class UserRestController {
     fun logout(@RequestBody model: LogoutRequest) {
         return userControllersProvider.logOutController.execute(model)
     }
+
+
 }

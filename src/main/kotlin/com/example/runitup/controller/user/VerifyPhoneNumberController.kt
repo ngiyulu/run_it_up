@@ -24,7 +24,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     @Autowired
     lateinit var jwtService: JwtService
 
-    override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse? {
+    override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse{
         val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpRepositoryService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
         if(otp.code == request.otp){
