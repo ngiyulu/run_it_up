@@ -38,7 +38,7 @@ class OtpRepositoryService {
         mongo.updateFirst(q, u, Otp::class.java)
 
         val code: String = ThreadLocalRandom.current()
-            .ints(6, 0, 10)
+            .ints(4, 0, 10)
             .mapToObj(java.lang.String::valueOf)
             .collect(Collectors.joining())
 
