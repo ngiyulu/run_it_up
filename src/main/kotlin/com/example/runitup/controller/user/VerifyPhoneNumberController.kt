@@ -27,6 +27,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse{
         val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpRepositoryService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
+        print(otp)
         if(otp.code == request.otp){
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             otpRepositoryService.disableOtp(otp)

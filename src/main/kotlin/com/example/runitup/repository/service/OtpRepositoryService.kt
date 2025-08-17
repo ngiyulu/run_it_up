@@ -28,7 +28,7 @@ class OtpRepositoryService {
     fun getOtp(userId: String): Otp?{
         val query = Query()
             .addCriteria(Criteria.where("userId").`is`(userId))
-            .addCriteria(Criteria.where("isActive").`is`(false))
+            .addCriteria(Criteria.where("isActive").`is`(true))
         return mongoTemplate.findOne(query, Otp::class.java)
     }
 
