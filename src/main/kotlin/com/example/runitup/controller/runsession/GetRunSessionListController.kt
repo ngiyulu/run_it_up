@@ -22,6 +22,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     override fun execute(request: SessionListModel): List<RunSession> {
         val center = Point(request.longitude, request.latitude)
         val radius = Distance(50.0, Metrics.MILES)
-        return runSessionRepository.findByLocationNear(center, radius)
+        val list = runSessionRepository.findByLocationNear(center, radius)
+        return list.filter { (it.date.isEqual(request.date))}
     }
 }

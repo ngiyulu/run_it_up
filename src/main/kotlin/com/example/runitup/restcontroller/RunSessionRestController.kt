@@ -10,7 +10,9 @@ import com.example.runitup.dto.session.JoinSessionModel
 import com.example.runitup.dto.user.CheckIn
 import com.example.runitup.model.RunSession
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 
 @RequestMapping("/api/v1/run-session")
 @RestController
@@ -45,9 +47,11 @@ class RunSessionRestController {
 
     @GetMapping("/list")
     fun getSessionList( @RequestParam(required = true) long: Double,
-                        @RequestParam(required = true) lat: Double):List<RunSession> {
-
-        return sessionControllersProvider.getRunSessionListController.execute(SessionListModel(longitude = long, latitude = lat))
+                        @RequestParam(required = true) lat: Double,
+                        @RequestParam("date")
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
+    ):List<RunSession> {
+        return sessionControllersProvider.getRunSessionListController.execute(SessionListModel(longitude = long, latitude = lat, date = date))
     }
 
     @PostMapping("/check-in")
