@@ -21,6 +21,9 @@ class SessionControllersProvider {
     lateinit var getRunSessionListController: GetRunSessionListController
 
     @Autowired
+    lateinit var getMyBookingSessionController: GetMyBookingList
+
+    @Autowired
     lateinit var joinSessionController: JoinSessionController
 
     @Autowired

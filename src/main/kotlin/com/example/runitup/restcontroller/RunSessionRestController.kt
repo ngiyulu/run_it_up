@@ -45,6 +45,11 @@ class RunSessionRestController {
         return sessionControllersProvider.getRunSessionController.execute(id)
     }
 
+    @GetMapping("/booking/{id}")
+    fun getMyBooking(@PathVariable id:String):List<RunSession> {
+        return sessionControllersProvider.getMyBookingSessionController.execute(id)
+    }
+
     @GetMapping("/list")
     fun getSessionList( @RequestParam(required = true) long: Double,
                         @RequestParam(required = true) lat: Double,
