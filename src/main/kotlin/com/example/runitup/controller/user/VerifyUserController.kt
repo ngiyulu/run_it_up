@@ -7,6 +7,7 @@ import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.service.JwtService
+import com.example.runitup.service.OtpService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,13 +26,14 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var jwtService: JwtService
+    lateinit var otpService: OtpService
 
     override fun execute(request: VerifyUserRequest): VerifyUserResponse? {
         val user = userRepository.findByPhone(request.phone) ?: throw  ApiRequestException("user_not_found")
         request.firebaseTokenModel?.let {
             phoneService.createPhone(it)
         }
+        otpService.createOtp(user)
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)?.let { it ->
                 it.map {
