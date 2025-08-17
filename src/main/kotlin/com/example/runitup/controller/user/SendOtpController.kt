@@ -6,6 +6,7 @@ import com.example.runitup.dto.SendOtpRequest
 import com.example.runitup.exception.ApiRequestException
 
 import com.example.runitup.repository.service.OtpRepositoryService
+import com.example.runitup.service.OtpService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -13,11 +14,10 @@ import org.springframework.stereotype.Service
 class SendOtpController:  BaseController<SendOtpRequest, OtpResponse>() {
 
     @Autowired
-    lateinit var otpRepositoryService: OtpRepositoryService
+    lateinit var otpService: OtpService
     override fun execute(request: SendOtpRequest): OtpResponse {
         val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
-        print(user)
-        val otp = otpRepositoryService.generateOtp(user.id.orEmpty(), user.phoneNumber)
+        val otp = otpService.createOtp(user)
         print(otp)
         return OtpResponse(true)
     }

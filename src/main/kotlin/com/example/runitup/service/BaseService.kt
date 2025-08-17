@@ -8,4 +8,5 @@ abstract class BaseService {
     @Autowired
     lateinit var logger: LoggerService
 
+
 }
