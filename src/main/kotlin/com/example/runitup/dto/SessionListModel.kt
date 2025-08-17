@@ -1,3 +1,8 @@
 package com.example.runitup.dto
 
-class SessionListModel (val longitude: Double, val latitude: Double)
+import java.time.LocalDate
+
+class SessionListModel (val longitude: Double,
+                        val latitude: Double,
+                        val date: LocalDate
+)
