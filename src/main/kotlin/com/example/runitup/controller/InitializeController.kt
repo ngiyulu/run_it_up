@@ -5,8 +5,8 @@ import com.example.runitup.dto.initialize.InitializeResponse
 import com.example.runitup.model.User
 import com.example.runitup.repository.GymRepository
 import com.example.runitup.repository.UserRepository
+import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.JwtService
 import com.example.runitup.service.PhoneService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var gymRepository: GymRepository
 
     @Autowired
-    lateinit var jwtService: JwtService
+    lateinit var jwtService: JwtTokenService
 
     @Autowired
     lateinit var userRepository: UserRepository

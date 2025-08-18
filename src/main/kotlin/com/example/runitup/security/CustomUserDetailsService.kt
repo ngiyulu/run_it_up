@@ -17,9 +17,10 @@ class CustomUserDetailsService(
     @Autowired
     lateinit var textService: TextService
 
-    override fun loadUserByUsername(email: String): UserDetails {
-        val user = userRepository.findByEmail(email)
-            ?: throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+    override fun loadUserByUsername(userId:String): UserDetails {
+        val userDb = userRepository.findById(userId)
+            if(!userDb.isPresent) throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+        val user = userDb.get()
         return UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth)
     }
 }

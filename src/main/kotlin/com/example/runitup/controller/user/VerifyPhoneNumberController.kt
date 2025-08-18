@@ -7,8 +7,8 @@ import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.repository.service.OtpRepositoryService
+import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.JwtService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -22,7 +22,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     lateinit var otpRepositoryService: OtpRepositoryService
 
     @Autowired
-    lateinit var jwtService: JwtService
+    lateinit var jwtService: JwtTokenService
 
     override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse{
         val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))

@@ -1,5 +1,6 @@
 package com.example.runitup.config
 
+import com.example.runitup.security.JwtAuthenticationFilter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
@@ -18,21 +20,33 @@ class SecurityConfig{
     @Autowired
     lateinit var userAuthenticationProvider: AuthenticationProvider
 
+    @Autowired
+    lateinit var jwtAuthenticationFilter: JwtAuthenticationFilter
+
     @Bean
     @Throws(java.lang.Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         println("securityFilterChain")
-        http.authorizeHttpRequests { requests ->
-            requests.anyRequest().permitAll()
-        }
         http.csrf {
             it.disable()
         }
         http.anonymous().disable() // Disable anonymous authentication
         http.sessionManagement {
             it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        }.authorizeHttpRequests {
+            // require init and toke generrate to by passs authentication
+            it.requestMatchers(
+                "/api/v1/init",
+                "/api/v1/user/token/generate/**",
+                "/api/v1/user/verify",
+                "/api/v1/user/create",
+                "/api/v1/user/otp/verify",
+                "/api/v1/user/otp/send"
+                ).permitAll()
+            // everything else needs to be authenticated
+            it.anyRequest().authenticated()
         }
-        //  http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
