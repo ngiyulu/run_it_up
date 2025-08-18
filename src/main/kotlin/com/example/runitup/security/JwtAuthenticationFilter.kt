@@ -1,7 +1,5 @@
-package com.basketapp.security
+package com.example.runitup.security
 
-import com.example.runitup.security.CustomUserDetailsService
-import com.example.runitup.security.JwtTokenProvider
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -13,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
 class JwtAuthenticationFilter(
-    private val jwtTokenProvider: JwtTokenProvider,
+    private val jwtTokenProvider: JwtTokenService,
     private val customUserDetailsService: CustomUserDetailsService
 ) : OncePerRequestFilter() {
 

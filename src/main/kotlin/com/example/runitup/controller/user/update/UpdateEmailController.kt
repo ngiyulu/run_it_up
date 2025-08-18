@@ -4,6 +4,7 @@ import com.example.runitup.controller.BaseController
 import com.example.runitup.dto.user.UpdateEmailModel
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
+import com.example.runitup.security.UserPrincipal
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service
 class UpdateEmailController: BaseController<UpdateEmailModel, User>() {
     override fun execute(request: UpdateEmailModel): User {
         val auth =  SecurityContextHolder.getContext().authentication
-        val savedUser = auth.principal as User
+        val savedUser = auth.principal as UserPrincipal
         var user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
         user.email = request.email
         user = cacheManager.updateUser(user)

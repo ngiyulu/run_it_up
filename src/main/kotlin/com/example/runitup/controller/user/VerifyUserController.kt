@@ -6,7 +6,6 @@ import com.example.runitup.dto.VerifyUserResponse
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.repository.UserRepository
-import com.example.runitup.service.JwtService
 import com.example.runitup.service.OtpService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService

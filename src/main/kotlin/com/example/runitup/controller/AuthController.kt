@@ -2,7 +2,7 @@ package com.example.runitup.controller
 
 import com.example.runitup.model.User
 import com.example.runitup.repository.UserRepository
-import com.example.runitup.security.JwtTokenProvider
+import com.example.runitup.security.JwtTokenService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val userRepository: UserRepository,
     private val authenticationManager: AuthenticationManager,
-    private val jwtTokenProvider: JwtTokenProvider,
+    private val jwtTokenProvider: JwtTokenService,
     private val passwordEncoder: PasswordEncoder
 ) {
 

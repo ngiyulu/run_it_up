@@ -1,6 +1,7 @@
 package com.example.runitup.restcontroller
 
 import com.example.runitup.constants.HeaderConstants
+import com.example.runitup.controller.user.GenerateTokenController
 import com.example.runitup.controllerprovider.UserControllersProvider
 import com.example.runitup.dto.*
 import com.example.runitup.dto.initialize.InitializeRequest
@@ -47,11 +48,9 @@ class UserRestController {
     }
 
     @GetMapping("/token/generate/{id}")
-    fun generateToken(@PathVariable id:String): String {
+    fun generateToken(@PathVariable id:String): GenerateTokenController.Token {
         return userControllersProvider.generateTokenController.execute(id)
     }
-
-
 
 
     @PostMapping("/update/name")
