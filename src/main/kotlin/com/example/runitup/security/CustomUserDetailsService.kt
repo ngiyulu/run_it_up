@@ -18,8 +18,12 @@ class CustomUserDetailsService(
     lateinit var textService: TextService
 
     override fun loadUserByUsername(userId:String): UserDetails {
+        print("loadUserByUsername userId = $userId")
         val userDb = userRepository.findById(userId)
-            if(!userDb.isPresent) throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+            if(!userDb.isPresent) {
+                print("user not found, authentication failed")
+                throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+            }
         val user = userDb.get()
         return UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth)
     }
