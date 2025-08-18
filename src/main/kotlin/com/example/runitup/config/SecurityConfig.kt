@@ -36,7 +36,7 @@ class SecurityConfig{
         }.authorizeHttpRequests {
             // require init and toke generrate to by passs authentication
             it.requestMatchers(
-                "/api/v1/init",
+                "/api/v1/user/init",
                 "/api/v1/user/token/generate/**",
                 "/api/v1/user/verify",
                 "/api/v1/user/create",
