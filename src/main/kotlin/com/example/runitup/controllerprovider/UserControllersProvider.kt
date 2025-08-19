@@ -2,10 +2,7 @@ package com.example.runitup.controllerprovider
 
 import com.example.runitup.controller.InitializeController
 import com.example.runitup.controller.user.*
-import com.example.runitup.controller.user.update.UpdateDobController
-import com.example.runitup.controller.user.update.UpdateEmailController
-import com.example.runitup.controller.user.update.UpdateNameController
-import com.example.runitup.controller.user.update.UpdateSkillLevelController
+import com.example.runitup.controller.user.update.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -35,6 +32,9 @@ class UserControllersProvider {
 
     @Autowired
     lateinit var updateSkillLevelController: UpdateSkillLevelController
+
+    @Autowired
+    lateinit var updateSexController: UpdateSexController
 
     @Autowired
     lateinit var updateEmail: UpdateEmailController

@@ -1,5 +1,5 @@
 package com.example.runitup.enum
 
 enum class Sex{
-    MALE, FEMALE
+    MALE, FEMALE, UNKNOWN, UNDISCLOSED
 }

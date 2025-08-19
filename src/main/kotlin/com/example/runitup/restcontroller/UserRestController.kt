@@ -76,6 +76,11 @@ class UserRestController {
         return userControllersProvider.updateSkillLevelController.execute(model)
     }
 
+    @PostMapping("/update/sex")
+    fun updateSkillLevel(@RequestBody model: UpdateSex): User {
+        return userControllersProvider.updateSexController.execute(model)
+    }
+
     @PostMapping("/update/dob")
     fun updateDob(@RequestBody model: UpdateDob): User {
         return userControllersProvider.updateDobController.execute(model)
