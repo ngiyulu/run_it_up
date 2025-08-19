@@ -6,8 +6,10 @@ plugins {
 }
 
 group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-
+version = '0.0.2-SNAPSHOT'
+springBoot {
+    buildInfo() // generates META-INF/build-info.properties (BuildProperties bean)
+}
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
