@@ -1,10 +1,17 @@
 package com.example.runitup.extensions
 
-import com.example.runitup.model.UserPayment
+import com.example.runitup.dto.CardModel
 import com.stripe.model.PaymentMethod
 
-fun PaymentMethod.mapToUserPayment(): UserPayment{
-    return UserPayment(this.id, this.type, "", "")
+fun PaymentMethod.mapToUserPayment(): CardModel{
+    val card = this.card
+    return CardModel(
+        id = this.id,
+        brand = card.brand,
+        last4 = card.last4,
+        expMonth = card.expMonth.toInt(),
+        expYear = card.expYear.toInt()
+    )
 }
 
 inline fun <A : Any, B : Any, R> let(a: A?, b: B?, block: (A, B) -> R): R? =

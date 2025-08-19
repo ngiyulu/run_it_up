@@ -80,15 +80,38 @@ class PaymentService: BaseService() {
 
     }
 
-    fun createCard(stripeCustomerId: String, token: String): PaymentSource?{
-        return  try {
-            val customer = Customer.retrieve(stripeCustomerId)
-            val params = PaymentSourceCollectionCreateParams.builder().setSource(token).build()
-            customer.sources.create(params)
-        }catch (exception: StripeException){
-            logger.logError(TAG, exception)
-            null
+    fun createCard(stripeCustomerId: String, token: String): PaymentMethod?{
+
+        try {
+            val pmParams = PaymentMethodCreateParams.builder()
+                .setType(PaymentMethodCreateParams.Type.CARD)
+                .setCard(
+                    PaymentMethodCreateParams.Token.builder()
+                        .setToken(token) // e.g. "tok_visa" or a real token from client
+                        .build()
+                )
+                .build()
+            var pm = PaymentMethod.create(pmParams)
+            pm = pm.attach(
+                PaymentMethodAttachParams.builder()
+                    .setCustomer(stripeCustomerId)
+                    .build()
+            )
+            return  pm
+        }catch (ex: Exception){
+            logger.logError(TAG, ex)
+            return null
         }
+
+
+//        return  try {
+//            val customer = Customer.retrieve(stripeCustomerId)
+//            val params = PaymentSourceCollectionCreateParams.builder().setSource(token).build()
+//            customer.sources.create(params)
+//        }catch (exception: StripeException){
+//            logger.logError(TAG, exception)
+//            null
+//        }
 
     }
 
