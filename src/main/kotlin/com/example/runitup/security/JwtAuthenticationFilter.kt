@@ -21,6 +21,7 @@ class JwtAuthenticationFilter(
         filterChain: FilterChain
     ) {
         val token = request.getHeader("Authorization")?.removePrefix("Bearer ")
+        print("token = $token")
         if (token != null && jwtTokenProvider.validateToken(token)) {
             val userId = jwtTokenProvider.getUserIdFromJWT(token)
             val userDetails = customUserDetailsService.loadUserByUsername(userId)
