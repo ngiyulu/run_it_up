@@ -23,6 +23,12 @@ class SecurityConfig{
     @Autowired
     lateinit var jwtAuthenticationFilter: JwtAuthenticationFilter
 
+    @Autowired
+    lateinit var accessDeniedHandler: LoggingAccessDeniedHandler
+
+    @Autowired
+    lateinit var jwtAuthEntryPoint: JwtAuthEntryPoint
+
     @Bean
     @Throws(java.lang.Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -45,6 +51,9 @@ class SecurityConfig{
                 ).permitAll()
             // everything else needs to be authenticated
             it.anyRequest().authenticated()
+        }.exceptionHandling {
+            it.authenticationEntryPoint(jwtAuthEntryPoint)       // 401 path
+            it.accessDeniedHandler(accessDeniedHandler)    // 403 path
         }
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
