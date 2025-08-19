@@ -46,6 +46,7 @@ class SecurityConfig{
                 "/api/v1/user/token/generate/**",
                 "/api/v1/user/verify",
                 "/api/v1/user/create",
+                "/api/v1/user/hello",
                 "/api/v1/user/otp/verify",
                 "/api/v1/user/otp/send"
                 ).permitAll()

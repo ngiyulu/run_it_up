@@ -1,8 +1,8 @@
 package com.example.runitup.model
 
+import com.example.runitup.dto.CardModel
 import com.example.runitup.enum.Sex
 import com.example.runitup.enum.SkillLevel
-import com.stripe.model.PaymentMethod
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
@@ -21,7 +21,7 @@ data class User(
     var stripeId: String?,
     var credit: Double = 0.0,
     var rating: Double? = null,
-    var payments: List<UserPayment>?,
+    var payments: List<CardModel>?,
     var sex: Sex,
     var auth:String = "",
     var runSessions:MutableList<RunSession>,

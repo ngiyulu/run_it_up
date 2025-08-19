@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
+import java.time.Instant
+import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.stream.Collectors
 
@@ -42,7 +44,7 @@ class OtpRepositoryService {
             .mapToObj(java.lang.String::valueOf)
             .collect(Collectors.joining())
 
-        return  otpRepository.save(Otp(userId = userId, code = code))
+        return  otpRepository.save(Otp(userId = userId, code = code, created =  Date.from(Instant.now())))
     }
 
     fun disableOtp(otp: Otp): Otp{
