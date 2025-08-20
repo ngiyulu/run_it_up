@@ -1,6 +1,6 @@
 package com.example.runitup.service
 
-import com.example.runitup.dto.CardModel
+import com.example.runitup.dto.payment.CardModel
 import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.model.User
 import com.stripe.Stripe
@@ -126,6 +126,33 @@ class PaymentService: BaseService() {
             logger.logError(TAG, exception)
             null
         }
+    }
+
+    fun makeDefaultCard(customerId: String, paymentMethodId: String): Customer? {
+        return  try {
+            val pm = PaymentMethod.retrieve(paymentMethodId)
+            if (pm.customer == null || pm.customer != customerId) {
+                val attachParams = PaymentMethodAttachParams.builder()
+                    .setCustomer(customerId)
+                    .build()
+                pm.attach(attachParams) // (Best practice is to save via SetupIntent client-side)
+            }
+
+            // 2) Set as customer's default for invoices/subscriptions
+            val customer = Customer.retrieve(customerId)
+            val update = CustomerUpdateParams.builder()
+                .setInvoiceSettings(
+                    CustomerUpdateParams.InvoiceSettings.builder()
+                        .setDefaultPaymentMethod(paymentMethodId)
+                        .build()
+                ).build()
+            customer.update(update)
+        }catch (ex: Exception){
+            logger.logError(TAG, ex)
+           null
+        }
+
+
     }
 
 

@@ -1,6 +1,6 @@
 package com.example.runitup.model
 
-import com.example.runitup.dto.CardModel
+import com.example.runitup.dto.payment.CardModel
 import com.example.runitup.enum.Sex
 import com.example.runitup.enum.SkillLevel
 import org.bson.types.ObjectId
@@ -19,6 +19,7 @@ data class User(
     var internalNotes: Long,
     var phoneNumber: String,
     var stripeId: String?,
+    var defaultPayment:String?,
     var credit: Double = 0.0,
     var rating: Double? = null,
     var payments: List<CardModel>?,

@@ -1,4 +1,4 @@
-package com.example.runitup.dto
+package com.example.runitup.dto.payment
 
 data class CardModel(
     val id: String,

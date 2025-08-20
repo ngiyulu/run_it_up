@@ -1,9 +1,9 @@
 package com.example.runitup.extensions
 
-import com.example.runitup.dto.CardModel
+import com.example.runitup.dto.payment.CardModel
 import com.stripe.model.PaymentMethod
 
-fun PaymentMethod.mapToUserPayment(isDefaultPayment:Boolean): CardModel{
+fun PaymentMethod.mapToUserPayment(isDefaultPayment:Boolean): CardModel {
     val card = this.card
     return CardModel(
         id = this.id,

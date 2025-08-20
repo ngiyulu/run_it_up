@@ -1,5 +1,6 @@
 package com.example.runitup.controller.user
 
+import com.example.runitup.constants.AppConstant
 import com.example.runitup.controller.BaseController
 import com.example.runitup.dto.CreateUserRequest
 import com.example.runitup.exception.ApiRequestException
@@ -34,6 +35,7 @@ class CreateUserController: BaseController<CreateUserRequest, User>() {
 //        }
         val user = request.user
         user.verifiedPhone = false
+        user.defaultPayment = AppConstant.WALLET
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
         user.stripeId = stripeId
         return cacheManager.updateUser(user)
