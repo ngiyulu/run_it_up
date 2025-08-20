@@ -15,11 +15,7 @@ class GetUserController: BaseController<String, User>() {
     override fun execute(request: String): User {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
         user.stripeId?.let { it ->
-            user.payments = paymentService.listOfCustomerCards(it)?.let { it ->
-                it.map {
-                    it.mapToUserPayment()
-                }
-            }
+            user.payments = paymentService.listOfCustomerCards(it)
         }
         return  user
     }

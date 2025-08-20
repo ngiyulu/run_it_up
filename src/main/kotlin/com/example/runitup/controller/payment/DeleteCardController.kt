@@ -20,9 +20,9 @@ class DeleteCardController: BaseController<DeleteCardModel, CardModel>() {
         if (request.paymentId.isEmpty()) {
             throw ApiRequestException(text("invalid_params"))
         }
-        var payment = paymentService.deleteCard(request.paymentId) ?: throw ApiRequestException(text("payment_error"))
+        val payment = paymentService.deleteCard(request.paymentId) ?: throw ApiRequestException(text("payment_error"))
 
-        return  payment.mapToUserPayment()
+        return  payment.mapToUserPayment(false)
 
     }
 }

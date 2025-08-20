@@ -33,7 +33,8 @@ class CreateCardController: BaseController<CreatePaymentModel, CardModel>() {
             brand = payment.card.brand,
             last4 = payment.card.last4,
             expMonth = payment.card.expMonth.toInt(),
-            expYear = payment.card.expYear.toInt()
+            expYear = payment.card.expYear.toInt(),
+            isDefault = false
         )
 
     }

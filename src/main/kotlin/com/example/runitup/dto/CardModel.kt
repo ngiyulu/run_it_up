@@ -5,5 +5,6 @@ data class CardModel(
     val brand: String?,
     val last4: String?,
     val expMonth: Int?,
-    val expYear: Int?
+    val expYear: Int?,
+    var isDefault: Boolean
 )
