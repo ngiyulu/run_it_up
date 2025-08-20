@@ -34,11 +34,7 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
         }
         otpService.createOtp(user)
         user.stripeId?.let { it ->
-            user.payments = paymentService.listOfCustomerCards(it)?.let { it ->
-                it.map {
-                    it.mapToUserPayment()
-                }
-            }
+            user.payments = paymentService.listOfCustomerCards(it)
         }
        return VerifyUserResponse(null, null, user.id.orEmpty(), user.phoneNumber)
     }

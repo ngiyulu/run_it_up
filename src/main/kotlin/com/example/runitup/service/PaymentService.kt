@@ -1,5 +1,7 @@
 package com.example.runitup.service
 
+import com.example.runitup.dto.payment.CardModel
+import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.model.User
 import com.stripe.Stripe
 import com.stripe.exception.StripeException
@@ -126,19 +128,61 @@ class PaymentService: BaseService() {
         }
     }
 
+    fun makeDefaultCard(customerId: String, paymentMethodId: String): Customer? {
+        return  try {
+            val pm = PaymentMethod.retrieve(paymentMethodId)
+            if (pm.customer == null || pm.customer != customerId) {
+                val attachParams = PaymentMethodAttachParams.builder()
+                    .setCustomer(customerId)
+                    .build()
+                pm.attach(attachParams) // (Best practice is to save via SetupIntent client-side)
+            }
 
-    fun listOfCustomerCards(customerId: String): List<PaymentMethod>? {
+            // 2) Set as customer's default for invoices/subscriptions
+            val customer = Customer.retrieve(customerId)
+            val update = CustomerUpdateParams.builder()
+                .setInvoiceSettings(
+                    CustomerUpdateParams.InvoiceSettings.builder()
+                        .setDefaultPaymentMethod(paymentMethodId)
+                        .build()
+                ).build()
+            customer.update(update)
+        }catch (ex: Exception){
+            logger.logError(TAG, ex)
+           null
+        }
+
+
+    }
+
+
+    fun listOfCustomerCards(customerId: String): List<CardModel>? {
         return try {
             val params: MutableMap<String, Any> = HashMap()
             params["customer"] = customerId
             params["type"] = "card"
             val pmCollection: PaymentMethodCollection = PaymentMethod.list(params)
-             pmCollection.data
+            val defaultPayment = getDefaultPayment(customerId)
+            print("default payment = $defaultPayment")
+            return pmCollection.data.map {
+                it.mapToUserPayment(it.id == defaultPayment)
+            }
         }catch (ex: StripeException){
             logger.logError(TAG, ex)
             null
         }
 
+    }
+
+    private fun getDefaultPayment(customerId: String): String?{
+        // 2) Get the customer's default payment method id (expanded for convenience)
+        val custParams = CustomerRetrieveParams.builder()
+            .addExpand("invoice_settings.default_payment_method")
+            .build()
+        val customer = Customer.retrieve(customerId, custParams, null)
+
+        // In stripe-java, default_payment_method is expandable; get the id if present
+        return customer.invoiceSettings?.defaultPaymentMethod
     }
 
 

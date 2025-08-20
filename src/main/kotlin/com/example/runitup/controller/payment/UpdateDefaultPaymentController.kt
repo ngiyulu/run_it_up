@@ -1,9 +1,10 @@
 package com.example.runitup.controller.payment
 
+import com.example.runitup.constants.AppConstant
 import com.example.runitup.controller.BaseController
-import com.example.runitup.dto.payment.CardModel
-import com.example.runitup.dto.payment.CreatePaymentModel
+import com.example.runitup.dto.payment.UpdateDefaultCardModel
 import com.example.runitup.exception.ApiRequestException
+import com.example.runitup.model.User
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.PaymentService
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,31 +12,26 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class CreateCardController: BaseController<CreatePaymentModel, CardModel>() {
+class UpdateDefaultPaymentController: BaseController<UpdateDefaultCardModel, User>() {
 
     @Autowired
     lateinit var paymentService: PaymentService
-    override fun execute(request: CreatePaymentModel): CardModel {
+    override fun execute(request: UpdateDefaultCardModel): User {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         if (user.stripeId == null) {
             logger.logError(CreateCardController::class.java.name, "user striped Id = null")
             throw ApiRequestException(text("payment_error"))
         }
-        if (request.token.isEmpty()) {
-            throw ApiRequestException(text("invalid_token"))
+        if(request.paymentId == AppConstant.WALLET){
+            user.defaultPayment = AppConstant.WALLET
         }
-        val payment = paymentService.createCard(user.stripeId.orEmpty(), request.token)
-            ?: throw ApiRequestException(text("payment_error"))
+        else{
+            user.defaultPayment = request.paymentId
+            paymentService.makeDefaultCard(user.stripeId.orEmpty(), request.paymentId)
+                ?: throw ApiRequestException(text("payment_error"))
+        }
 
-        return   CardModel(
-            id = payment.id,
-            brand = payment.card.brand,
-            last4 = payment.card.last4,
-            expMonth = payment.card.expMonth.toInt(),
-            expYear = payment.card.expYear.toInt(),
-            isDefault = false
-        )
-
+        return cacheManager.updateUser(user)
     }
 }

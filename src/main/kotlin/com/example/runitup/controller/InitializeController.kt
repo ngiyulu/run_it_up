@@ -39,9 +39,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
             if(dbRes.isPresent){
                 user = dbRes.get()
                 user.stripeId?.let { it ->
-                    user.payments = paymentService.listOfCustomerCards(it)?.map {
-                        it.mapToUserPayment()
-                    }
+                    user.payments = paymentService.listOfCustomerCards(it)
                 }
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
