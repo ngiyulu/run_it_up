@@ -11,11 +11,11 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class CreateCardController: BaseController<CreatePaymentModel, CardModel>() {
+class CreateCardController: BaseController<CreatePaymentModel, List<CardModel>? >() {
 
     @Autowired
     lateinit var paymentService: PaymentService
-    override fun execute(request: CreatePaymentModel): CardModel {
+    override fun execute(request: CreatePaymentModel): List<CardModel>? {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         if (user.stripeId == null) {
@@ -28,14 +28,7 @@ class CreateCardController: BaseController<CreatePaymentModel, CardModel>() {
         val payment = paymentService.createCard(user.stripeId.orEmpty(), request.token)
             ?: throw ApiRequestException(text("payment_error"))
 
-        return   CardModel(
-            id = payment.id,
-            brand = payment.card.brand,
-            last4 = payment.card.last4,
-            expMonth = payment.card.expMonth.toInt(),
-            expYear = payment.card.expYear.toInt(),
-            isDefault = false
-        )
+        return   paymentService.listOfCustomerCards(user.stripeId.orEmpty())
 
     }
 }

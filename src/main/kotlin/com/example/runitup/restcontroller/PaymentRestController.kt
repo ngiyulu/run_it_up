@@ -21,7 +21,7 @@ class PaymentRestController {
     lateinit var  paymentControllersProvider: PaymentControllersProvider
 
     @PostMapping("/create")
-    fun createPayment(@RequestBody model: CreatePaymentModel): CardModel {
+    fun createPayment(@RequestBody model: CreatePaymentModel): List<CardModel>? {
         return paymentControllersProvider.createCardController.execute(model)
     }
 
