@@ -22,10 +22,10 @@ class CreateCardController: BaseController<CreatePaymentModel, List<CardModel>? 
             logger.logError(CreateCardController::class.java.name, "user striped Id = null")
             throw ApiRequestException(text("payment_error"))
         }
-        if (request.token.isEmpty()) {
+        if (request.paymentMethod.isEmpty()) {
             throw ApiRequestException(text("invalid_token"))
         }
-        val payment = paymentService.createCard(user.stripeId.orEmpty(), request.token)
+        paymentService.createPaymentMethod(user.stripeId.orEmpty(), request.paymentMethod)
             ?: throw ApiRequestException(text("payment_error"))
 
         return   paymentService.listOfCustomerCards(user.stripeId.orEmpty())
