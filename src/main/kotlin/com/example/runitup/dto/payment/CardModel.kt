@@ -1,5 +1,6 @@
 package com.example.runitup.dto.payment
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.data.mongodb.core.mapping.Field
 
 data class CardModel(
@@ -8,6 +9,8 @@ data class CardModel(
     val last4: String?,
     val expMonth: Int?,
     val expYear: Int?,
-    @field:Field("isDefault")         // for Mongo field name
+    @field:JsonProperty("isDefault")  // for Jackson (write/read)
+    @get:JsonProperty("isDefault")    // sometimes needed for getters
+    @field:Field("isDefault")           // for Mongo field name
     var isDefault: Boolean
 )
