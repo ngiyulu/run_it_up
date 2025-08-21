@@ -25,6 +25,7 @@ data class RunSession(
     var amount: Double = 0.0,
     var total: Double = 0.0,
     var maxPlayer: Int,
+    var title: String,
     var playersSignedUp: MutableList<RunUser> = mutableListOf(),
     var waitList: MutableList<RunUser> = mutableListOf(),
     var players:  MutableList<User>? = null,

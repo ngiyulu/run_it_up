@@ -25,7 +25,7 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
         run.updatedAt = getTimeStamp()
         run.time = request.time
         run.duration = request.duration
-
+        run.title = request.title
         run.courtFee = request.courtFee
         run.updateTotal()
         run.increment()
