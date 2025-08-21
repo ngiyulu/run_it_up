@@ -1,9 +1,35 @@
-<!-- src/main/resources/logback-spring.xml -->
-<configuration>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <!-- Grab app name from Spring, fallback if missing -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="app"/>
+
+    <!-- Pattern with colors, timestamp, level, request-id from MDC, logger and message -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight(%-5level)] [%yellow(${APP_NAME})] %magenta(%X{traceId:-}) %cyan(%logger{36}) - %msg%n%ex{full}"/>
+
+    <!-- Plain console -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] traceId=%X{traceId} %logger{36} - %msg%n</pattern>
+            <pattern>${CONSOLE_PATTERN}</pattern>
         </encoder>
     </appender>
-    <root level="INFO"><appender-ref ref="CONSOLE"/></root>
+
+    <!-- Async wrapper so logging doesn’t block your threads -->
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>2048</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="CONSOLE"/>
+    </appender>
+
+    <!-- Fine-tune log levels -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="com.yourapp" level="DEBUG" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+    </logger>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+    </root>
 </configuration>
