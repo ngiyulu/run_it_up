@@ -51,7 +51,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         val newRun = sessionService.joinSession(RunUser(auth.name, auth.username, null, user.imageUrl, request.guest, false, null), run, request.stripeToken, amount.toLong())
                 ?: throw ApiRequestException(text("stripe_error"))
         newRun.updateTotal()
-        user.runSessions.add(newRun)
+        user.runSessions?.add(newRun)
         cacheManager.updateUser(user)
         return runSessionRepository.save(newRun)
     }

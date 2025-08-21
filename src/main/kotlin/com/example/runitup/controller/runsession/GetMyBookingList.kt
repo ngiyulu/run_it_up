@@ -16,7 +16,7 @@ class GetMyBookingList: BaseController<String, List<RunSession>>() {
     override fun execute(request: String): List<RunSession> {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
         val session = mutableListOf<RunSession>()
-        user.runSessions.forEach {
+        user.runSessions.orEmpty().forEach {
             val dbRes = runSessionRepository.findById(it.id.orEmpty())
             if(!dbRes.isPresent){
               session.add(dbRes.get())

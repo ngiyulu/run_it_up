@@ -27,37 +27,36 @@ class GcsImageService(
     data class UploadResult(
         val objectName: String,
         val url: String,
-        val contentType: String,
-        val sizeBytes: Long
+        val contentType: String
     )
     @Value("\${gcs.bucket}") private val bucketName: String = ""
 
     fun upload(
-        file: MultipartFile
+        jpegBytes: ByteArray
     ): UploadResult? {
-        require(!file.isEmpty) { "Empty file" }
-        val contentType = file.contentType ?: error("Missing content type")
-        require(contentType in allowed) { "Unsupported content type: $contentType" }
+//        require(!file.isEmpty) { "Empty file" }
+//        val contentType = file.contentType ?: error("Missing content type")
+//        require(contentType in allowed) { "Unsupported content type: $contentType" }
 
-        val ext = when (contentType) {
-            MediaType.IMAGE_PNG_VALUE -> ".png"
-            MediaType.IMAGE_JPEG_VALUE -> ".jpg"
-            "image/webp" -> ".webp"
-            "image/heic" -> ".heic"
-            else -> ""
-        }
+//        val ext = when (contentType) {
+//            MediaType.IMAGE_PNG_VALUE -> ".png"
+//            MediaType.IMAGE_JPEG_VALUE -> ".jpg"
+//            "image/webp" -> ".webp"
+//            "image/heic" -> ".heic"
+//            else -> ""
+//        }
 
-        val objectName = "uploads/profile/${UUID.randomUUID()}$ext"
+        val objectName = "uploads/profile/${UUID.randomUUID()}.jpeg"
         val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
-            .setContentType(contentType)
+            .setContentType(MediaType.IMAGE_JPEG_VALUE)
             .build()
 
         return try {
             // Simple upload (fine up to ~10–20 MB). For larger, see streaming version below.
-            storage.create(blobInfo, file.bytes)
+            storage.create(blobInfo, jpegBytes)
 
             val url = "https://storage.googleapis.com/${bucketName}/$objectName"
-             UploadResult(objectName, url, contentType, file.size)
+             UploadResult(objectName, url, MediaType.IMAGE_JPEG_VALUE)
         }
         catch (ex: Exception){
             println(ex)
@@ -86,6 +85,6 @@ class GcsImageService(
          } else {
              "https://storage.googleapis.com/${props.bucket}/$objectName"
          }
-         return UploadResult(objectName, url, contentType, file.size)
+         return UploadResult(objectName, url, contentType)
      }
 }
