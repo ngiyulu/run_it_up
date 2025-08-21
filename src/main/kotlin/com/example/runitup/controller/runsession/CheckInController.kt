@@ -16,7 +16,7 @@ class CheckInController:BaseController<CheckIn, RunSession>() {   @Autowired
 
     lateinit var runSessionRepository: RunSessionRepository
     override fun execute(request: CheckIn): RunSession {
-        val auth =  SecurityContextHolder.getContext().authentication as UserPrincipal
+        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val runDb = runSessionRepository.findById(request.sessionId)
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
