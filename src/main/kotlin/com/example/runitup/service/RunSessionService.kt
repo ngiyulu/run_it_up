@@ -16,7 +16,7 @@ class RunSessionService(): BaseService(){
         runUser.stripeChargeId = sessionCharge.id
         runSession.playersSignedUp.add(runUser)
         for (i in 0 until runUser.guest) {
-            val guestUser = RunUser(runUser.name+"$i", null, null, 0, true, runUser.userId.orEmpty())
+            val guestUser = RunUser(runUser.name+"$i", null, null, runUser.imageUrl,0, true, runUser.userId.orEmpty())
             runSession.playersSignedUp.add(guestUser)
         }
         return runSession

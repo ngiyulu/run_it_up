@@ -25,6 +25,7 @@ data class User(
     var payments: List<CardModel>?,
     var sex: Sex,
     var auth:String = "",
+    var imageUrl: String?,
     var runSessions:MutableList<RunSession>,
     var skillLevel: SkillLevel
 ): BaseModel(){

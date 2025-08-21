@@ -9,6 +9,7 @@ class RunUser(
     val name: String,
     val userId: String?,
     var stripeChargeId: String?,
+    var imageUrl:String?,
     var guest: Int = 0,
     var isGuestUser: Boolean,
     var host: String?,

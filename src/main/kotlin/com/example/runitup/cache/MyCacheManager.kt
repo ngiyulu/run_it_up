@@ -16,13 +16,13 @@ class MyCacheManager {
 
 
     //user
-    @Cacheable(CollectionConstants.USER_COLLECTION, key = "#id")
+    @Cacheable(value = [CollectionConstants.USER_COLLECTION], key = "#id")
     fun getUser(id:String): User?{
         return userRepository.findByIdentifier(id)
     }
 
 
-    @CachePut(CollectionConstants.USER_COLLECTION, key = "#user.identifier")
+    @CachePut(value = [CollectionConstants.USER_COLLECTION], key = "#user.id")
     fun updateUser(user:User):User{
         return userRepository.save(user)
     }
