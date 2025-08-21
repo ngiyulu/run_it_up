@@ -1,7 +1,10 @@
+package com.example.runitup.service
+
 import com.example.runitup.dto.GcsProps
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -27,12 +30,11 @@ class GcsImageService(
         val contentType: String,
         val sizeBytes: Long
     )
+    @Value("\${gcs.bucket}") private val bucketName: String = ""
 
     fun upload(
-        file: MultipartFile,
-        signed: Boolean = true,
-        ttlMinutes: Long = 15
-    ): UploadResult {
+        file: MultipartFile
+    ): UploadResult? {
         require(!file.isEmpty) { "Empty file" }
         val contentType = file.contentType ?: error("Missing content type")
         require(contentType in allowed) { "Unsupported content type: $contentType" }
@@ -45,26 +47,23 @@ class GcsImageService(
             else -> ""
         }
 
-        val objectName = "uploads/images/${UUID.randomUUID()}$ext"
-        val blobInfo = BlobInfo.newBuilder(BlobId.of(props.bucket, objectName))
+        val objectName = "uploads/profile/${UUID.randomUUID()}$ext"
+        val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
             .setContentType(contentType)
             .build()
 
-        // Simple upload (fine up to ~10–20 MB). For larger, see streaming version below.
-        storage.create(blobInfo, file.bytes)
+        return try {
+            // Simple upload (fine up to ~10–20 MB). For larger, see streaming version below.
+            storage.create(blobInfo, file.bytes)
 
-        val url = if (signed) {
-            storage.signUrl(
-                blobInfo,
-                ttlMinutes,
-                TimeUnit.MINUTES,
-                Storage.SignUrlOption.withV4Signature()
-            ).toString()
-        } else {
-            "https://storage.googleapis.com/${props.bucket}/$objectName"
+            val url = "https://storage.googleapis.com/${bucketName}/$objectName"
+             UploadResult(objectName, url, contentType, file.size)
+        }
+        catch (ex: Exception){
+            println(ex)
+            null
         }
 
-        return UploadResult(objectName, url, contentType, file.size)
     }
 
     fun delete(objectName: String): Boolean {
@@ -72,21 +71,21 @@ class GcsImageService(
     }
 
     // --- Optional: streaming upload for very large files ---
-    // fun uploadStreaming(file: MultipartFile, signed: Boolean = true, ttlMinutes: Long = 15): UploadResult {
-    //     val contentType = file.contentType ?: error("Missing content type")
-    //     val objectName = "uploads/images/${UUID.randomUUID()}"
-    //     val blobInfo = BlobInfo.newBuilder(BlobId.of(props.bucket, objectName))
-    //         .setContentType(contentType).build()
-    //     storage.writer(blobInfo).use { writer ->
-    //         java.nio.channels.Channels.newOutputStream(writer).use { out ->
-    //             file.inputStream.use { it.copyTo(out) }
-    //         }
-    //     }
-    //     val url = if (signed) {
-    //         storage.signUrl(blobInfo, ttlMinutes, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature()).toString()
-    //     } else {
-    //         "https://storage.googleapis.com/${props.bucket}/$objectName"
-    //     }
-    //     return UploadResult(objectName, url, contentType, file.size)
-    // }
+     fun uploadStreaming(file: MultipartFile, signed: Boolean = true, ttlMinutes: Long = 15): UploadResult {
+         val contentType = file.contentType ?: error("Missing content type")
+         val objectName = "uploads/images/${UUID.randomUUID()}"
+         val blobInfo = BlobInfo.newBuilder(BlobId.of(props.bucket, objectName))
+             .setContentType(contentType).build()
+         storage.writer(blobInfo).use { writer ->
+             java.nio.channels.Channels.newOutputStream(writer).use { out ->
+                 file.inputStream.use { it.copyTo(out) }
+             }
+         }
+         val url = if (signed) {
+             storage.signUrl(blobInfo, ttlMinutes, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature()).toString()
+         } else {
+             "https://storage.googleapis.com/${props.bucket}/$objectName"
+         }
+         return UploadResult(objectName, url, contentType, file.size)
+     }
 }
