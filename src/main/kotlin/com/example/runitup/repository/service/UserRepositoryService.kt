@@ -13,7 +13,7 @@ class UserRepositoryService {
 
     fun deleteSessionFromUser(userId: String, sessionId: String){
         userRepository.findById(userId).orElseThrow { NoSuchElementException("Parent not found") }
-            .apply { runSessions.removeAll { it.id.toString() == sessionId || it.hostedBy == userId } }
+            .apply { runSessions?.removeAll { it.id.toString() == sessionId || it.hostedBy == userId } }
             .let { userRepository.save(it) }
     }
 
