@@ -12,6 +12,7 @@ import java.util.*
 class JwtAuthEntryPoint : AuthenticationEntryPoint {
     private val log = LoggerFactory.getLogger(javaClass)
 
+
     override fun commence(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -24,7 +25,6 @@ class JwtAuthEntryPoint : AuthenticationEntryPoint {
             request.method, request.requestURI, request.headerNames, authException.message,
             if ((authHeader?.length ?: 0) > 20) authHeader?.take(20) + "..." else authHeader
         )
-//        printAllHeaders(request)
         response.sendError(HttpServletResponse.SC_FORBIDDEN, "Unauthorized")
     }
 
