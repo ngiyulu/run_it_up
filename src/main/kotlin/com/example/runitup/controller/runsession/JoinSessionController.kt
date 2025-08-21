@@ -48,7 +48,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
             throw ApiRequestException(text("spots_left", arrayOf(run.availableSpots().toString())))
         }
         val amount = request.guest * run.amount
-        val newRun = sessionService.joinSession(RunUser(auth.name, auth.username, null, request.guest, false, null), run, request.stripeToken, amount.toLong())
+        val newRun = sessionService.joinSession(RunUser(auth.name, auth.username, null, user.imageUrl, request.guest, false, null), run, request.stripeToken, amount.toLong())
                 ?: throw ApiRequestException(text("stripe_error"))
         newRun.updateTotal()
         user.runSessions.add(newRun)
