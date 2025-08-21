@@ -22,6 +22,8 @@ data class RunSession(
     val startAtUtc: Instant? = null, // optional cache
     var hostedBy: String?,
     var duration: Int, // in hours
+    var notes:String,
+    var description: String,
     var amount: Double = 0.0,
     var total: Double = 0.0,
     var maxPlayer: Int,

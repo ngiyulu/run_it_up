@@ -26,6 +26,8 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
         run.time = request.time
         run.duration = request.duration
         run.title = request.title
+        run.notes = request.notes
+        run.description = request.description
         run.courtFee = request.courtFee
         run.updateTotal()
         run.increment()
