@@ -17,7 +17,8 @@ data class RunSession(
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     var location: GeoJsonPoint?,
     val date: LocalDate,      // local calendar date at the venue
-    var time: LocalTime,      // local time at the venue
+    var startTime: LocalTime,      // local time at the venue
+    var endTime: LocalTime,      // local time at the venue
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
     val startAtUtc: Instant? = null, // optional cache
     var hostedBy: String?,

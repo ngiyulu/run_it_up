@@ -32,6 +32,12 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             gym = runGym
             location = runGym.location
         }
+        if(run.maxPlayer < 13){
+            throw ApiRequestException(text("max_player_error", arrayOf("13")))
+        }
+        if(run.maxGuest > 3){
+            throw ApiRequestException(text("max_guest_error", arrayOf("3")))
+        }
 
         return  runSessionRepository.save(run)
     }

@@ -15,7 +15,7 @@ class TimeAndDateService {
     private fun eventInstant(event: RunSession): Instant {
         event.startAtUtc?.let { return it } // use cached value if present
         val zone = ZoneId.of(event.zoneId)
-        val ldt  = LocalDateTime.of(event.date, event.time)
+        val ldt  = LocalDateTime.of(event.date, event.startTime)
         var zdt  = ZonedDateTime.of(ldt, zone)
         zone.rules.getTransition(ldt)?.takeIf { it.isOverlap }?.let {
             zdt = zdt.withLaterOffsetAtOverlap()
