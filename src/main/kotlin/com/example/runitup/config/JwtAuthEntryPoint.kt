@@ -17,13 +17,14 @@ class JwtAuthEntryPoint : AuthenticationEntryPoint {
         response: HttpServletResponse,
         authException: AuthenticationException
     ) {
+        log.info(authException.message)
         val authHeader = request.getHeader("Authorization")
         log.warn(
             "401 Unauthorized (invalid/missing JWT) -> method={}, path={}, header={}, reason={}, authHeader={}",
             request.method, request.requestURI, request.headerNames, authException.message,
             if ((authHeader?.length ?: 0) > 20) authHeader?.take(20) + "..." else authHeader
         )
-        printAllHeaders(request)
+//        printAllHeaders(request)
         response.sendError(HttpServletResponse.SC_FORBIDDEN, "Unauthorized")
     }
 
