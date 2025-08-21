@@ -38,7 +38,10 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
         userRepositoryService.deleteSessionFromUser(user.id.toString(), run.id.toString())
-        return sessionRunSessionRepositoryService.setPlayerSignedUpListToCancelled(user.id.toString(), run)
+        var session = sessionRunSessionRepositoryService.setPlayerSignedUpListToCancelled(user.id.toString(), run)
+        return session.apply {
+            updateButtonStatus(user.id.orEmpty())
+        }
     }
 
 }

@@ -22,6 +22,11 @@ class GetMyBookingList: BaseController<String, List<RunSession>>() {
               session.add(dbRes.get())
             }
         }
+
+        // because this means the u
+        session.map {
+            it.updateButtonStatus(user.id.toString())
+        }
         return session
     }
 }

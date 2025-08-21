@@ -24,6 +24,7 @@ data class RunSession(
     var hostedBy: String?,
     var duration: Int, // in hours
     var notes:String,
+    var privateRun : Boolean,
     var description: String,
     var amount: Double = 0.0,
     var total: Double = 0.0,
@@ -35,10 +36,36 @@ data class RunSession(
     var courtFee: Double = 0.0,
     var maxGuest: Int,
     var payment: RunSessionPayment?,
-    var status: RunStatus = RunStatus.PENDING
+    var status: RunStatus = RunStatus.PENDING,
+    var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN
 ): BaseModel(){
 
 
+    fun updateButtonStatus(userId: String){
+        buttonStatus = if(isParticiPant(userId)){
+            JoinButtonStatus.UPDATE
+        } else if(isWaitlisted(userId)){
+            JoinButtonStatus.WAITLIST
+        } else if(status == RunStatus.CANCELLED || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
+            JoinButtonStatus.HIDE
+        } else {
+            JoinButtonStatus.JOIN
+        }
+
+    }
+
+    private fun isParticiPant(userId: String): Boolean{
+        val findUser = getPlayersList()
+            .filter { !it.isGuestUser ||  it.status != RunUser.RunUserStatus.GOING  }
+            .find { it.userId == userId }
+
+        return  findUser != null
+    }
+
+    private fun isWaitlisted(userId: String): Boolean{
+        val user = waitList.find { it.userId == userId }
+        return  user != null
+    }
     fun getPlayersList():List<RunUser>{
         return playersSignedUp.filter { it.status == RunUser.RunUserStatus.GOING }
     }
@@ -72,5 +99,9 @@ data class RunSession(
 
     fun availableSpots(): Int{
         return  maxPlayer - (getPlayersList().size -1)
+    }
+
+    enum class JoinButtonStatus{
+        JOIN, WAITLIST, UPDATE, HIDE
     }
 }

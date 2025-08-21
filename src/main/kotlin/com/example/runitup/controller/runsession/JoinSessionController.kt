@@ -33,12 +33,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
         }
-        val userDbRes = userRepository.findById(auth.id.orEmpty())
-        if(!userDbRes.isPresent){
-            throw  ApiRequestException(text("stripe_error"))
-        }
-        val user = userDbRes.get()
-
+        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val run = runDb.get()
         // this mean the event is full
         if( run.atFullCapacity()){
@@ -53,6 +48,8 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         newRun.updateTotal()
         user.runSessions?.add(newRun)
         cacheManager.updateUser(user)
-        return runSessionRepository.save(newRun)
+        return runSessionRepository.save(newRun).apply {
+            updateButtonStatus(user.id.orEmpty())
+        }
     }
 }

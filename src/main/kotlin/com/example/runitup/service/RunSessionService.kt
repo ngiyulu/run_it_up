@@ -19,6 +19,7 @@ class RunSessionService(): BaseService(){
             val guestUser = RunUser(runUser.name+"$i", null, null, runUser.imageUrl,0, true, runUser.userId.orEmpty())
             runSession.playersSignedUp.add(guestUser)
         }
+
         return runSession
     }
 

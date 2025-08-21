@@ -6,7 +6,9 @@ import com.example.runitup.dto.user.CheckIn
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
+import com.example.runitup.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -14,6 +16,7 @@ class CheckInController:BaseController<CheckIn, RunSession>() {   @Autowired
 
     lateinit var runSessionRepository: RunSessionRepository
     override fun execute(request: CheckIn): RunSession {
+        val auth =  SecurityContextHolder.getContext().authentication as UserPrincipal
         val runDb = runSessionRepository.findById(request.sessionId)
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
@@ -27,6 +30,8 @@ class CheckInController:BaseController<CheckIn, RunSession>() {   @Autowired
         }
         signedUpPlayer?.checkIn = true
         signedUpPlayer?.status = RunUser.RunUserStatus.PLAYED
-        return runSessionRepository.save(run)
+        return runSessionRepository.save(run).apply {
+            updateButtonStatus(auth.id.orEmpty())
+        }
     }
 }
