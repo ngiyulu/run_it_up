@@ -23,7 +23,8 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
         }
         run.gym = request.gym
         run.updatedAt = getTimeStamp()
-        run.time = request.time
+        run.startTime = request.startTime
+        run.endTime = request.endTime
         run.duration = request.duration
         run.title = request.title
         run.notes = request.notes
