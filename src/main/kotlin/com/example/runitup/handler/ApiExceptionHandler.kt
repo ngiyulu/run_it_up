@@ -1,4 +1,4 @@
-package com.example.runitup.security
+package com.example.runitup.handler
 
 import com.example.runitup.dto.ApiError
 import com.example.runitup.exception.ApiRequestException

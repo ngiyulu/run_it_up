@@ -1,5 +1,6 @@
 package com.example.runitup.config
 
+import com.example.runitup.handler.LoggingAccessDeniedHandler
 import com.example.runitup.security.JwtAuthenticationFilter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -26,8 +27,8 @@ class SecurityConfig{
     @Autowired
     lateinit var accessDeniedHandler: LoggingAccessDeniedHandler
 
-    @Autowired
-    lateinit var jwtAuthEntryPoint: JwtAuthEntryPoint
+//    @Autowired
+//    lateinit var jwtAuthEntryPoint: JwtAuthEntryPoint
 
     @Bean
     @Throws(java.lang.Exception::class)
@@ -53,8 +54,8 @@ class SecurityConfig{
             // everything else needs to be authenticated
             it.anyRequest().authenticated()
         }.exceptionHandling {
-            it.authenticationEntryPoint(jwtAuthEntryPoint)       // 401 path
-            it.accessDeniedHandler(accessDeniedHandler)    // 403 path
+//            it.authenticationEntryPoint(jwtAuthEntryPoint)       // 401 path
+//            it.accessDeniedHandler(accessDeniedHandler)    // 403 path
         }
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 

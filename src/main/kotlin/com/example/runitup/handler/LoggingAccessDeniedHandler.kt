@@ -1,4 +1,4 @@
-package com.example.runitup.config
+package com.example.runitup.handler
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
