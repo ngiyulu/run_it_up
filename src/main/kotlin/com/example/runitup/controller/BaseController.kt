@@ -34,7 +34,7 @@ abstract class BaseController<R, P> {
     }
 
     fun getUser(): User{
-        val auth = SecurityContextHolder.getContext().authentication as UserPrincipal
+        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
        return cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
     }
     fun  text(code:String): String{

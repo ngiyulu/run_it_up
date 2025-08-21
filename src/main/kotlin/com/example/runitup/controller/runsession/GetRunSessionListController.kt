@@ -22,7 +22,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     @Autowired
     private lateinit var runSessionRepository: RunSessionRepository
     override fun execute(request: SessionListModel): List<RunSession> {
-        val auth =  SecurityContextHolder.getContext().authentication as UserPrincipal
+        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val center = Point(request.longitude, request.latitude)
         val radius = Distance(50.0, Metrics.MILES)
         val list = runSessionRepository.findByLocationNear(center, radius)

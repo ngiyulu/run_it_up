@@ -29,7 +29,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
     private lateinit var sessionService: RunSessionService
     override fun execute(request: JoinSessionModel): RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
-        val auth =  SecurityContextHolder.getContext().authentication as UserPrincipal
+        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
         }
