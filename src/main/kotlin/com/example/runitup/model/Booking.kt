@@ -6,7 +6,7 @@ import org.bson.types.ObjectId
 
 class Booking (
     var id: ObjectId? = ObjectId(),
-    //partyisze include the guest and the user
+    //party size include the guest and the user
     var partySize: Int = 1,
     // created userId to make query easier
     var userId: String,

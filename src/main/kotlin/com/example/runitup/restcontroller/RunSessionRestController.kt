@@ -2,7 +2,6 @@ package com.example.runitup.restcontroller
 
 import com.example.runitup.controllerprovider.SessionControllersProvider
 import com.example.runitup.dto.CreateRunSessionRequest
-import com.example.runitup.dto.MyLocationModel
 import com.example.runitup.dto.SessionListModel
 import com.example.runitup.dto.session.CancelSessionModel
 import com.example.runitup.dto.session.ConfirmSessionModel

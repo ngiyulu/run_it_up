@@ -19,7 +19,6 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
     @Autowired
     lateinit var bookingDbService: BookingDbService
 
-
     override fun execute(request: CancelSessionModel): RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
         if(!runDb.isPresent){
@@ -30,6 +29,9 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
         run.status = RunStatus.CANCELLED
+        if(run.status == RunStatus.CONFIRMED){
+            //TODO: add  to queue for refunding
+        }
         run = runSessionRepository.save(run)
         bookingDbService.cancelAllBooking(run.id.orEmpty())
         return run

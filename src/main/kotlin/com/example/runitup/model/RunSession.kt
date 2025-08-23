@@ -68,7 +68,7 @@ data class RunSession(
     }
 
     fun isDeletable(): Boolean{
-        return status == RunStatus.PENDING || status == RunStatus.CONFIRMED
+        return status == RunStatus.PENDING
     }
 
     fun isUpdatable(): Boolean{
