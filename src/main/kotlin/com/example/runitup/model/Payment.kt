@@ -5,7 +5,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 
 class Payment(
-    @Id var id: ObjectId = ObjectId(),
+    @Id var id: String? = ObjectId().toString(),
     val paymentIntentId: String?,
     val userId: String,
     var bookingId: String,

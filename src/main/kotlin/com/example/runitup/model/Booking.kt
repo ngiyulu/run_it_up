@@ -5,7 +5,7 @@ import com.example.runitup.enum.PaymentStatus
 import org.bson.types.ObjectId
 
 class Booking (
-    var id: ObjectId? = ObjectId(),
+    var id: String? = ObjectId().toString(),
     //party size include the guest and the user
     var partySize: Int = 1,
     // created userId to make query easier
