@@ -5,7 +5,7 @@ import org.springframework.data.annotation.Id
 import java.time.LocalDate
 
 class Refund (
-    @Id val id: ObjectId? = ObjectId(),
+    @Id val id: String? = ObjectId().toString(),
     val userId: String,
     var runId: String?,
     var amount: Double,
