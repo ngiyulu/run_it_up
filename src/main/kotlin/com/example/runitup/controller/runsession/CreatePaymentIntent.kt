@@ -20,9 +20,10 @@ class CreatePaymentIntent: BaseController<CreatePIRequest, CreatePIResponse>()  
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         if(user.stripeId == null){
-            logger.logError(CreateCardController::class.java.name, "user striped Id = null")
+            logger.logError(TAG, "user striped Id = null")
             throw ApiRequestException(text("payment_error"))
         }
+        request.customerId = user.stripeId
         return paymentService.createPaymentIntent(request) ?: throw ApiRequestException("payment_error")
     }
 }
