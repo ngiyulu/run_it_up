@@ -1,7 +1,6 @@
 package com.example.runitup.controller.runsession
 
 import com.example.runitup.controller.BaseController
-import com.example.runitup.dto.SessionListModel
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.BookingRepository
@@ -30,7 +29,7 @@ class GetMyBookingList: BaseController<String, List<RunSession>>() {
 
         // because this means the u
         session.map {
-            it.updateButtonStatus(user.id.toString())
+            it.updateStatus(user.id.toString())
         }
         return session
     }

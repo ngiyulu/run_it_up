@@ -1,9 +1,7 @@
 package com.example.runitup.controller.runsession
 
 import com.example.runitup.controller.BaseController
-import com.example.runitup.dto.MyLocationModel
 import com.example.runitup.dto.SessionListModel
-import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.security.UserPrincipal
@@ -27,7 +25,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         val radius = Distance(50.0, Metrics.MILES)
         val list = runSessionRepository.findByLocationNear(center, radius)
         return list.filter { (it.date.isEqual(request.date))}.map {
-            it.updateButtonStatus(auth.id.orEmpty())
+            it.updateStatus(auth.id.orEmpty())
             it
         }
     }

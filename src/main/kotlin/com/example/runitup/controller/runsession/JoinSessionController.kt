@@ -10,9 +10,7 @@ import com.example.runitup.model.BookingPayment
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.BookingRepository
 import com.example.runitup.repository.RunSessionRepository
-import com.example.runitup.repository.UserRepository
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.PaymentService
 import com.example.runitup.service.RunSessionService
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,13 +47,13 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         // and the ui will update, this should only happen if they had an old version of the run
         // that didn't not have the proper ui
         if( run.atFullCapacity()){
-            run.updateButtonStatus(user.id.orEmpty())
+            run.updateStatus(user.id.orEmpty())
             return  run
         }
         val availableSpots = run.availableSpots()
         // this means the run is full because he added guests
         if(availableSpots < request.guest){
-            run.updateButtonStatus(user.id.orEmpty())
+            run.updateStatus(user.id.orEmpty())
             return  run
         }
         if(run.userHasBookingAlready(user.id.orEmpty())){

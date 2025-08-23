@@ -1,7 +1,6 @@
 package com.example.runitup.controller.runsession
 
 import com.example.runitup.controller.BaseController
-import com.example.runitup.dto.RunUser
 import com.example.runitup.dto.user.CheckIn
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
@@ -31,7 +30,7 @@ class CheckInController:BaseController<CheckIn, RunSession>() {   @Autowired
 //        signedUpPlayer?.checkIn = true
 //        signedUpPlayer?.status = RunUser.RunUserStatus.PLAYED
         return runSessionRepository.save(run).apply {
-            updateButtonStatus(auth.id.orEmpty())
+            updateStatus(auth.id.orEmpty())
         }
     }
 }

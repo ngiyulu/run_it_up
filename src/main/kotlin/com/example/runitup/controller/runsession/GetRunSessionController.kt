@@ -21,7 +21,7 @@ class GetRunSessionController: BaseController<String, RunSession>() {
     override fun execute(request: String): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val run = runSessionService.getRunSession(request) ?: throw ApiRequestException(text("run_not_found"))
-        run.updateButtonStatus(auth.id.orEmpty())
+        run.updateStatus(auth.id.orEmpty())
         return run
     }
 }
