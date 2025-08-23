@@ -6,10 +6,7 @@ import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.repository.service.BookingDbService
-import com.example.runitup.repository.service.RunSessionDbService
-import com.example.runitup.repository.service.UserDbRepositoryService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -20,15 +17,6 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
-
-    @Autowired
-    lateinit var userDbRepositoryService: UserDbRepositoryService
-
-    @Autowired
-    lateinit var sessionRunSessionRepositoryService: RunSessionDbService
-
-    @Autowired
-    private lateinit var sessionService: RunSessionService
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
@@ -50,5 +38,4 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
         }
         return runSessionRepository.save(run)
     }
-
 }
