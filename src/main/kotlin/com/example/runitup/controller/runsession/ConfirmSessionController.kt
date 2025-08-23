@@ -2,74 +2,59 @@ package com.example.runitup.controller.runsession
 
 import com.example.runitup.controller.BaseController
 import com.example.runitup.dto.session.ConfirmSessionModel
-import com.example.runitup.enum.PaymentStatus
 import com.example.runitup.enum.RunStatus
 import com.example.runitup.exception.ApiRequestException
-import com.example.runitup.model.Payment
 import com.example.runitup.model.RunSession
-import com.example.runitup.model.RunSessionPayment
-import com.example.runitup.repository.RunSessionPaymentRepository
-import com.example.runitup.repository.RunSessionRepository
+import com.example.runitup.repository.BookingRepository
+import com.example.runitup.repository.PaymentRepository
 import com.example.runitup.service.PaymentService
+import com.example.runitup.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
+/// confirm session is when we charge the card, this happens 3 hours before the run
 class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>() {
 
+
     @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
+    lateinit var runSessionService: RunSessionService
 
     @Autowired
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var runSessionPaymentRepository: RunSessionPaymentRepository
+    lateinit var paymentRepository:PaymentRepository
+
+    @Autowired
+    lateinit var bookinRepository: BookingRepository
+
+
     override fun execute(request: ConfirmSessionModel): RunSession {
-        val runDb = runSessionRepository.findById(request.sessionId)
-        if(!runDb.isPresent){
-            throw ApiRequestException(text("invalid_session_id"))
+        val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
+        if(run.status == RunStatus.CONFIRMED){
+            return  run
         }
-        var run = runDb.get()
+        if(run.status != RunStatus.PENDING){
+            logger.logError("trying to confirm a run session that's not in pedning", run)
+            return  run
+        }
         run.status = RunStatus.CONFIRMED
-        var runSessionPayment = createPayment(run, completePayment(run))
-        runSessionPayment = runSessionPaymentRepository.save(runSessionPayment)
-        run.payment = runSessionPayment
-        run = runSessionRepository.save(run)
+        // we captured the charge in stripe
+        // we updated the booking list payment status
+        // we created the payment list that needs stored in the payment db
+        val paymentList  = runSessionService.confirmSession(run)
+
+        paymentList.forEach {
+            paymentRepository.save(it)
+        }
+        // we storing the bookings because we updated the payment status
+        run.bookings.forEach {
+            bookinRepository.save(it)
+        }
         return run
     }
 
 
-    private fun createPayment(runSession: RunSession, payments:List<Payment>): RunSessionPayment{
-        val total = payments.sumOf { it.amount }
-        val remainder = total - runSession.courtFee
-        return RunSessionPayment(payments = payments,
-            courtFee = runSession.courtFee,
-            remainder = remainder,
-            runSessionId = runSession.id.toString(),
-            total = total,
-        )
-    }
-    private fun completePayment(runSession: RunSession): List<Payment>{
-        val paymentList:MutableList<Payment> = mutableListOf()
-        runSession.getPlayersList().forEach { user->
-            val charge = paymentService.completePayment(user.stripeChargeId)
-            charge?.let { ch ->
-                paymentList.add(
-                    Payment(
-                        chargeId =  ch.id,
-                        userId = user.userId.orEmpty(),
-                        sessionId = runSession.id.toString(),
-                        amount = runSession.amount
-                    )
-                )
-                user.paymentStatus = PaymentStatus.PAID
-            } ?:run {
-                user.paymentStatus = PaymentStatus.FAILED
-            }
 
-        }
-        return paymentList
-
-    }
 }

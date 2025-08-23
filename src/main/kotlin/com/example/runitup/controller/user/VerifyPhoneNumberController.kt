@@ -6,7 +6,7 @@ import com.example.runitup.dto.VerifyPhoneNumberResponse
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
 import com.example.runitup.repository.UserRepository
-import com.example.runitup.repository.service.OtpRepositoryService
+import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,18 +19,18 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     lateinit var userRepository: UserRepository
 
     @Autowired
-    lateinit var otpRepositoryService: OtpRepositoryService
+    lateinit var otpDbService: OtpDbService
 
     @Autowired
     lateinit var jwtService: JwtTokenService
 
     override fun execute(request: VerifyPhoneNumberRequest): VerifyPhoneNumberResponse{
         val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
-        val otp = otpRepositoryService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
+        val otp = otpDbService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
         print(otp)
         if(otp.code == request.otp){
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
-            otpRepositoryService.disableOtp(otp)
+            otpDbService.disableOtp(otp)
             return  VerifyPhoneNumberResponse(true, user, token)
         }
         return  VerifyPhoneNumberResponse(false, null, null)

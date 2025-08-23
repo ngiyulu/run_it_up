@@ -84,7 +84,7 @@ class RunSessionRestController {
         return sessionControllersProvider.startSessionController.execute(model)
     }
 
-    @PostMapping("/update/guess")
+    @PostMapping("/update/guest")
     fun updateSessionGuest(@RequestBody model: JoinSessionModel): RunSession {
         return sessionControllersProvider.updateSessionGuest.execute(model)
     }

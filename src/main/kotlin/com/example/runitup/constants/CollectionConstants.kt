@@ -8,5 +8,7 @@ object CollectionConstants {
     const val GYM_COLLECTION = "gym"
     const val SESSION_COLLECTION = "session"
     const val OTP_COLLECTION = "otp"
+    const val REFUND_COLLECTION = "otp"
+    const val BOOKING_COLLECTION = "booking"
 
 }

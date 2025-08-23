@@ -30,6 +30,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             createdAt = timestamp
             status = RunStatus.PENDING
             gym = runGym
+            total = 0.0
             location = runGym.location
         }
         if(run.maxPlayer < 13){

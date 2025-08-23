@@ -22,14 +22,14 @@ class CheckInController:BaseController<CheckIn, RunSession>() {   @Autowired
             throw ApiRequestException(text("invalid_session_id"))
         }
         val run = runDb.get()
-        val playerList = run.getPlayersList()
-        val signedUpPlayer = playerList.findLast { it.userId == request.userId }
-        if (signedUpPlayer != null) {
-            logger.logError("", "Player signedup for with id=${request.userId} not found")
-            throw ApiRequestException(text("player_not_found"))
-        }
-        signedUpPlayer?.checkIn = true
-        signedUpPlayer?.status = RunUser.RunUserStatus.PLAYED
+//        val playerList = run.getPlayersList()
+//        val signedUpPlayer = playerList.findLast { it.userId == request.userId }
+//        if (signedUpPlayer != null) {
+//            logger.logError("", "Player signedup for with id=${request.userId} not found")
+//            throw ApiRequestException(text("player_not_found"))
+//        }
+//        signedUpPlayer?.checkIn = true
+//        signedUpPlayer?.status = RunUser.RunUserStatus.PLAYED
         return runSessionRepository.save(run).apply {
             updateButtonStatus(auth.id.orEmpty())
         }

@@ -21,7 +21,7 @@ data class User(
     var loggedInAt: Long = 0,
     var internalNotes: Long = 0,
     var phoneNumber: String = "",
-    var stripeId: String = "",
+    var stripeId: String? = null,
     var defaultPayment:String = "",
     var credit: Double = 0.0,
     var rating: Double = 0.0,

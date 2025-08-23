@@ -3,13 +3,18 @@ package com.example.runitup.controller.runsession
 import com.example.runitup.controller.BaseController
 import com.example.runitup.dto.RunUser
 import com.example.runitup.dto.session.JoinSessionModel
+import com.example.runitup.enum.PaymentStatus
 import com.example.runitup.exception.ApiRequestException
+import com.example.runitup.model.Booking
+import com.example.runitup.model.BookingPayment
 import com.example.runitup.model.RunSession
+import com.example.runitup.repository.BookingRepository
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.RunSessionService
+import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -21,9 +26,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
     private lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
-    private  lateinit var paymentService: PaymentService
-    @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var bookingRepository: BookingRepository
 
     @Autowired
     private lateinit var sessionService: RunSessionService
@@ -36,20 +39,51 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val run = runDb.get()
         // this mean the event is full
-        if( run.atFullCapacity()){
-            throw  ApiRequestException(text("full_capacity"))
+        if( user.stripeId == null){
+            throw ApiRequestException(text("payment_error"))
         }
-        if(run.atFullCapacityForGuest(request.guest)){
+        if( !run.isJoinable()){
+            throw  ApiRequestException(text("join_error"))
+        }
+        // this means the run is full regardless if the user has guest or not
+        if( run.atFullCapacity()){
+            throw ApiRequestException(text("full_capacity"))
+        }
+        val availableSpots = run.availableSpots()
+        // this means the run is full because he added guests
+        if(availableSpots < request.guest){
             throw ApiRequestException(text("spots_left", arrayOf(run.availableSpots().toString())))
         }
-        val amount = request.guest * run.amount
-        val newRun = sessionService.joinSession(RunUser(auth.name, auth.username, null, user.imageUrl, request.guest, false, null), run, request.stripeToken, amount.toLong())
-                ?: throw ApiRequestException(text("stripe_error"))
-        newRun.updateTotal()
-        user.runSessions?.add(newRun)
-        cacheManager.updateUser(user)
-        return runSessionRepository.save(newRun).apply {
-            updateButtonStatus(user.id.orEmpty())
+        if(run.userHasBookingAlready(user.id.orEmpty())){
+            throw ApiRequestException(text("join_invalid"))
         }
+        val amount = request.getTotalParticipants() * run.amount
+        val runUser = RunUser(
+            auth.name,
+            auth.username,
+            user.imageUrl,
+            false,
+            user.imageUrl)
+        val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
+                ?: throw ApiRequestException(text("stripe_error"))
+        val booking = bookingRepository.save(Booking(ObjectId(),
+            request.getTotalParticipants(),
+            user.id.orEmpty(),
+            runUser,
+            request.sessionId,
+            listOf(
+                BookingPayment(amount, paymentId)
+            ),
+            PaymentStatus.PENDING,
+            run.amount,
+            amount
+        ))
+        run.bookingList.add(RunSession.SessionRunBooking(
+            booking.id.toString(),
+            user.id.orEmpty(),
+            booking.partySize
+            ))
+        run.updateTotal()
+        return runSessionRepository.save(run)
     }
 }

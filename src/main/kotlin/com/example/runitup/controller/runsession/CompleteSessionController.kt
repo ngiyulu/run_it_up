@@ -6,7 +6,7 @@ import com.example.runitup.enum.RunStatus
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
-import com.example.runitup.repository.service.UserRepositoryService
+import com.example.runitup.repository.service.UserDbRepositoryService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -16,7 +16,7 @@ class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
 
-    lateinit var userRepositoryService: UserRepositoryService
+    lateinit var userDbRepositoryService: UserDbRepositoryService
 
     override fun execute(request: ConfirmSessionModel): RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
@@ -29,9 +29,6 @@ class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>
         }
         run.status = RunStatus.COMPLETED
         run = runSessionRepository.save(run)
-        for (runUser in run.getPlayersList()) {
-            userRepositoryService.deleteSessionFromUser(runUser.userId.orEmpty(), run.id.toString())
-        }
         return run
 
     }

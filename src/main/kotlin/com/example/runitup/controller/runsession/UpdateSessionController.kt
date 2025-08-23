@@ -30,7 +30,6 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
         run.notes = request.notes
         run.description = request.description
         run.courtFee = request.courtFee
-        run.updateTotal()
         run.increment()
         run = runSessionRepository.save(run)
         return run

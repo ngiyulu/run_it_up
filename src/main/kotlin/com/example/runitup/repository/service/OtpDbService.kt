@@ -2,7 +2,6 @@ package com.example.runitup.repository.service
 
 import com.example.runitup.model.Otp
 import com.example.runitup.repository.OtpRepository
-import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -16,7 +15,7 @@ import java.util.stream.Collectors
 
 
 @Service
-class OtpRepositoryService {
+class OtpDbService {
 
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
