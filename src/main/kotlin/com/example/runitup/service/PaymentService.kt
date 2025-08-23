@@ -10,6 +10,8 @@ import com.stripe.param.*
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.*
+import kotlin.collections.HashMap
 
 
 @Service
@@ -40,47 +42,99 @@ class PaymentService: BaseService() {
             logger.logError(TAG, ex)
             null
         }
-
     }
 
     // Method to update the hold charge
-    fun updateHoldCharge(chargeId: String, newAmount: Long): Charge? {
+    fun updatePaymentIntentAmount(paymentIntentId: String, newAmountCents: Long): PaymentIntent? {
         return try {
-            val resource = Charge.retrieve(chargeId)
-            val params = ChargeUpdateParams.builder().putMetadata("shipping", "express").build()
-            return resource.update(params)
-        }catch (ex: StripeException){
-            logger.logError("update hold charge failed", ex.toString())
-              null
-        }
-    }
-
-    fun createHoldChargeWithToken(token: String, amount: Long): Charge? {
-       return try {
-            val params = ChargeCreateParams.builder()
-                .setAmount(amount) // e.g. 2000 = $20.00
-                .setCurrency("usd")
-                .setCapture(false) // FALSE means authorization only (hold)
-                .setSource(token) // Token from frontend
+            val params = PaymentIntentUpdateParams.builder()
+                .setAmount(newAmountCents)
                 .build()
-            return Charge.create(params)
+
+            val paymentIntent = PaymentIntent.retrieve(paymentIntentId)
+            paymentIntent.update(params)
         }catch (exception: Exception){
-            logger.logError(TAG, exception)
+            logger.logError("updatePaymentIntentAmount", exception)
             null
         }
-
     }
 
-    fun completePayment(chargeId: String?): Charge? {
+    fun createCharge(
+        isHold: Boolean,
+        amountCents: Long,
+        currency: String,
+        paymentMethodId: String,
+        customerId: String? = null,
+        idempotencyKey: String = UUID.randomUUID().toString()
+    ): PaymentIntent? {
+        var captureMethod = PaymentIntentCreateParams.CaptureMethod.MANUAL
+        if(!isHold){
+            captureMethod = PaymentIntentCreateParams.CaptureMethod.AUTOMATIC
+        }
         return try {
-            val charge = Charge.retrieve(chargeId)
-            charge.capture()
+            val createParams = PaymentIntentCreateParams.builder()
+                .setAmount(amountCents)
+                .setCurrency(currency)
+                .setCaptureMethod(captureMethod) // **key**
+                .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.AUTOMATIC)
+                .setConfirm(true) // confirm immediately (requires a PM id)
+                .setPaymentMethod(paymentMethodId)
+                // If you want to save the card for later:
+                //.setSetupFutureUsage(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION)
+                .apply {
+                    if (customerId != null) setCustomer(customerId)
+                }
+                .build()
+
+            // Recommended: pass an idempotency key for resilience
+            val requestOptions = com.stripe.net.RequestOptions.builder()
+                .setIdempotencyKey(idempotencyKey)
+                .build()
+
+            // May return requires_action if 3DS is needed — handle on the client if so.
+            PaymentIntent.create(createParams, requestOptions)
         }catch (exception: Exception){
-            logger.logError(TAG, exception)
+            logger.logError("createHold", exception)
             null
         }
-
     }
+
+
+
+    /**
+     * Capture the previously authorized PaymentIntent (charges the customer).
+     * You can optionally capture a partial amount <= original authorization.
+     */
+    fun captureHold(
+        paymentIntentId: String,
+        captureAmountCents: Long
+    ): PaymentIntent? {
+       return try {
+           val paramsBuilder = PaymentIntentCaptureParams.builder()
+           paramsBuilder.setAmountToCapture(captureAmountCents)
+           PaymentIntent.retrieve(paymentIntentId).capture(paramsBuilder.build())
+       }catch (exception: Exception){
+           logger.logError("captureHold", exception)
+           null
+       }
+    }
+
+
+    /**
+     * Cancel the authorization (releases the hold).
+     */
+    fun cancelHold(paymentIntentId: String, reason: PaymentIntentCancelParams.CancellationReason? = null): PaymentIntent? {
+        return try {
+            val cancelParams = PaymentIntentCancelParams.builder().apply {
+                if (reason != null) setCancellationReason(reason)
+            }.build()
+            PaymentIntent.retrieve(paymentIntentId).cancel(cancelParams)
+        }catch (exception: Exception){
+            logger.logError("cancelHold", exception)
+            null
+        }
+    }
+
 
     fun createPaymentMethod(stripeCustomerId: String, paymentMethodId: String): PaymentMethod? {
         return try {
@@ -90,8 +144,8 @@ class PaymentService: BaseService() {
                     .setCustomer(stripeCustomerId)
                     .build()
             )
-        } catch (ex: Exception) {
-            logger.logError(TAG, ex)
+        } catch (exception: Exception) {
+            logger.logError("createPaymentMethod", exception)
             null
         }
     }
@@ -102,7 +156,7 @@ class PaymentService: BaseService() {
             val params = PaymentMethodDetachParams.builder().build()
             resource.detach(params)
         }catch (exception: StripeException){
-            logger.logError(TAG, exception)
+            logger.logError("deleteCard", exception)
             null
         }
     }
@@ -126,8 +180,8 @@ class PaymentService: BaseService() {
                         .build()
                 ).build()
             customer.update(update)
-        }catch (ex: Exception){
-            logger.logError(TAG, ex)
+        }catch (exception: Exception){
+            logger.logError("makeDefaultCard", exception)
            null
         }
 
@@ -146,8 +200,8 @@ class PaymentService: BaseService() {
             return pmCollection.data.map {
                 it.mapToUserPayment(it.id == defaultPayment)
             }
-        }catch (ex: StripeException){
-            logger.logError(TAG, ex)
+        }catch (exception: StripeException){
+            logger.logError("listOfCustomerCards", exception)
             null
         }
 
@@ -165,17 +219,4 @@ class PaymentService: BaseService() {
     }
 
 
-    fun refundOrCancel(chargeId: String?): Refund? {
-        return try {
-            val params = RefundCreateParams.builder()
-                .setCharge(chargeId)
-                .build()
-            return Refund.create(params)
-
-        }catch (exception: Exception){
-            logger.logError(TAG, exception)
-            null
-        }
-
-    }
 }

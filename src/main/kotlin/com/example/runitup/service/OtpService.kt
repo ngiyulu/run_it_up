@@ -1,9 +1,8 @@
 package com.example.runitup.service
 
 import com.example.runitup.dto.OtpResponse
-import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
-import com.example.runitup.repository.service.OtpRepositoryService
+import com.example.runitup.repository.service.OtpDbService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -45,10 +44,10 @@ import org.springframework.stereotype.Service
 class OtpService : BaseService(){
 
     @Autowired
-    lateinit var otpRepositoryService: OtpRepositoryService
+    lateinit var otpDbService: OtpDbService
 
     fun createOtp(user: User): OtpResponse{
-        otpRepositoryService.generateOtp(user.id.orEmpty(), user.phoneNumber)
+        otpDbService.generateOtp(user.id.orEmpty(), user.phoneNumber)
         return OtpResponse(true)
     }
 }

@@ -1,3 +1,11 @@
 package com.example.runitup.dto.session
 
-class JoinSessionModel(val sessionId: String, val stripeToken:String, val guest: Int)
+class JoinSessionModel(
+    val sessionId: String,
+    val paymentMethodId:String,
+    val guest: Int){
+
+    fun getTotalParticipants(): Int{
+        return  guest + 1
+    }
+}

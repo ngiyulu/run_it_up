@@ -6,7 +6,7 @@ import com.example.runitup.enum.RunStatus
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
-import com.example.runitup.repository.service.UserRepositoryService
+import com.example.runitup.repository.service.BookingDbService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -17,7 +17,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
     lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
-    lateinit var userRepositoryService: UserRepositoryService
+    lateinit var bookingDbService: BookingDbService
 
     override fun execute(request: CancelSessionModel): RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
@@ -29,10 +29,11 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
         run.status = RunStatus.CANCELLED
-        run = runSessionRepository.save(run)
-        run.getPlayersList().forEach {
-            userRepositoryService.deleteSessionFromUser(it.userId.toString(), run.id.toString())
+        if(run.status == RunStatus.CONFIRMED){
+            //TODO: add  to queue for refunding
         }
+        run = runSessionRepository.save(run)
+        bookingDbService.cancelAllBooking(run.id.orEmpty())
         return run
     }
 

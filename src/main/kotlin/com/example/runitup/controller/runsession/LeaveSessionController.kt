@@ -5,10 +5,10 @@ import com.example.runitup.dto.session.CancelSessionModel
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
-import com.example.runitup.repository.service.RunSessionRepositoryService
-import com.example.runitup.repository.service.UserRepositoryService
-import com.example.runitup.service.RunSessionService
+import com.example.runitup.repository.service.BookingDbService
+import com.example.runitup.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -19,17 +19,12 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
     lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
-    lateinit var userRepositoryService: UserRepositoryService
-
-    @Autowired
-    lateinit var sessionRunSessionRepositoryService: RunSessionRepositoryService
-
-    @Autowired
-    private lateinit var sessionService: RunSessionService
+    lateinit var bookingDbService: BookingDbService
 
     override fun execute(request: CancelSessionModel): RunSession {
+        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val runDb = runSessionRepository.findById(request.sessionId)
-        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
+        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
         }
@@ -37,11 +32,10 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
         if(!run.isDeletable()){
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
-        userRepositoryService.deleteSessionFromUser(user.id.toString(), run.id.toString())
-        var session = sessionRunSessionRepositoryService.setPlayerSignedUpListToCancelled(user.id.toString(), run)
-        return session.apply {
-            updateButtonStatus(user.id.orEmpty())
+        bookingDbService.cancelUserBooking(user.id.orEmpty())
+        run.bookingList.removeAll {
+            it.userId == user.id.orEmpty()
         }
+        return runSessionRepository.save(run)
     }
-
 }

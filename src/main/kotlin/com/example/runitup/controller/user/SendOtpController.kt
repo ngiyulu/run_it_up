@@ -5,7 +5,6 @@ import com.example.runitup.dto.OtpResponse
 import com.example.runitup.dto.SendOtpRequest
 import com.example.runitup.exception.ApiRequestException
 
-import com.example.runitup.repository.service.OtpRepositoryService
 import com.example.runitup.service.OtpService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

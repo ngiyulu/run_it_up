@@ -8,19 +8,14 @@ import java.time.LocalDateTime
 class RunUser(
     val name: String,
     val userId: String?,
-    var stripeChargeId: String?,
     var imageUrl:String?,
-    var guest: Int = 0,
     var isGuestUser: Boolean,
     var host: String?,
-    var paymentStatus: PaymentStatus = PaymentStatus.PENDING,
     var checkIn: Boolean = false,
     // this is the model
     var cancelModel: CancelModel? = null,
     var status: RunUserStatus = RunUserStatus.GOING,
-    var verificationCode: String = AppUtil.generate4DigitCode().toString()
-
-){
+    var verificationCode: String = AppUtil.generate4DigitCode().toString()){
 
     class CancelModel(val cancelAt: Long, var  cancelRefundType: CancelRefundType)
 

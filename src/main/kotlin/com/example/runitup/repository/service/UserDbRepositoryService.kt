@@ -2,14 +2,12 @@ package com.example.runitup.repository.service
 
 import com.example.runitup.cache.MyCacheManager
 import com.example.runitup.exception.ApiRequestException
-import com.example.runitup.model.RunSession
-import com.example.runitup.repository.UserRepository
 import com.example.runitup.service.BaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class UserRepositoryService: BaseService() {
+class UserDbRepositoryService: BaseService() {
     @Autowired
     lateinit var cacheManager: MyCacheManager
 
