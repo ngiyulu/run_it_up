@@ -95,7 +95,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             }
             else{
                 logger.logInfo("decreasing the hold amount", "refund")
-                val refund  = Refund(ObjectId(),
+                val refund  = Refund(ObjectId().toString(),
                     userId = user.id.orEmpty(),
                     runId = run.id.orEmpty(), amount =  newRequestAmount,
                     status =  RefundStatus.PENDING,

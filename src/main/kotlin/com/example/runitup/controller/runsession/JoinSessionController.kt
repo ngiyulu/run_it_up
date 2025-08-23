@@ -70,7 +70,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
             request.guest)
         val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
                 ?: throw ApiRequestException(text("stripe_error"))
-        val booking = bookingRepository.save(Booking(ObjectId(),
+        val booking = bookingRepository.save(Booking(ObjectId().toString(),
             request.getTotalParticipants(),
             user.id.orEmpty(),
             runUser,
