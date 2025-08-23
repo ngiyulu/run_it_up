@@ -27,6 +27,8 @@ abstract class BaseController<R, P> {
     @Autowired
     protected lateinit var logger: LoggerService
 
+    var TAG = this.javaClass.simpleName
+
     abstract fun execute(request: R): P
 
     fun getTimeStamp(): Long{
