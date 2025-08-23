@@ -47,6 +47,6 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 phoneService.createPhone(it)
             }
         }
-        return  InitializeResponse(gyms, user, token.orEmpty(), 5)
+        return  InitializeResponse(gyms, user, token.orEmpty(), true, 3)
     }
 }

@@ -45,14 +45,18 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         if( !run.isJoinable()){
             throw  ApiRequestException(text("join_error"))
         }
-        // this means the run is full regardless if the user has guest or not
+        // this means the run is full, so we return the run to the user
+        // and the ui will update, this should only happen if they had an old version of the run
+        // that didn't not have the proper ui
         if( run.atFullCapacity()){
-            throw ApiRequestException(text("full_capacity"))
+            run.updateButtonStatus(user.id.orEmpty())
+            return  run
         }
         val availableSpots = run.availableSpots()
         // this means the run is full because he added guests
         if(availableSpots < request.guest){
-            throw ApiRequestException(text("spots_left", arrayOf(run.availableSpots().toString())))
+            run.updateButtonStatus(user.id.orEmpty())
+            return  run
         }
         if(run.userHasBookingAlready(user.id.orEmpty())){
             throw ApiRequestException(text("join_invalid"))
@@ -60,10 +64,10 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         val amount = request.getTotalParticipants() * run.amount
         val runUser = RunUser(
             auth.name,
-            auth.username,
+            auth.id,
             user.imageUrl,
-            false,
-            user.imageUrl)
+            0,
+            request.guest)
         val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
                 ?: throw ApiRequestException(text("stripe_error"))
         val booking = bookingRepository.save(Booking(ObjectId(),

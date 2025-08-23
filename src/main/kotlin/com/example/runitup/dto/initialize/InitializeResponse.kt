@@ -7,5 +7,6 @@ class InitializeResponse(
     val gyms: List<Gym>,
     var user: User?,
     var token: String,
+    var allowGuest: Boolean,
     var maxGuest: Int
 )
