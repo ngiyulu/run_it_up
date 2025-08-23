@@ -6,6 +6,8 @@ import com.example.runitup.dto.SessionListModel
 import com.example.runitup.dto.session.CancelSessionModel
 import com.example.runitup.dto.session.ConfirmSessionModel
 import com.example.runitup.dto.session.JoinSessionModel
+import com.example.runitup.dto.stripe.CreatePIRequest
+import com.example.runitup.dto.stripe.CreatePIResponse
 import com.example.runitup.dto.user.CheckIn
 import com.example.runitup.model.RunSession
 import org.springframework.beans.factory.annotation.Autowired
@@ -91,5 +93,10 @@ class RunSessionRestController {
     @PostMapping("/update/guest")
     fun updateSessionGuest(@RequestBody model: JoinSessionModel): RunSession {
         return sessionControllersProvider.updateSessionGuest.execute(model)
+    }
+
+    @PostMapping("/payment/intent")
+    fun createPaymentIntent(@RequestBody model: CreatePIRequest): CreatePIResponse {
+        return sessionControllersProvider.createPaymentIntent.execute(model)
     }
 }

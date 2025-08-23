@@ -1,11 +1,14 @@
 package com.example.runitup.service
 
 import com.example.runitup.dto.payment.CardModel
+import com.example.runitup.dto.stripe.CreatePIRequest
+import com.example.runitup.dto.stripe.CreatePIResponse
 import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.model.User
 import com.stripe.Stripe
 import com.stripe.exception.StripeException
 import com.stripe.model.*
+import com.stripe.net.RequestOptions
 import com.stripe.param.*
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
@@ -184,8 +187,50 @@ class PaymentService: BaseService() {
             logger.logError("makeDefaultCard", exception)
            null
         }
+    }
 
 
+    fun createPaymentIntent(req: CreatePIRequest): CreatePIResponse? {
+        return try {
+            require(req.amount > 0) { "amount must be > 0 (in minor units)" }
+            require(req.currency.isNotBlank()) { "currency is required" }
+
+            val automaticPMs = PaymentIntentCreateParams.AutomaticPaymentMethods
+                .builder().setEnabled(true).build()
+
+            val paramsBuilder = PaymentIntentCreateParams.builder()
+                .setAmount(req.amount)
+                .setCurrency(req.currency.lowercase())
+                .setAutomaticPaymentMethods(automaticPMs)
+
+            req.customerId?.let { paramsBuilder.setCustomer(it) }
+            req.description?.let { paramsBuilder.setDescription(it) }
+            req.metadata?.let { paramsBuilder.putAllMetadata(it) }
+            paramsBuilder.setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)
+            val params = paramsBuilder.build()
+
+            // Set an explicit idempotency key when creating the PI
+            val requestOptions = req.idempotencyKey?.let {
+                RequestOptions.builder().setIdempotencyKey(it).build()
+            }
+
+            val pi: PaymentIntent = if (requestOptions != null) {
+                PaymentIntent.create(params, requestOptions)
+            } else {
+                PaymentIntent.create(params)
+            }
+
+            // Return the client secret for the client (iOS) to confirm via PaymentSheet/Apple Pay
+             CreatePIResponse(
+                paymentIntentId = pi.id,
+                clientSecret = pi.clientSecret,
+                amount = pi.amount,
+                currency = pi.currency
+            )
+        }catch (exception: Exception){
+            logger.logError("createPaymentIntent", exception)
+            null
+        }
     }
 
 

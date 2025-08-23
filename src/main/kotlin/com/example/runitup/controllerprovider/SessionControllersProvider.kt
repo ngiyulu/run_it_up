@@ -50,4 +50,7 @@ class SessionControllersProvider {
 
     @Autowired
     lateinit var updateSessionGuest: UpdateSessionGuest
+
+    @Autowired
+    lateinit var createPaymentIntent: CreatePaymentIntent
 }
