@@ -39,11 +39,14 @@ data class RunSession(
     var bookingList:MutableList<SessionRunBooking> = mutableListOf(),
     var waitListBooking:MutableList<Booking> = mutableListOf(),
     var status: RunStatus = RunStatus.PENDING,
-    var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN
+    var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
+    var showUpdatePaymentButton: Boolean,
+    var guestUpdateAllowed: Boolean,
+    var leaveSessionUpdateAllowed: Boolean,
 ): BaseModel(){
 
 
-    fun updateButtonStatus(userId: String){
+    fun updateStatus(userId: String){
         buttonStatus = if(isParticiPant(userId)){
             JoinButtonStatus.UPDATE
         } else if(isWaitlisted(userId)){
@@ -53,7 +56,9 @@ data class RunSession(
         } else {
             JoinButtonStatus.JOIN
         }
-
+        showUpdatePaymentButton = status == RunStatus.PENDING
+        guestUpdateAllowed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
+        leaveSessionUpdateAllowed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
     }
 
     private fun isParticiPant(userId: String): Boolean{
