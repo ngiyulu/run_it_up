@@ -15,6 +15,7 @@ class Gym (
     var fee: Double,
     var phoneNumber: String?,
     var city: String,
+    var title: String,
     var state: String,
     var notes: String,
     var description: String,
