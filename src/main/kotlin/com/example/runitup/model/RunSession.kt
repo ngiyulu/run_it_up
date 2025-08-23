@@ -40,9 +40,9 @@ data class RunSession(
     var waitListBooking:MutableList<Booking> = mutableListOf(),
     var status: RunStatus = RunStatus.PENDING,
     var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
-    var showUpdatePaymentButton: Boolean,
-    var guestUpdateAllowed: Boolean,
-    var leaveSessionUpdateAllowed: Boolean,
+    var showUpdatePaymentButton: Boolean = true,
+    var guestUpdateAllowed: Boolean = true,
+    var leaveSessionUpdateAllowed: Boolean = true,
 ): BaseModel(){
 
 
