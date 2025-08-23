@@ -58,7 +58,7 @@ class RunSessionService(): BaseService(){
         runSession.bookings.forEach { booking->
             booking.stripePayment.forEach {
                 val payment = Payment(
-                    ObjectId(),
+                    ObjectId().toString(),
                     it.stripePaymentId,
                     booking.user.userId.orEmpty(),
                     booking.id.toString(),
