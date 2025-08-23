@@ -28,6 +28,9 @@ class SessionControllersProvider {
     lateinit var joinSessionController: JoinSessionController
 
     @Autowired
+    lateinit var joinWaitListController: JoinWaitListController
+
+    @Autowired
     lateinit var updateSessionController: UpdateSessionController
 
     @Autowired

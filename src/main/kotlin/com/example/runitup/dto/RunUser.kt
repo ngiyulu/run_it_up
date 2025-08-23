@@ -9,20 +9,8 @@ class RunUser(
     val name: String,
     val userId: String?,
     var imageUrl:String?,
-    var isGuestUser: Boolean,
-    var host: String?,
-    var checkIn: Boolean = false,
-    // this is the model
-    var cancelModel: CancelModel? = null,
-    var status: RunUserStatus = RunUserStatus.GOING,
+    var checkIn: Int = 0,
+    var guest: Int,
     var verificationCode: String = AppUtil.generate4DigitCode().toString()){
 
-    class CancelModel(val cancelAt: Long, var  cancelRefundType: CancelRefundType)
-
-    enum class RunUserStatus{
-        CANCELLED, GOING, PLAYED
-    }
-    enum class CancelRefundType{
-        REFUND, CREDIT, NO_REFUND
-    }
 }

@@ -29,6 +29,11 @@ class RunSessionRestController {
         return sessionControllersProvider.joinSessionController.execute(model)
     }
 
+    @PostMapping("/waitlist")
+    fun joinWaitList(@RequestBody model: JoinSessionModel):RunSession {
+        return sessionControllersProvider.joinWaitListController.execute(model)
+    }
+
     @PostMapping("/confirm")
     fun confirm(@RequestBody model: ConfirmSessionModel):RunSession {
         return sessionControllersProvider.confirmSessionController.execute(model)

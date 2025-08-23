@@ -22,6 +22,7 @@ data class RunSession(
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
     val startAtUtc: Instant? = null, // optional cache
     var hostedBy: String?,
+    var allowGuest: Boolean,
     var duration: Int, // in hours
     var notes:String,
     var privateRun : Boolean,
