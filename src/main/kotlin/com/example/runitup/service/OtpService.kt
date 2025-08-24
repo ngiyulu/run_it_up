@@ -1,6 +1,5 @@
 package com.example.runitup.service
 
-import com.example.runitup.dto.OtpResponse
 import com.example.runitup.model.User
 import com.example.runitup.repository.service.OtpDbService
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,8 +45,8 @@ class OtpService : BaseService(){
     @Autowired
     lateinit var otpDbService: OtpDbService
 
-    fun createOtp(user: User): OtpResponse{
+    fun createOtp(user: User): com.example.runitup.web.rest.v1.dto.OtpResponse {
         otpDbService.generateOtp(user.id.orEmpty(), user.phoneNumber)
-        return OtpResponse(true)
+        return com.example.runitup.web.rest.v1.dto.OtpResponse(true)
     }
 }

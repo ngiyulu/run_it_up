@@ -1,6 +1,5 @@
 package com.example.runitup.service
 
-import com.example.runitup.dto.GcsProps
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
@@ -15,7 +14,7 @@ import java.util.concurrent.TimeUnit
 @Service
 class GcsImageService(
     private val storage: Storage,
-    private val props: GcsProps
+    private val props: com.example.runitup.web.rest.v1.dto.GcsProps
 ) {
     private val allowed = setOf(
         MediaType.IMAGE_JPEG_VALUE,

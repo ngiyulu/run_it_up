@@ -1,6 +1,5 @@
 package com.example.runitup.utility
 
-import com.example.runitup.dto.RunUser
 import java.security.SecureRandom
 
 object AppUtil {

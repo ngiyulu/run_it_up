@@ -2,7 +2,6 @@ package com.example.runitup.repository
 
 import com.example.runitup.constants.CollectionConstants
 import com.example.runitup.model.Payment
-import com.twilio.twiml.voice.Pay
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query

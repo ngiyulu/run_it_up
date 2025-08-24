@@ -1,6 +1,5 @@
 package com.example.runitup.model
 
-import com.example.runitup.dto.RunUser
 import com.example.runitup.enum.PaymentStatus
 import org.bson.types.ObjectId
 
@@ -10,7 +9,7 @@ class Booking (
     var partySize: Int = 1,
     // created userId to make query easier
     var userId: String,
-    var user: RunUser,
+    var user: com.example.runitup.web.rest.v1.dto.RunUser,
     var runSessionId: String,
     // this is the object that gets created when we join a run
     // a new object will be made for each request to join

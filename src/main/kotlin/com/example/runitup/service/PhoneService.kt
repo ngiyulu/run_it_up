@@ -1,7 +1,6 @@
 package com.example.runitup.service
 
 import com.example.runitup.constants.HeaderConstants
-import com.example.runitup.dto.FirebaseTokenModel
 import com.example.runitup.enum.PhoneType
 import com.example.runitup.model.Phone
 import com.example.runitup.repository.PhoneRepository
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Service
 class PhoneService: BaseService() {
 
     lateinit var phoneRepository: PhoneRepository
-    fun createPhone(token: FirebaseTokenModel): Phone{
+    fun createPhone(token: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel): Phone{
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
         if(ph == null){
@@ -34,7 +33,7 @@ class PhoneService: BaseService() {
         return ph
     }
 
-    fun deletePhone(token: FirebaseTokenModel){
+    fun deletePhone(token: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel){
         val ph = phoneRepository.findByPhoneId(token.phoneId)
         if(ph != null){
             phoneRepository.delete(ph)

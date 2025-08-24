@@ -1,16 +1,13 @@
 package com.example.runitup.repository.service
 
 import com.example.runitup.model.Booking
-import com.example.runitup.model.BookingPayment
 import com.example.runitup.repository.BookingRepository
 import com.example.runitup.service.BaseService
 import com.mongodb.client.result.DeleteResult
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 
 

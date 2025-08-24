@@ -1,20 +1,19 @@
 package com.example.runitup.service
 
-import com.example.runitup.dto.payment.CardModel
-import com.example.runitup.dto.stripe.CreatePIRequest
-import com.example.runitup.dto.stripe.CreatePIResponse
 import com.example.runitup.extensions.mapToUserPayment
 import com.example.runitup.model.User
 import com.stripe.Stripe
 import com.stripe.exception.StripeException
-import com.stripe.model.*
+import com.stripe.model.Customer
+import com.stripe.model.PaymentIntent
+import com.stripe.model.PaymentMethod
+import com.stripe.model.PaymentMethodCollection
 import com.stripe.net.RequestOptions
 import com.stripe.param.*
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
-import kotlin.collections.HashMap
 
 
 @Service
@@ -190,7 +189,7 @@ class PaymentService: BaseService() {
     }
 
 
-    fun createPaymentIntent(req: CreatePIRequest): CreatePIResponse? {
+    fun createPaymentIntent(req: com.example.runitup.web.rest.v1.dto.stripe.CreatePIRequest): com.example.runitup.web.rest.v1.dto.stripe.CreatePIResponse? {
         return try {
             require(req.amount > 0) { "amount must be > 0 (in minor units)" }
             require(req.currency.isNotBlank()) { "currency is required" }
@@ -221,7 +220,7 @@ class PaymentService: BaseService() {
             }
 
             // Return the client secret for the client (iOS) to confirm via PaymentSheet/Apple Pay
-             CreatePIResponse(
+            com.example.runitup.web.rest.v1.dto.stripe.CreatePIResponse(
                 paymentIntentId = pi.id,
                 clientSecret = pi.clientSecret,
                 amount = pi.amount,
@@ -234,7 +233,7 @@ class PaymentService: BaseService() {
     }
 
 
-    fun listOfCustomerCards(customerId: String): List<CardModel>? {
+    fun listOfCustomerCards(customerId: String): List<com.example.runitup.web.rest.v1.dto.payment.CardModel>? {
         return try {
             val params: MutableMap<String, Any> = HashMap()
             params["customer"] = customerId
