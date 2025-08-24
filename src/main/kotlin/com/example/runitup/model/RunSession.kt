@@ -42,14 +42,14 @@ data class RunSession(
     var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
     var showUpdatePaymentButton: Boolean = true,
     var guestUpdateAllowed: Boolean = true,
-    var leaveSessionUpdateAllowed: Boolean = true,
+    var leaveSessionUpdateAllowed: Boolean = true
 ): BaseModel(){
 
 
     fun updateStatus(userId: String){
         buttonStatus = if(isParticiPant(userId)){
             JoinButtonStatus.UPDATE
-        } else if(isWaitlisted(userId)){
+        } else if(atFullCapacity()){
             JoinButtonStatus.WAITLIST
         } else if(status == RunStatus.CANCELLED || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
@@ -61,7 +61,7 @@ data class RunSession(
         leaveSessionUpdateAllowed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
     }
 
-    private fun isParticiPant(userId: String): Boolean{
+    fun isParticiPant(userId: String): Boolean{
         val findUser = bookingList
             .find { it.userId == userId }
 

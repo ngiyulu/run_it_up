@@ -74,7 +74,6 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
         // if it's subtraction it means we either have to descrease the hold amount
         // or we have to do a refund
         val diffAmount = abs(newRequestAmount - booking.stripePayment.last().amount)
-
         if(adding){
             // we are creating a new hold charge
             logger.logInfo("update session guest", "adding")
