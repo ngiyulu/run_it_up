@@ -27,7 +27,6 @@ class GetMyBookingListV2: BaseController<String, List<MyBookingModel>>() {
                 session.add(dbRes.get())
             }
         }
-
         // because this means the u
         session.map {
             it.updateStatus(user.id.toString())
