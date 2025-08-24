@@ -60,8 +60,10 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         }
         val amount = request.getTotalParticipants() * run.amount
         val runUser = com.example.runitup.web.rest.v1.dto.RunUser(
-            auth.name,
-            auth.id,
+            user.firstName,
+            user.lastName,
+            user.skillLevel,
+            user.id.orEmpty(),
             user.imageUrl,
             0,
             request.guest

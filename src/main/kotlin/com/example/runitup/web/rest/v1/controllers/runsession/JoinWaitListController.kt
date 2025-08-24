@@ -36,7 +36,10 @@ class JoinWaitListController: BaseController<JoinSessionModel, RunSession>() {
         val availableSpots = run.availableSpots()
         if( run.atFullCapacity() || availableSpots < request.guest){
             val runUser = com.example.runitup.web.rest.v1.dto.RunUser(
-                user.getFullName(), null,
+                user.firstName,
+                user.lastName,
+                user.skillLevel,
+                user.id.orEmpty(),
                 user.imageUrl,
                 0,
                 guest = request.guest
