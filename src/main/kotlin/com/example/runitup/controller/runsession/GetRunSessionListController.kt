@@ -24,7 +24,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         val center = Point(request.longitude, request.latitude)
         val radius = Distance(50.0, Metrics.MILES)
         val list = runSessionRepository.findByLocationNear(center, radius)
-        return list.filter { (it.date.isEqual(request.date))}.map {
+        return list.filter { (it.date.isEqual(request.date)) && !it.isParticiPant(auth.id.orEmpty()) }.map {
             it.updateStatus(auth.id.orEmpty())
             it
         }
