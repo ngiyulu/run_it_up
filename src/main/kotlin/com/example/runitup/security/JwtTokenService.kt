@@ -1,16 +1,15 @@
 package com.example.runitup.security
 
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
+import java.nio.charset.StandardCharsets
+import java.security.Key
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.*
-import java.nio.charset.StandardCharsets
-import java.security.Key
 
 @Component
 class JwtTokenService {

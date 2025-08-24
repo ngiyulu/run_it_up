@@ -1,6 +1,5 @@
 package com.example.runitup.handler
 
-import com.example.runitup.dto.ApiError
 import com.example.runitup.exception.ApiRequestException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,7 +12,11 @@ import java.time.ZonedDateTime
 class ApiExceptionHandler {
     @ExceptionHandler(value = [ApiRequestException::class])
     fun handleApiRequestException(e: ApiRequestException): ResponseEntity<Any> {
-        val error = ApiError(e.message.orEmpty(), HttpStatus.BAD_REQUEST, ZonedDateTime.now(ZoneId.of("Z")))
+        val error = com.example.runitup.web.rest.v1.dto.ApiError(
+            e.message.orEmpty(),
+            HttpStatus.BAD_REQUEST,
+            ZonedDateTime.now(ZoneId.of("Z"))
+        )
         return ResponseEntity(error, HttpStatus.BAD_REQUEST)
     }
 }

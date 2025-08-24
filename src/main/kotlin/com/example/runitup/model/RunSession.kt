@@ -1,6 +1,5 @@
 package com.example.runitup.model
 
-import com.example.runitup.dto.RunUser
 import com.example.runitup.enum.RunStatus
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
@@ -8,7 +7,9 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 @Document
 data class RunSession(
@@ -32,7 +33,7 @@ data class RunSession(
     var maxPlayer: Int,
     var title: String,
     var bookings: MutableList<Booking> = mutableListOf(),
-    var waitList: MutableList<RunUser> = mutableListOf(),
+    var waitList: MutableList<com.example.runitup.web.rest.v1.dto.RunUser> = mutableListOf(),
     var players:  MutableList<User>? = null,
     var courtFee: Double = 0.0,
     var maxGuest: Int,

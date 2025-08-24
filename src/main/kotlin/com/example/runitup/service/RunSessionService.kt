@@ -1,6 +1,5 @@
 package com.example.runitup.service
 
-import com.example.runitup.dto.RunUser
 import com.example.runitup.enum.PaymentStatus
 import com.example.runitup.extensions.convertToCents
 import com.example.runitup.model.Payment
@@ -35,7 +34,7 @@ class RunSessionService(): BaseService(){
         session.bookings = bookings.toMutableList()
         return  session
     }
-    fun joinSession(stripeId: String, runUser: RunUser, paymentId:String, amount:Double): String?{
+    fun joinSession(stripeId: String, runUser: com.example.runitup.web.rest.v1.dto.RunUser, paymentId:String, amount:Double): String?{
         // this means the run session is not confirmed which means we just create a hold charge
         // even if the run already started or confirmed, we still want to create a hold
         //we will have a job that will run later that will charge all the users who didn't
@@ -43,7 +42,7 @@ class RunSessionService(): BaseService(){
         return  createHoldCharge(stripeId, runUser, paymentId, amount)
     }
 
-    fun createHoldCharge(stripeId: String, runUser: RunUser, paymentMethodId:String, amount:Double): String?{
+    fun createHoldCharge(stripeId: String, runUser: com.example.runitup.web.rest.v1.dto.RunUser, paymentMethodId:String, amount:Double): String?{
         val paymentIntent: PaymentIntent = paymentService.createCharge(true, amount.convertToCents(), "usd", paymentMethodId, stripeId) ?: return null
         return paymentIntent.id
     }

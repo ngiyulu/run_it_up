@@ -1,13 +1,12 @@
 package com.example.runitup.extensions
 
-import com.example.runitup.dto.payment.CardModel
 import com.stripe.model.PaymentMethod
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-fun PaymentMethod.mapToUserPayment(isDefaultPayment:Boolean): CardModel {
+fun PaymentMethod.mapToUserPayment(isDefaultPayment:Boolean): com.example.runitup.web.rest.v1.dto.payment.CardModel {
     val card = this.card
-    return CardModel(
+    return com.example.runitup.web.rest.v1.dto.payment.CardModel(
         id = this.id,
         brand = card.brand,
         last4 = card.last4,
