@@ -46,7 +46,7 @@ class UserControllersProvider {
     lateinit var generateTokenController: GenerateTokenController
 
     @Autowired
-    lateinit var sendOtpController: SendOtpController
+    lateinit var requestOtpController: RequestOtpController
 
     @Autowired
     lateinit var getOtpController: GetOtpController
