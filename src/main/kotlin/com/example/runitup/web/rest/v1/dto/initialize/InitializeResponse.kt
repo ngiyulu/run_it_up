@@ -8,5 +8,6 @@ class InitializeResponse(
     var user: User?,
     var token: String,
     var allowGuest: Boolean,
-    var maxGuest: Int
+    var maxGuest: Int,
+    var waiverUrl: String = "https://google.com"
 )

@@ -13,11 +13,11 @@ class SendOtpController:  BaseController<SendOtpRequest, OtpResponse>() {
 
     @Autowired
     lateinit var otpService: OtpService
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.SendOtpRequest): com.example.runitup.web.rest.v1.dto.OtpResponse {
+    override fun execute(request: SendOtpRequest): OtpResponse {
         val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpService.createOtp(user)
         print(otp)
-        return com.example.runitup.web.rest.v1.dto.OtpResponse(true)
+        return OtpResponse(true)
     }
 
 
