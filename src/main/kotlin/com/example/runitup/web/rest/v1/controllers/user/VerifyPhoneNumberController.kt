@@ -24,16 +24,16 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     @Autowired
     lateinit var jwtService: JwtTokenService
 
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
+    override fun execute(request: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest): VerifyPhoneNumberResponse {
         val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpDbService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
         print(otp)
         if(otp.code == request.otp){
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             otpDbService.disableOtp(otp)
-            return com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse(true, user, token)
+            return VerifyPhoneNumberResponse(true, user, token)
         }
-        return com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse(false, null, null)
+        return VerifyPhoneNumberResponse(false, null, null)
     }
 
 }
