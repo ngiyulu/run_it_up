@@ -17,7 +17,7 @@ data class User(
     var verifiedPhone: Boolean = false,
     var email: String = "",
     var loggedInAt: Long = 0,
-    var internalNotes: Long = 0,
+    var internalNotes: String = "",
     var phoneNumber: String = "",
     var stripeId: String? = null,
     var defaultPayment:String = "",
