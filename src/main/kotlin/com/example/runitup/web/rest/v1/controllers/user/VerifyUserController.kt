@@ -38,7 +38,7 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)
         }
-       return VerifyUserResponse(null, null, user.id.orEmpty(), user.phoneNumber)
+       return VerifyUserResponse(user, null, user.id.orEmpty(), user.phoneNumber)
     }
 
 
