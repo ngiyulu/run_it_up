@@ -14,6 +14,7 @@ data class User(
     var firstName: String = "",
     var lastName: String = "",
     var dob: String =  "",
+    var waiverSigned: Boolean = false,
     var verifiedPhone: Boolean = false,
     var email: String = "",
     var loggedInAt: Long = 0,

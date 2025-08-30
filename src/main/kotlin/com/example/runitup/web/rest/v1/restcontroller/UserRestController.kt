@@ -17,10 +17,10 @@ class UserRestController {
 
     @PostMapping("/verify")
     fun verifyUser(@RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyUserRequest,
-                   @RequestHeader(HeaderConstants.TYPE)
-                   type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.VerifyUserResponse? {
+                   @RequestHeader("X-Timezone", required = true) tzHeader: String,
+                   @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.VerifyUserResponse? {
         model.firebaseTokenModel?.type = type
-        return userControllersProvider.verifyUserController.execute(model)
+        return userControllersProvider.verifyUserController.execute(Pair(tzHeader, model))
     }
 
     @GetMapping("/hello")
@@ -29,8 +29,11 @@ class UserRestController {
     }
 
     @PostMapping("/create")
-    fun createUser(@RequestBody model: com.example.runitup.web.rest.v1.dto.CreateUserRequest): User {
-        return userControllersProvider.createUserController.execute(model)
+    fun createUser(
+        @RequestBody model: com.example.runitup.web.rest.v1.dto.CreateUserRequest,
+        @RequestHeader("X-Timezone", required = true) tzHeader: String,
+    ): User {
+        return userControllersProvider.createUserController.execute(Pair(tzHeader,model))
     }
 
     @PostMapping("/block")
