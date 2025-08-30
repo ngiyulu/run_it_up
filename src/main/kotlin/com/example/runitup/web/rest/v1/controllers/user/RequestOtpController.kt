@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class SendOtpController:  BaseController<SendOtpRequest, OtpResponse>() {
+class RequestOtpController:  BaseController<SendOtpRequest, OtpResponse>() {
 
     @Autowired
     lateinit var otpService: OtpService

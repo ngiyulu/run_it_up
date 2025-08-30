@@ -87,7 +87,7 @@ class UserRestController {
 
     @PostMapping("/otp/request")
     fun sendOtp(@RequestBody model: com.example.runitup.web.rest.v1.dto.SendOtpRequest): com.example.runitup.web.rest.v1.dto.OtpResponse {
-        return userControllersProvider.sendOtpController.execute(model)
+        return userControllersProvider.requestOtpController.execute(model)
     }
 
     @PostMapping("/otp/verify")
