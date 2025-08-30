@@ -26,8 +26,8 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
     @Autowired
     lateinit var otpService: OtpService
 
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.VerifyUserRequest): com.example.runitup.web.rest.v1.dto.VerifyUserResponse? {
-        val user = userRepository.findByPhone(request.phone) ?: throw  ApiRequestException("user_not_found")
+    override fun execute(request: VerifyUserRequest): VerifyUserResponse? {
+        val user = userRepository.findByPhone(request.phone) ?: return VerifyUserResponse(null, null, "", "")
         request.firebaseTokenModel?.let {
             phoneService.createPhone(it)
         }
@@ -35,7 +35,7 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)
         }
-       return com.example.runitup.web.rest.v1.dto.VerifyUserResponse(null, null, user.id.orEmpty(), user.phoneNumber)
+       return VerifyUserResponse(null, null, user.id.orEmpty(), user.phoneNumber)
     }
 
 

@@ -13,7 +13,7 @@ data class User(
     @Id var id: String? = ObjectId().toString(),
     var firstName: String = "",
     var lastName: String = "",
-    var dob: String = "",
+    var dob: String =  "",
     var verifiedPhone: Boolean = false,
     var email: String = "",
     var loggedInAt: Long = 0,
