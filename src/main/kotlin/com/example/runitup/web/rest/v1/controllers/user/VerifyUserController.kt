@@ -1,7 +1,8 @@
 package com.example.runitup.web.rest.v1.controllers.user
 
-import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.repository.UserRepository
+import com.example.runitup.security.JwtTokenService
+import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.OtpService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
@@ -26,6 +27,9 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
     @Autowired
     lateinit var otpService: OtpService
 
+    @Autowired
+    lateinit var jwtService: JwtTokenService
+
     override fun execute(request: VerifyUserRequest): VerifyUserResponse? {
         val user = userRepository.findByPhone(request.phone)
         if(user == null){
@@ -34,11 +38,12 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
         request.firebaseTokenModel?.let {
             phoneService.createPhone(it)
         }
+        val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
         otpService.createOtp(user)
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)
         }
-       return VerifyUserResponse(user, null, user.id.orEmpty(), user.phoneNumber)
+       return VerifyUserResponse(user, token, user.id.orEmpty(), user.phoneNumber)
     }
 
 
