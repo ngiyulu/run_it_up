@@ -14,8 +14,7 @@ class RequestOtpController:  BaseController<SendOtpRequest, OtpResponse>() {
     @Autowired
     lateinit var otpDbService: OtpDbService
     override fun execute(request: SendOtpRequest): OtpResponse {
-        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
-        val otp = otpDbService.generateOtp(user.id.toString(), user.phoneNumber)
+        val otp = otpDbService.generateOtp(request.phoneNumber)
         print(otp)
         return OtpResponse(true)
     }
