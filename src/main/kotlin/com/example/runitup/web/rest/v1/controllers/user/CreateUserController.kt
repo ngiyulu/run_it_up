@@ -41,8 +41,8 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
         user.defaultPayment = AppConstant.WALLET
         val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
         println("age = $age")
-        if(age < 18 ){
-            user.waiverSigned = false
+        if(!user.waiverSigned){
+            user.waiverSigned = age >= 18
         }
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
         user.stripeId = stripeId

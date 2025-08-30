@@ -91,8 +91,10 @@ class UserRestController {
     }
 
     @PostMapping("/otp/verify")
-    fun verifyOtp(@RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
-        return userControllersProvider.verifyPhoneNumController.execute(model)
+    fun verifyOtp(
+        @RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest,
+        @RequestHeader("X-Timezone", required = true) tzHeader: String,): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
+        return userControllersProvider.verifyPhoneNumController.execute(Pair(tzHeader, model))
     }
 
     @GetMapping("/otp/get/{id}")
