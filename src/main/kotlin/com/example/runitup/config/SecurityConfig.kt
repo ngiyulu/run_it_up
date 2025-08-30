@@ -52,7 +52,7 @@ class SecurityConfig{
                 "/api/v1/user/create",
                 "/api/v1/user/hello",
                 "/api/v1/user/otp/verify",
-                "/api/v1/user/otp/send"
+                "/api/v1/user/otp/request"
                 ).permitAll()
             // everything else needs to be authenticated
             it.anyRequest().authenticated()
