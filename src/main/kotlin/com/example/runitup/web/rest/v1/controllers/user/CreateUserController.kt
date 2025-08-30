@@ -26,7 +26,7 @@ class CreateUserController: BaseController<CreateUserRequest, User>() {
     @Autowired
     lateinit var paymentService: PaymentService
     override fun execute(request: com.example.runitup.web.rest.v1.dto.CreateUserRequest): User {
-        val existingUser = userRepository.findByAuth(request.user.auth)
+        val existingUser = userRepository.findByAuth(request.user.phoneNumber)
         if(existingUser != null){
             throw  ApiRequestException(text("user_exist"))
         }
@@ -34,6 +34,7 @@ class CreateUserController: BaseController<CreateUserRequest, User>() {
 //            throw  ApiRequestException(text("invalid_password"))
 //        }
         val user = request.user
+        user.email = user.email.lowercase()
         user.verifiedPhone = false
         user.defaultPayment = AppConstant.WALLET
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
