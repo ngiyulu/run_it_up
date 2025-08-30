@@ -27,7 +27,10 @@ class VerifyUserController: BaseController<VerifyUserRequest, VerifyUserResponse
     lateinit var otpService: OtpService
 
     override fun execute(request: VerifyUserRequest): VerifyUserResponse? {
-        val user = userRepository.findByPhone(request.phone) ?: return VerifyUserResponse(null, null, "", "")
+        val user = userRepository.findByPhone(request.phone)
+        if(user == null){
+            return VerifyUserResponse(null, null, "", "")
+        }
         request.firebaseTokenModel?.let {
             phoneService.createPhone(it)
         }
