@@ -33,8 +33,8 @@ class OtpDbService {
         return mongoTemplate.findOne(query, Otp::class.java)
     }
 
-    fun generateOtp(userId: String, phone: String): Otp {
-        val q = Query(Criteria.where("userId").`is`(userId))
+    fun generateOtp(phone: String): Otp {
+        val q = Query(Criteria.where("phoneNumber").`is`(phone))
         val u = Update().set("isActive", false)
         mongo.updateFirst(q, u, Otp::class.java)
 
@@ -43,7 +43,7 @@ class OtpDbService {
             .mapToObj(java.lang.String::valueOf)
             .collect(Collectors.joining())
 
-        return  otpRepository.save(Otp(userId = userId, code = code, created =  Date.from(Instant.now())))
+        return  otpRepository.save(Otp(code = code, phoneNumber = phone, created =  Date.from(Instant.now())))
     }
 
     fun disableOtp(otp: Otp): Otp{

@@ -1,6 +1,7 @@
 package com.example.runitup.web.rest.v1.controllers.user
 
 import com.example.runitup.repository.UserRepository
+import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.OtpService
@@ -31,11 +32,15 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
     @Autowired
     lateinit var jwtService: JwtTokenService
 
+    @Autowired
+    lateinit var otpDbService: OtpDbService
+
     override fun execute(request: Pair<String, VerifyUserRequest>): VerifyUserResponse? {
         val  (zoneId, userRequest)= request
         val user = userRepository.findByPhone(userRequest.phone)
         if(user == null){
-            return VerifyUserResponse(null, null, "", "")
+            otpDbService.generateOtp(userRequest.phone)
+            return VerifyUserResponse(null, null, "", userRequest.phone)
         }
 
         user.waiverSigned = true
