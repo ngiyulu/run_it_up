@@ -6,6 +6,7 @@ import com.example.runitup.repository.UserRepository
 import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
+import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service
 
 @Service
 //login controller
-class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, VerifyPhoneNumberResponse?>() {
+class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumberRequest>, VerifyPhoneNumberResponse?>() {
     @Autowired
     lateinit var userRepository: UserRepository
 
@@ -24,13 +25,19 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberRequest, Veri
     @Autowired
     lateinit var jwtService: JwtTokenService
 
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest): VerifyPhoneNumberResponse {
-        val user: User = cacheManager.getUser(request.userId) ?: throw ApiRequestException(text("invalid_user"))
+    override fun execute(request: Pair<String, VerifyPhoneNumberRequest>): VerifyPhoneNumberResponse {
+        val (zoneId, userRequest) = request
+        val user: User = cacheManager.getUser(userRequest.userId) ?: throw ApiRequestException(text("invalid_user"))
         val otp = otpDbService.getOtp(user.id.toString())?: throw ApiRequestException(text("error"))
         print(otp)
-        if(otp.code == request.otp){
+        if(otp.code == userRequest.otp){
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             otpDbService.disableOtp(otp)
+            val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
+            println("age = $age")
+            if(!user.waiverSigned){
+                user.waiverSigned = age >= 18
+            }
             return VerifyPhoneNumberResponse(true, user, token)
         }
         return VerifyPhoneNumberResponse(false, null, null)
