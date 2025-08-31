@@ -4,11 +4,11 @@ import com.example.runitup.repository.UserRepository
 import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.OtpService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
 import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
+import com.example.runitup.web.rest.v1.dto.VerifyUserFlow
 import com.example.runitup.web.rest.v1.dto.VerifyUserRequest
 import com.example.runitup.web.rest.v1.dto.VerifyUserResponse
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,8 +26,6 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
     @Autowired
     lateinit var paymentService: PaymentService
 
-    @Autowired
-    lateinit var otpService: OtpService
 
     @Autowired
     lateinit var jwtService: JwtTokenService
@@ -39,8 +37,9 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
         val  (zoneId, userRequest)= request
         val user = userRepository.findByPhone(userRequest.phone)
         if(user == null){
-            otpDbService.generateOtp(userRequest.phone)
-            return VerifyUserResponse(null, null, "", userRequest.phone)
+            // the user has verified and he doesn't have an account
+            otpDbService.generateOtp(null, userRequest.phone)
+            return VerifyUserResponse(VerifyUserFlow.CREATE,null, null, "", userRequest.phone)
         }
 
         user.waiverSigned = true
@@ -48,7 +47,7 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
             phoneService.createPhone(it)
         }
         val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
-        otpService.createOtp(user)
+        otpDbService.generateOtp(user.id, userRequest.phone)
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)
         }
@@ -56,7 +55,7 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
         if(age >=18 ){
             user.waiverSigned = true
         }
-       return VerifyUserResponse(user, token, user.id.orEmpty(), user.phoneNumber)
+       return VerifyUserResponse(VerifyUserFlow.LOGIN, user, token, user.id.orEmpty(), user.phoneNumber)
     }
 
 

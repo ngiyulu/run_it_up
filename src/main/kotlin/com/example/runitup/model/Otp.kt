@@ -9,6 +9,7 @@ import java.util.*
 data class Otp(
     @Id var id: String? = ObjectId().toString(),
     var code: String,
+    var userId: String?,
     var phoneNumber: String,
     // createDate indexed for automatic expiration 5 minutes after insertion
     @Indexed(name = "otpCreatedAtIdx", expireAfter = "5m")

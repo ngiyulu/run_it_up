@@ -45,8 +45,5 @@ class OtpService : BaseService(){
     @Autowired
     lateinit var otpDbService: OtpDbService
 
-    fun createOtp(user: User): com.example.runitup.web.rest.v1.dto.OtpResponse {
-        otpDbService.generateOtp(user.phoneNumber)
-        return com.example.runitup.web.rest.v1.dto.OtpResponse(true)
-    }
+
 }
