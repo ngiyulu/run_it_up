@@ -21,9 +21,6 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
     lateinit var userRepository: UserRepository
 
     @Autowired
-    lateinit var phoneService: PhoneService
-
-    @Autowired
     lateinit var paymentService: PaymentService
 
 
@@ -43,9 +40,6 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
         }
 
         user.waiverSigned = true
-        userRequest.firebaseTokenModel?.let {
-            phoneService.createPhone(it)
-        }
         val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
         otpDbService.generateOtp(user.id, userRequest.phone)
         user.stripeId?.let { it ->
