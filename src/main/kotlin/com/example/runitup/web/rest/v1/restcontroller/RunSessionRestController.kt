@@ -2,6 +2,8 @@ package com.example.runitup.web.rest.v1.restcontroller
 
 import com.example.runitup.model.RunSession
 import com.example.runitup.web.rest.v1.controllerprovider.SessionControllersProvider
+import com.example.runitup.web.rest.v1.dto.JoinRunSessionResponse
+import com.example.runitup.web.rest.v1.dto.JoinWaitListResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
@@ -19,12 +21,12 @@ class RunSessionRestController {
     }
 
     @PostMapping("/join")
-    fun join(@RequestBody model: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel):RunSession {
+    fun join(@RequestBody model: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel):JoinRunSessionResponse {
         return sessionControllersProvider.joinSessionController.execute(model)
     }
 
     @PostMapping("/waitlist")
-    fun joinWaitList(@RequestBody model: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel):RunSession {
+    fun joinWaitList(@RequestBody model: com.example.runitup.web.rest.v1.dto.session.JoinWaitListModel):JoinWaitListResponse {
         return sessionControllersProvider.joinWaitListController.execute(model)
     }
 

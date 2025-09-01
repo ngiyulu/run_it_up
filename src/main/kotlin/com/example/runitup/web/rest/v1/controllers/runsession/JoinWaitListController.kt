@@ -5,17 +5,19 @@ import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.web.rest.v1.controllers.BaseController
+import com.example.runitup.web.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.web.rest.v1.dto.session.JoinSessionModel
+import com.example.runitup.web.rest.v1.dto.session.JoinWaitListModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class JoinWaitListController: BaseController<JoinSessionModel, RunSession>() {
+class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResponse>() {
 
     @Autowired
     private lateinit var runSessionRepository: RunSessionRepository
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel): RunSession {
+    override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
         val runDb = runSessionRepository.findById(request.sessionId)
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         if(!runDb.isPresent){
@@ -30,11 +32,8 @@ class JoinWaitListController: BaseController<JoinSessionModel, RunSession>() {
         if( !run.isJoinable()){
             throw  ApiRequestException(text("join_error"))
         }
-        // this means the run is full, so we return the run to the user
-        // and the ui will update, this should only happen if they had an old version of the run
-        // that did not have the proper ui
-        val availableSpots = run.availableSpots()
-        if( run.atFullCapacity() || availableSpots < request.guest){
+        // user can only join the waitlist if the run is at full capacity
+        if( run.atFullCapacity()){
             val runUser = com.example.runitup.web.rest.v1.dto.RunUser(
                 user.firstName,
                 user.lastName,
@@ -42,16 +41,18 @@ class JoinWaitListController: BaseController<JoinSessionModel, RunSession>() {
                 user.id.orEmpty(),
                 user.imageUrl,
                 0,
-                guest = request.guest
+                guest = 0
             )
             run.waitList.add(
               runUser
             )
             run.updateTotal()
-            return runSessionRepository.save(run)
+            val updatedRun = runSessionRepository.save(run)
+            return JoinWaitListResponse(true, updatedRun)
         }
 
-        return  run
+        // this means the user tried to join the waitlist
+        return  JoinWaitListResponse(false, run)
 
     }
 }

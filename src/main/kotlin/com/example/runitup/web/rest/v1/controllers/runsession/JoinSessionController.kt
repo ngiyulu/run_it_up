@@ -10,6 +10,8 @@ import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.RunSessionService
 import com.example.runitup.web.rest.v1.controllers.BaseController
+import com.example.runitup.web.rest.v1.dto.JoinRunSessionResponse
+import com.example.runitup.web.rest.v1.dto.JoinRunSessionStatus
 import com.example.runitup.web.rest.v1.dto.session.JoinSessionModel
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
+class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
 
     @Autowired
     private lateinit var runSessionRepository: RunSessionRepository
@@ -27,7 +29,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
 
     @Autowired
     private lateinit var sessionService: RunSessionService
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel): RunSession {
+    override fun execute(request: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel): JoinRunSessionResponse {
         val runDb = runSessionRepository.findById(request.sessionId)
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         if(!runDb.isPresent){
@@ -47,16 +49,15 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
         // that didn't not have the proper ui
         if( run.atFullCapacity()){
             run.updateStatus(user.id.orEmpty())
-            return  run
+            return  JoinRunSessionResponse(JoinRunSessionStatus.FULL, run)
         }
         val availableSpots = run.availableSpots()
         // this means the run is full because he added guests
         if(availableSpots < request.guest){
-            run.updateStatus(user.id.orEmpty())
-            return  run
+            return  JoinRunSessionResponse(JoinRunSessionStatus.GUEST_FULL, run)
         }
         if(run.userHasBookingAlready(user.id.orEmpty())){
-            throw ApiRequestException(text("join_invalid"))
+            return  JoinRunSessionResponse(JoinRunSessionStatus.ALREADY_BOOKED, run)
         }
         val amount = request.getTotalParticipants() * run.amount
         val runUser = com.example.runitup.web.rest.v1.dto.RunUser(
@@ -88,6 +89,7 @@ class JoinSessionController: BaseController<JoinSessionModel, RunSession>() {
             booking.partySize
             ))
         run.updateTotal()
-        return runSessionRepository.save(run)
+        val updated =  runSessionRepository.save(run)
+        return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
     }
 }
