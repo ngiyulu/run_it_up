@@ -6,6 +6,7 @@ import com.example.runitup.repository.UserRepository
 import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
+import com.example.runitup.service.PhoneService
 import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest
@@ -25,6 +26,9 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
     @Autowired
     lateinit var jwtService: JwtTokenService
 
+    @Autowired
+    lateinit var phoneService: PhoneService
+
     override fun execute(request: Pair<String, VerifyPhoneNumberRequest>): VerifyPhoneNumberResponse {
         val (zoneId, userRequest) = request
         val otp = otpDbService.getOtp(userRequest.phoneNumber)?: throw ApiRequestException(text("error"))
@@ -43,6 +47,9 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
             println("age = $age")
             if(!user.waiverSigned){
                 user.waiverSigned = age >= 18
+            }
+            userRequest.firebaseTokenModel?.let {
+                phoneService.createPhone(it)
             }
             return VerifyPhoneNumberResponse(true, user, token)
         }
