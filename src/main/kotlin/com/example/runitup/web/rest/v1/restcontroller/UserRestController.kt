@@ -17,9 +17,7 @@ class UserRestController {
 
     @PostMapping("/verify")
     fun verifyUser(@RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyUserRequest,
-                   @RequestHeader("X-Timezone", required = true) tzHeader: String,
-                   @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.VerifyUserResponse? {
-        model.firebaseTokenModel?.type = type
+                   @RequestHeader("X-Timezone", required = true) tzHeader: String): com.example.runitup.web.rest.v1.dto.VerifyUserResponse? {
         return userControllersProvider.verifyUserController.execute(Pair(tzHeader, model))
     }
 
@@ -93,7 +91,9 @@ class UserRestController {
     @PostMapping("/otp/verify")
     fun verifyOtp(
         @RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest,
-        @RequestHeader("X-Timezone", required = true) tzHeader: String,): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
+        @RequestHeader("X-Timezone", required = true) tzHeader: String,
+        @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
+        model.firebaseTokenModel?.type = type
         return userControllersProvider.verifyPhoneNumController.execute(Pair(tzHeader, model))
     }
 
