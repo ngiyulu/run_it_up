@@ -6,6 +6,13 @@
 FROM eclipse-temurin:17-jdk AS build
 WORKDIR /workspace
 
+# Receive creds from build args
+ARG GPR_USER
+ARG GPR_TOKEN
+# Expose them to Gradle during build
+ENV GPR_USER=$GPR_USER
+ENV GPR_TOKEN=$GPR_TOKEN
+
 # Copy wrapper + config first for caching (supports Groovy or Kotlin DSL)
 COPY gradlew ./gradlew
 COPY gradle ./gradle

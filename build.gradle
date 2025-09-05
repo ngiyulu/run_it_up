@@ -21,8 +21,8 @@ repositories {
     maven {
         url = uri('https://maven.pkg.github.com/ngiyulu/run_it_up_model')
         credentials {
-            username = findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
-            password = findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+            username = findProperty('gpr.user') ?: System.getenv('GPR_USER')
+            password = findProperty('gpr.key') ?: System.getenv('GPR_TOKEN')
         }
     }
 }
