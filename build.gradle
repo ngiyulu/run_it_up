@@ -18,6 +18,13 @@ java {
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri('https://maven.pkg.github.com/ngiyulu/run_it_up_model')
+        credentials {
+            username = findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+            password = findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+        }
+    }
 }
 
 dependencies {
@@ -41,6 +48,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.ngiyulu:runitup-models:1.0.2")
     // Image resize/compress
     implementation("net.coobird:thumbnailator:0.4.20")
 
