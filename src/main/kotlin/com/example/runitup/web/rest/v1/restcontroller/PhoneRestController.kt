@@ -1,9 +1,9 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
-import com.example.runitup.constants.HeaderConstants
-import com.example.runitup.constants.HeaderConstants.ANDROID_TYPE
 import com.example.runitup.model.Phone
 import com.example.runitup.web.rest.v1.controllers.phone.CreateOrUpdatePhone
+import constant.HeaderConstants
+import constant.HeaderConstants.ANDROID_TYPE
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 
@@ -15,7 +15,8 @@ class PhoneRestController {
     lateinit var createOrUpdatePhone: CreateOrUpdatePhone
 
     @PostMapping("/create")
-    fun create(@RequestBody model: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel, @RequestHeader(HeaderConstants.TYPE)  type:String = ANDROID_TYPE): Phone {
+    fun create(@RequestBody model: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel, @RequestHeader(
+        HeaderConstants.TYPE)  type:String = ANDROID_TYPE): Phone {
         model.type = type
         return createOrUpdatePhone.execute(model)
     }

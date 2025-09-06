@@ -7,10 +7,12 @@ import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.PhoneService
+import com.example.runitup.service.http.MessagingService
 import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse
+import model.messaging.MessagingUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -29,12 +31,15 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
     @Autowired
     lateinit var phoneService: PhoneService
 
+    @Autowired
+    lateinit var messagingService: MessagingService
+
     override fun execute(request: Pair<String, VerifyPhoneNumberRequest>): VerifyPhoneNumberResponse {
         val (zoneId, userRequest) = request
         val otp = otpDbService.getOtp(userRequest.phoneNumber)?: throw ApiRequestException(text("error"))
         print(otp)
         if(otp.code == userRequest.otp){
-            // this means the use has to create a new account
+            // this means the user has to create a new account
 
             if(otp.userId == null){
                 return VerifyPhoneNumberResponse(true, null, null)
@@ -51,6 +56,21 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
             userRequest.firebaseTokenModel?.let {
                 phoneService.createPhone(it)
             }
+            messagingService.createUser(MessagingUser(
+                id = user.id,
+                firstName = user.firstName,
+                lastName = user.lastName,
+                dob = user.dob,
+                email = user.email,
+                loggedInAt = user.loggedInAt,
+                phoneNumber = user.phoneNumber,
+                stripeId = user.stripeId,
+                sex = user.sex,
+                createdAt = user.createdAt,
+                lastSeenAt = null,
+                imageUrl = user.imageUrl
+
+            )).block()
             return VerifyPhoneNumberResponse(true, user, token)
         }
         return VerifyPhoneNumberResponse(false, null, null)

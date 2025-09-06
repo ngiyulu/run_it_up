@@ -1,6 +1,6 @@
 package com.example.runitup.extensions
 
-import com.example.runitup.enum.Sex
+import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 
 fun String.mapFromStringToSex(): Sex {
     if(this == "MALE"){

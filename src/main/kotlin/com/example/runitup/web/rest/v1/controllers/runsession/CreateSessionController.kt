@@ -5,10 +5,14 @@ import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.RunSession
 import com.example.runitup.repository.GymRepository
 import com.example.runitup.repository.RunSessionRepository
+import com.example.runitup.service.http.MessagingService
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.CreateRunSessionRequest
+import model.messaging.Conversation
+import model.messaging.ConversationType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class CreateSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
@@ -18,6 +22,10 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
 
     @Autowired
     lateinit var gymRepository: GymRepository
+
+    @Autowired
+    lateinit var messagingService: MessagingService
+
     override fun execute(request: com.example.runitup.web.rest.v1.dto.CreateRunSessionRequest): RunSession {
         val gymDb = gymRepository.findById(request.gymId)
         if(!gymDb.isPresent){
@@ -38,7 +46,18 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
         if(run.maxGuest > 3){
             throw ApiRequestException(text("max_guest_error", arrayOf("3")))
         }
+        val runSession = runSessionRepository.save(run)
+        messagingService.createConversation(
+            Conversation(UUID.randomUUID().toString(),
+                ConversationType.GROUP, "",
+                getTimeStamp(),
+                lastMessageText = null,
+                runSession = runSession.id.orEmpty(),
+                lastMessageAt =  null,
+                lastMessageSenderId = null,
+                memberCount = 0)
+        ).block()
 
-        return  runSessionRepository.save(run)
+        return  runSession
     }
 }
