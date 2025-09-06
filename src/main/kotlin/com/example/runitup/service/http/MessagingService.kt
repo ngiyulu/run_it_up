@@ -2,6 +2,7 @@ package com.example.runitup.service.http
 
 import ServiceResult
 import com.example.runitup.model.User
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import constant.ServiceConstant
 import model.messaging.Conversation
@@ -54,7 +55,7 @@ class MessagingService {
 
 
 
-    fun createConversation(conversation: Conversation):Mono<ServiceResult<Conversation>>{
+    fun createConversation(conversation: CreateConversationModel):Mono<ServiceResult<Conversation>>{
         return client.post()
             .uri("/api/v1/conversation/create")
             .accept(MediaType.APPLICATION_JSON)
