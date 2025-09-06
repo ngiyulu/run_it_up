@@ -1,9 +1,9 @@
 package com.example.runitup.service
 
-import com.example.runitup.constants.HeaderConstants
 import com.example.runitup.enum.PhoneType
 import com.example.runitup.model.Phone
 import com.example.runitup.repository.PhoneRepository
+import constant.HeaderConstants
 import org.springframework.stereotype.Service
 
 @Service

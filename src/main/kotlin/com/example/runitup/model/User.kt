@@ -1,8 +1,8 @@
 package com.example.runitup.model
 
-import com.example.runitup.enum.Sex
 import com.example.runitup.enum.SkillLevel
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
