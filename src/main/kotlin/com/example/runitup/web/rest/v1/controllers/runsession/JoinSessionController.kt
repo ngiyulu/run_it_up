@@ -9,10 +9,13 @@ import com.example.runitup.repository.BookingRepository
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.RunSessionService
+import com.example.runitup.service.http.MessagingService
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.web.rest.v1.dto.JoinRunSessionStatus
 import com.example.runitup.web.rest.v1.dto.session.JoinSessionModel
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
+import model.messaging.Participant
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
@@ -29,6 +32,10 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
 
     @Autowired
     private lateinit var sessionService: RunSessionService
+
+    @Autowired
+    lateinit var messagingService: MessagingService
+
     override fun execute(request: com.example.runitup.web.rest.v1.dto.session.JoinSessionModel): JoinRunSessionResponse {
         val runDb = runSessionRepository.findById(request.sessionId)
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
@@ -90,6 +97,15 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             ))
         run.updateTotal()
         val updated =  runSessionRepository.save(run)
+        val participant = Participant(
+            userId = user.id.orEmpty(),
+            role = "member",
+            joinedAt = user.createdAt,
+            lastReadMessageAt = null,
+            mutedUntil = null,
+            unreadCount = 0
+        )
+        messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant)).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
     }
 }
