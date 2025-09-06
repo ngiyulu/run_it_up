@@ -2,9 +2,11 @@ package com.example.runitup.service.http
 
 import ServiceResult
 import com.example.runitup.model.User
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import constant.ServiceConstant
 import model.messaging.Conversation
 import model.messaging.MessagingUser
+import model.messaging.Participant
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatusCode
@@ -93,6 +95,38 @@ class MessagingService {
             .exchangeToMono { resp ->
                 if (resp.statusCode().is2xxSuccessful) {
                     resp.bodyToMono(MessagingUser::class.java).map { ServiceResult.ok(it) }
+                } else {
+                    resp.bodyToMono(String::class.java).defaultIfEmpty("")
+                        .map { body ->
+                            ServiceResult.err(
+                                status = resp.statusCode().value(),
+                                source = "service-a",
+                                message = "Downstream returned ${resp.statusCode()}",
+                                body = body
+                            )
+                        }
+                }
+            }
+            .onErrorResume { ex ->
+                Mono.just(
+                    ServiceResult.err(
+                        status = -1,
+                        source = "service-a",
+                        message = ex.message ?: ex.javaClass.simpleName
+                    )
+                )
+            }
+    }
+
+
+    fun createParticipant(model: CreateParticipantModel):Mono<ServiceResult<Participant>>{
+        return client.post()
+            .uri("/api/v1/conversation/participant/add")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(model)
+            .exchangeToMono { resp ->
+                if (resp.statusCode().is2xxSuccessful) {
+                    resp.bodyToMono(Participant::class.java).map { ServiceResult.ok(it) }
                 } else {
                     resp.bodyToMono(String::class.java).defaultIfEmpty("")
                         .map { body ->
