@@ -76,16 +76,19 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             0,
             request.guest
         )
-        val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
+        val bookingPayment = mutableListOf<BookingPayment>()
+        if(!run.isFree()){
+            val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
                 ?: throw ApiRequestException(text("stripe_error"))
+            bookingPayment.add(BookingPayment(amount, paymentId))
+        }
+
         val booking = bookingRepository.save(Booking(ObjectId().toString(),
             request.getTotalParticipants(),
             user.id.orEmpty(),
             runUser,
             request.sessionId,
-            listOf(
-                BookingPayment(amount, paymentId)
-            ),
+            bookingPayment,
             PaymentStatus.PENDING,
             run.amount,
             amount
