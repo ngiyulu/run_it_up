@@ -47,6 +47,9 @@ data class RunSession(
 ): BaseModel(){
 
 
+    fun isFree(): Boolean{
+        return courtFee == 0.0
+    }
     fun updateStatus(userId: String){
         buttonStatus = if(isParticiPant(userId)){
             JoinButtonStatus.UPDATE

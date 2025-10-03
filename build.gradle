@@ -49,7 +49,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("com.ngiyulu:runitup-models:1.0.6")
+    implementation("com.ngiyulu:runitup-models:1.0.8")
     // Image resize/compress
     implementation("net.coobird:thumbnailator:0.4.20")
 

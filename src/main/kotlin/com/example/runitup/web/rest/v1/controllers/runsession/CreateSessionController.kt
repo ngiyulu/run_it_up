@@ -48,7 +48,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             throw ApiRequestException(text("max_guest_error", arrayOf("3")))
         }
         val runSession = runSessionRepository.save(run)
-        var conversation =   Conversation(UUID.randomUUID().toString(),
+        val conversation =   Conversation(UUID.randomUUID().toString(),
             ConversationType.GROUP, "",
             getTimeStamp(),
             lastMessageText = null,
