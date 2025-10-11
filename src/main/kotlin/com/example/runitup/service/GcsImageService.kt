@@ -1,5 +1,6 @@
 package com.example.runitup.service
 
+import com.example.runitup.model.User
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
@@ -31,6 +32,7 @@ class GcsImageService(
     @Value("\${gcs.bucket}") private val bucketName: String = ""
 
     fun upload(
+        user: User,
         jpegBytes: ByteArray
     ): UploadResult? {
 //        require(!file.isEmpty) { "Empty file" }
@@ -45,7 +47,7 @@ class GcsImageService(
 //            else -> ""
 //        }
 
-        val objectName = "uploads/profile/${UUID.randomUUID()}.jpeg"
+        val objectName = "uploads/profile/${user.id}.jpeg"
         val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
             .setContentType(MediaType.IMAGE_JPEG_VALUE)
             .build()

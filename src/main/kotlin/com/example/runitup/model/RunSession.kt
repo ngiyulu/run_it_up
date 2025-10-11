@@ -60,9 +60,10 @@ data class RunSession(
         } else {
             JoinButtonStatus.JOIN
         }
+        val isPendingOrConfirmed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
         showUpdatePaymentButton = status == RunStatus.PENDING
-        guestUpdateAllowed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
-        leaveSessionUpdateAllowed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
+        guestUpdateAllowed = isPendingOrConfirmed
+        leaveSessionUpdateAllowed = isPendingOrConfirmed
     }
 
     fun isParticiPant(userId: String): Boolean{
@@ -70,11 +71,6 @@ data class RunSession(
             .find { it.userId == userId }
 
         return  findUser != null
-    }
-
-    private fun isWaitlisted(userId: String): Boolean{
-        val user = waitList.find { it.userId == userId }
-        return  user != null
     }
 
     fun isDeletable(): Boolean{
@@ -92,7 +88,7 @@ data class RunSession(
     }
 
     fun atFullCapacity(): Boolean{
-        return bookingSize() -1 >= maxPlayer
+        return bookingSize() >= maxPlayer
     }
 
 
@@ -104,7 +100,7 @@ data class RunSession(
 
 
 
-    fun bookingSize(): Int{
+    private fun bookingSize(): Int{
         return bookingList.sumOf { it.partySize }
     }
     fun availableSpots(): Int{
@@ -115,11 +111,6 @@ data class RunSession(
         total =bookingList.sumOf {
             it.partySize * amount
         }
-    }
-
-
-    fun updateGuestList(){
-        //playersSignedUp = playersSignedUp.filter { !it.isGuestUser }
     }
 
     enum class JoinButtonStatus{

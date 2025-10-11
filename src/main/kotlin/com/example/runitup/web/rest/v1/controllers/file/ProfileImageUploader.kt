@@ -27,7 +27,7 @@ class ProfileImageUploader: BaseController<FileUploadModel, User>() {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = maanager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val resized = imageService.resizeToAvatarJpeg(request.file, maxSize = 512, quality = 0.85)
-        val storageResponse = service.upload(resized) ?: throw ApiRequestException("error")
+        val storageResponse = service.upload(user, resized) ?: throw ApiRequestException("error")
         user.imageUrl = storageResponse.url
         return cacheManager.updateUser(user)
     }

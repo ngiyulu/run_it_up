@@ -20,8 +20,6 @@ class OtpDbService {
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
 
-    @Autowired
-    lateinit var mongo: MongoTemplate
 
     @Autowired
     lateinit var otpRepository: OtpRepository
@@ -36,7 +34,7 @@ class OtpDbService {
     fun generateOtp(userId: String?, phone: String): Otp {
         val q = Query(Criteria.where("phoneNumber").`is`(phone))
         val u = Update().set("isActive", false)
-        mongo.updateFirst(q, u, Otp::class.java)
+        mongoTemplate.updateFirst(q, u, Otp::class.java)
 
         val code: String = ThreadLocalRandom.current()
             .ints(4, 0, 10)
