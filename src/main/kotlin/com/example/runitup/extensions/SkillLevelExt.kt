@@ -13,5 +13,8 @@ fun String.mapFromString(): SkillLevel{
     if(this == "COLLEGIATE"){
         return SkillLevel.COLLEGIATE
     }
-    return SkillLevel.PRO
+    if(this == "PRO"){
+        return SkillLevel.PRO
+    }
+    return SkillLevel.BEGINNER
 }

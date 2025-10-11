@@ -19,6 +19,7 @@ class BookingDbService: BaseService() {
 
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
+
     fun cancelUserBooking(userId: String): Boolean {
         val query = Query.query(
             Criteria.where("userId").`is`(userId)
