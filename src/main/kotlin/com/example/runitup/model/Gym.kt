@@ -7,6 +7,7 @@ class Gym (
     @Id var id: String,
     var address: String,
     var location: GeoJsonPoint?,
+    var image:String?,
     var fee: Double,
     var phoneNumber: String?,
     var city: String,
