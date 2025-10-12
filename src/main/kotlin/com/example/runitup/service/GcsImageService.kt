@@ -1,5 +1,6 @@
 package com.example.runitup.service
 
+import com.example.runitup.model.Gym
 import com.example.runitup.model.User
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
@@ -31,22 +32,10 @@ class GcsImageService(
     )
     @Value("\${gcs.bucket}") private val bucketName: String = ""
 
-    fun upload(
+    fun uploadProfileImage(
         user: User,
         jpegBytes: ByteArray
     ): UploadResult? {
-//        require(!file.isEmpty) { "Empty file" }
-//        val contentType = file.contentType ?: error("Missing content type")
-//        require(contentType in allowed) { "Unsupported content type: $contentType" }
-
-//        val ext = when (contentType) {
-//            MediaType.IMAGE_PNG_VALUE -> ".png"
-//            MediaType.IMAGE_JPEG_VALUE -> ".jpg"
-//            "image/webp" -> ".webp"
-//            "image/heic" -> ".heic"
-//            else -> ""
-//        }
-
         val objectName = "uploads/profile/${user.id}.jpeg"
         val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
             .setContentType(MediaType.IMAGE_JPEG_VALUE)
@@ -88,4 +77,28 @@ class GcsImageService(
          }
          return UploadResult(objectName, url, contentType)
      }
+
+    fun uploadGymImage(
+        gym: Gym,
+        jpegBytes: ByteArray
+    ): UploadResult? {
+        val objectName = "gym/profile/${gym.id}.jpeg"
+        val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
+            .setContentType(MediaType.IMAGE_JPEG_VALUE)
+            .build()
+
+        return try {
+            storage.create(blobInfo, jpegBytes)
+            val url = "https://storage.googleapis.com/${bucketName}/$objectName"
+            UploadResult(objectName, url, MediaType.IMAGE_JPEG_VALUE)
+        }
+        catch (ex: Exception){
+            println(ex)
+            null
+        }
+
+    }
+
+
+
 }

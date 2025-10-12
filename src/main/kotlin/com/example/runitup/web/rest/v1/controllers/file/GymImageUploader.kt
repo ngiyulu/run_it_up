@@ -2,7 +2,9 @@ package com.example.runitup.web.rest.v1.controllers.file
 
 import com.example.runitup.cache.MyCacheManager
 import com.example.runitup.exception.ApiRequestException
+import com.example.runitup.model.Gym
 import com.example.runitup.model.User
+import com.example.runitup.repository.GymRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.GcsImageService
 import com.example.runitup.service.ImageService
@@ -13,23 +15,28 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class ProfileImageUploader: BaseController<FileUploadModel, User>() {
+class GymImageUploader: BaseController<FileUploadModel, Gym>() {
 
     @Autowired
     lateinit var service: GcsImageService
 
     @Autowired
-    lateinit var imageService: ImageService
+    lateinit var gymRepository: GymRepository
 
     @Autowired
-    protected lateinit var maanager: MyCacheManager
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.FileUploadModel): User {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = maanager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
+    lateinit var imageService: ImageService
+
+    override fun execute(request: FileUploadModel): Gym {
         val resized = imageService.resizeToAvatarJpeg(request.file, maxSize = 512, quality = 0.85)
-        val storageResponse = service.uploadProfileImage(user, resized) ?: throw ApiRequestException("error")
-        user.imageUrl = storageResponse.url
-        return cacheManager.updateUser(user)
+        val gymRes = gymRepository.findById(request.gymId.orEmpty())
+        if(!gymRes.isPresent){
+            throw ApiRequestException(text("gym_not_found"))
+        }
+        val gym = gymRes.get()
+        val storageResponse = service.uploadGymImage(gym, resized) ?: throw ApiRequestException("error")
+        gym.image = storageResponse.url
+
+        return gymRepository.save(gym)
     }
 
 }
