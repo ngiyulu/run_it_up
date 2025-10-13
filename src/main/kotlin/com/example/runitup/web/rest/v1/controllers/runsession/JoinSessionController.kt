@@ -103,6 +103,8 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         val participant = Participant(
             userId = user.id.orEmpty(),
             role = "member",
+            first = user.firstName,
+            last = user.lastName,
             joinedAt = user.createdAt,
             lastReadMessageAt = null,
             mutedUntil = null,
