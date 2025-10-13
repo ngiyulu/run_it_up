@@ -49,13 +49,15 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
         }
         val runSession = runSessionRepository.save(run)
         val conversation =   Conversation(UUID.randomUUID().toString(),
-            ConversationType.GROUP, "",
+            ConversationType.GROUP,
+            "",
             getTimeStamp(),
             lastMessageText = null,
             runSession = runSession.id.orEmpty(),
             lastMessageAt =  null,
             lastMessageSenderId = null,
-            memberCount = 0)
+            memberCount = 0,
+            title = runSession.getConversationTitle())
         messagingService.createConversation(
             CreateConversationModel(runSession.id.orEmpty(), conversation)
 
