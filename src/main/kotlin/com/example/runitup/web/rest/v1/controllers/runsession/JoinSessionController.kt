@@ -110,7 +110,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             mutedUntil = null,
             unreadCount = 0
         )
-        messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant)).block()
+        messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
     }
 }
