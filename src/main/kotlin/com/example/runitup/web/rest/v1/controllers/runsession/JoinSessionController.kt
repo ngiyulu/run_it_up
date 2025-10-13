@@ -102,7 +102,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         val updated =  runSessionRepository.save(run)
         val participant = Participant(
             userId = user.id.orEmpty(),
-            role = "member",
+            role = "MEMBER",
             first = user.firstName,
             last = user.lastName,
             joinedAt = user.createdAt,
