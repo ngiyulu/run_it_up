@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Document
 data class RunSession(
@@ -85,6 +87,14 @@ data class RunSession(
         return status == RunStatus.PENDING ||
                 status == RunStatus.CONFIRMED ||
                 status == RunStatus.ONGOING
+    }
+    fun getConversationTitle(): String{
+        val dateFormatter = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH) // e.g. "Oct 13"
+        val timeFormatter = DateTimeFormatter.ofPattern("h:mma", Locale.ENGLISH) // e.g. "4:00PM"
+
+        val formattedDate = date.format(dateFormatter)
+        val formattedTime = startTime.format(timeFormatter)
+        return "$formattedDate, $formattedTime"
     }
 
     fun atFullCapacity(): Boolean{
