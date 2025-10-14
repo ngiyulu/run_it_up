@@ -3,14 +3,17 @@ package com.example.runitup.service
 import com.example.runitup.enum.PhoneType
 import com.example.runitup.model.Phone
 import com.example.runitup.repository.PhoneRepository
+import com.example.runitup.web.rest.v1.dto.FirebaseTokenModel
 import constant.HeaderConstants
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class PhoneService: BaseService() {
 
+    @Autowired
     lateinit var phoneRepository: PhoneRepository
-    fun createPhone(token: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel): Phone{
+    fun createPhone(token: FirebaseTokenModel): Phone{
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
         if(ph == null){

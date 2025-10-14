@@ -7,19 +7,18 @@ import com.example.runitup.repository.UserRepository
 import com.example.runitup.service.AuthenticationService
 import com.example.runitup.service.PasswordValidator
 import com.example.runitup.service.PaymentService
+import com.example.runitup.service.http.MessagingService
 import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.CreateUserRequest
+import model.messaging.MessagingUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User>() {
     @Autowired
-    lateinit var authenticationService: AuthenticationService
-
-    @Autowired
-    lateinit var passwordValidator: PasswordValidator
+    lateinit var messagingService: MessagingService
 
     @Autowired
     lateinit var userRepository: UserRepository
@@ -46,7 +45,25 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
         }
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
         user.stripeId = stripeId
-        return cacheManager.updateUser(user)
+        val newUser = cacheManager.updateUser(user)
+        messagingService.createUser(
+            MessagingUser(
+            id = newUser.id,
+            firstName = newUser.firstName,
+            lastName = newUser.lastName,
+            dob = newUser.dob,
+            email = newUser.email,
+            loggedInAt = newUser.loggedInAt,
+            phoneNumber = newUser.phoneNumber,
+            stripeId = newUser.stripeId,
+            sex = newUser.sex,
+            createdAt = newUser.createdAt,
+            lastSeenAt = null,
+            imageUrl = newUser.imageUrl
+
+        )
+        ).block()
+        return newUser
     }
 
 }

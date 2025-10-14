@@ -2,6 +2,7 @@ package com.example.runitup.crash
 
 // src/main/kotlin/com/example/error/GlobalExceptionHandler.kt
 
+import com.example.runitup.exception.ApiRequestException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.MDC
 import org.springframework.http.HttpStatus
@@ -20,6 +21,14 @@ class GlobalExceptionHandler {
         org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
             .error("Unhandled error [traceId=$traceId] ${req.method} ${req.requestURI}", ex)
 
+        if(ex is ApiRequestException){
+
+            val problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
+                setProperty("status", traceId)
+                setProperty("message", ex.message.orEmpty())
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
+        }
         val problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR).apply {
             title = "Internal Server Error"
             detail = ex.message ?: "Unexpected error"

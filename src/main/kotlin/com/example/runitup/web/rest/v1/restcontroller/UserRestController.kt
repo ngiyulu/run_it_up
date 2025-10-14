@@ -4,6 +4,7 @@ import com.example.runitup.model.Otp
 import com.example.runitup.model.User
 import com.example.runitup.web.rest.v1.controllerprovider.UserControllersProvider
 import com.example.runitup.web.rest.v1.controllers.user.GenerateTokenController
+import com.example.runitup.web.rest.v1.controllers.user.VerifyPhoneNumberController
 import constant.HeaderConstants
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
@@ -93,9 +94,12 @@ class UserRestController {
     fun verifyOtp(
         @RequestBody model: com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest,
         @RequestHeader("X-Timezone", required = true) tzHeader: String,
+        @RequestHeader("model") phoneModel: String = "",
+        @RequestHeader("X-OS-Version", required = true) phoneOs: String,
         @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse {
-        model.firebaseTokenModel?.type = type
-        return userControllersProvider.verifyPhoneNumController.execute(Pair(tzHeader, model))
+        model.tokenModel?.type = type
+
+        return userControllersProvider.verifyPhoneNumController.execute(VerifyPhoneNumberController.VerifyPhoneNumberControllerModel(tzHeader, model, phoneOs, phoneModel))
     }
 
     @GetMapping("/otp/get/{id}")
