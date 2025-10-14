@@ -1,17 +1,22 @@
 package com.example.runitup.config
 
+import com.example.runitup.twilio.TwilioProperties
 import com.twilio.Twilio
 import jakarta.annotation.PostConstruct
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Configuration
 
-@Component
-class TwilioInitializer(
-    @Value("\${twilio.account.sid}") private val sid: String,
-    @Value("\${twilio.auth.token}") private val token: String
-) {
+@Configuration
+@EnableConfigurationProperties(TwilioProperties::class)
+class TwilioInitializer{
+
+    @Autowired
+   lateinit var props: TwilioProperties
     @PostConstruct
-    fun init() {
-        Twilio.init(sid, token)
+    fun init(): Any {
+        // Initialize Twilio globally once
+        Twilio.init(props.accountSid, props.authToken)
+        return Any()
     }
 }

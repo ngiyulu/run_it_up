@@ -1,7 +1,6 @@
 package com.example.runitup.service.http
 
 import ServiceResult
-import com.example.runitup.model.User
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import constant.ServiceConstant
@@ -10,7 +9,6 @@ import model.messaging.MessagingUser
 import model.messaging.Participant
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient

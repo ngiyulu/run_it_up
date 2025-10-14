@@ -5,9 +5,9 @@ import com.example.runitup.repository.GymRepository
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.SendGridService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
+import com.example.runitup.service.SendGridService
 import com.example.runitup.web.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.web.rest.v1.dto.initialize.InitializeResponse
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,7 +47,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
             request.firebaseTokenModel?.let {
-                phoneService.createPhone(it)
+                phoneService.createPhone(it, request.os)
             }
         }
 //        emailService.sendEmailHtml(

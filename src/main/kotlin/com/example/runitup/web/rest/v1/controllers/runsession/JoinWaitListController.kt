@@ -1,12 +1,10 @@
 package com.example.runitup.web.rest.v1.controllers.runsession
 
 import com.example.runitup.exception.ApiRequestException
-import com.example.runitup.model.RunSession
 import com.example.runitup.repository.RunSessionRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.JoinWaitListResponse
-import com.example.runitup.web.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.web.rest.v1.dto.session.JoinWaitListModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder

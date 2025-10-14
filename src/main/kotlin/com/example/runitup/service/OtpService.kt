@@ -1,6 +1,5 @@
 package com.example.runitup.service
 
-import com.example.runitup.model.User
 import com.example.runitup.repository.service.OtpDbService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

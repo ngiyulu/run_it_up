@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class CreateOrUpdatePhone: BaseController<FirebaseTokenModel, Phone>() {
+class CreateOrUpdatePhone: BaseController<CreateOrUpdatePhone.CreateOrUpdatePhoneModel, Phone>() {
 
     @Autowired
     lateinit var phoneService: PhoneService
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel): Phone {
-       return phoneService.createPhone(request)
+    override fun execute(request: CreateOrUpdatePhoneModel): Phone {
+       return phoneService.createPhone(request.token, request.phoneOS)
     }
+
+    class CreateOrUpdatePhoneModel(val token: FirebaseTokenModel, val phoneOS:String)
 }
