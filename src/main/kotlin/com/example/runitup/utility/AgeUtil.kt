@@ -1,6 +1,5 @@
 package com.example.runitup.utility
 
-import com.example.runitup.constants.AppConstant.DATE_FORMAT
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate

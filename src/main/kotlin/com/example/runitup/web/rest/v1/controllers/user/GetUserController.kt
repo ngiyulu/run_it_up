@@ -7,7 +7,6 @@ import com.example.runitup.service.http.MessagingService
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
 
 @Service
 class GetUserController: BaseController<String, User>() {

@@ -7,12 +7,10 @@ import com.example.runitup.repository.service.OtpDbService
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.PhoneService
-import com.example.runitup.service.http.MessagingService
 import com.example.runitup.utility.AgeUtil
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberRequest
 import com.example.runitup.web.rest.v1.dto.VerifyPhoneNumberResponse
-import model.messaging.MessagingUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

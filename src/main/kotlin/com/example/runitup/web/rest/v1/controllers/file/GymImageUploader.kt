@@ -1,17 +1,13 @@
 package com.example.runitup.web.rest.v1.controllers.file
 
-import com.example.runitup.cache.MyCacheManager
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.Gym
-import com.example.runitup.model.User
 import com.example.runitup.repository.GymRepository
-import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.GcsImageService
 import com.example.runitup.service.ImageService
 import com.example.runitup.web.rest.v1.controllers.BaseController
 import com.example.runitup.web.rest.v1.dto.FileUploadModel
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service

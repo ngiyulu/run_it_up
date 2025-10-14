@@ -13,7 +13,7 @@ import model.messaging.Conversation
 import model.messaging.ConversationType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 @Service
 class CreateSessionController: BaseController<CreateRunSessionRequest, RunSession>() {

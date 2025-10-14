@@ -4,8 +4,6 @@ import com.example.runitup.constants.AppConstant
 import com.example.runitup.exception.ApiRequestException
 import com.example.runitup.model.User
 import com.example.runitup.repository.UserRepository
-import com.example.runitup.service.AuthenticationService
-import com.example.runitup.service.PasswordValidator
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.http.MessagingService
 import com.example.runitup.utility.AgeUtil

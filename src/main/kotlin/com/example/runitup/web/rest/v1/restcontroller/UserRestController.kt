@@ -8,7 +8,6 @@ import com.example.runitup.web.rest.v1.controllers.user.VerifyPhoneNumberControl
 import constant.HeaderConstants
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
-import reactor.core.publisher.Mono
 
 @RequestMapping("/api/v1/user")
 @RestController
@@ -64,9 +63,10 @@ class UserRestController {
 
     @PostMapping("/init")
     fun init(@RequestBody model: com.example.runitup.web.rest.v1.dto.initialize.InitializeRequest,
-             @RequestHeader(HeaderConstants.TYPE)
-             type:String = HeaderConstants.ANDROID_TYPE): com.example.runitup.web.rest.v1.dto.initialize.InitializeResponse {
+             @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE,
+             @RequestHeader("X-OS-Version", required = true) phoneOs: String): com.example.runitup.web.rest.v1.dto.initialize.InitializeResponse {
         model.firebaseTokenModel?.type = type
+        model.os = phoneOs
         return userControllersProvider.initializeController.execute(model)
     }
 
