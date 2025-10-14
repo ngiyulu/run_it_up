@@ -52,7 +52,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
                 user.waiverSigned = age >= 18
             }
             request.request.tokenModel?.let {
-                phoneService.createPhone(it)
+                phoneService.createPhone(it, request.os)
             }
             return VerifyPhoneNumberResponse(true, user, token)
         }

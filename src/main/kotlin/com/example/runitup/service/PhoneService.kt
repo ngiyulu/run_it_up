@@ -13,7 +13,7 @@ class PhoneService: BaseService() {
 
     @Autowired
     lateinit var phoneRepository: PhoneRepository
-    fun createPhone(token: FirebaseTokenModel): Phone{
+    fun createPhone(token: FirebaseTokenModel, os:String): Phone{
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
         if(ph == null){
@@ -21,7 +21,7 @@ class PhoneService: BaseService() {
                 phoneType = PhoneType.IOS
             }
             ph =phoneRepository.save(
-                Phone(os = "",
+                Phone(os = os,
                     model = "",
                     token = token.token,
                     phoneId = token.phoneId,
