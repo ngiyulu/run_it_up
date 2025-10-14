@@ -5,7 +5,7 @@ import com.example.runitup.repository.GymRepository
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.security.JwtTokenService
 import com.example.runitup.security.UserPrincipal
-import com.example.runitup.service.EmailService
+import com.example.runitup.service.SendGridService
 import com.example.runitup.service.PaymentService
 import com.example.runitup.service.PhoneService
 import com.example.runitup.web.rest.v1.dto.initialize.InitializeRequest
@@ -32,7 +32,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var emailService: EmailService
+    lateinit var emailService: SendGridService
     override fun execute(request: InitializeRequest): InitializeResponse {
         val gyms = gymRepository.findAll()
         var user: User? = null

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service
 
 @Service
 //login controller
-class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumberRequest>, VerifyPhoneNumberResponse?>() {
+class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.VerifyPhoneNumberControllerModel, VerifyPhoneNumberResponse?>() {
     @Autowired
     lateinit var userRepository: UserRepository
 
@@ -31,16 +31,14 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
     @Autowired
     lateinit var phoneService: PhoneService
 
-    @Autowired
-    lateinit var messagingService: MessagingService
 
-    override fun execute(request: Pair<String, VerifyPhoneNumberRequest>): VerifyPhoneNumberResponse {
-        val (zoneId, userRequest) = request
-        val otp = otpDbService.getOtp(userRequest.phoneNumber)?: throw ApiRequestException(text("error"))
+
+    override fun execute(request: VerifyPhoneNumberControllerModel): VerifyPhoneNumberResponse {
+        val enteredOtp = request.request.otp
+        val otp = otpDbService.getOtp(request.request.phoneNumber)?: throw ApiRequestException(text("error"))
         print(otp)
-        if(otp.code == userRequest.otp){
+        if(otp.code == enteredOtp){
             // this means the user has to create a new account
-
             if(otp.userId == null){
                 return VerifyPhoneNumberResponse(true, null, null)
             }
@@ -48,32 +46,19 @@ class VerifyPhoneNumberController: BaseController<Pair<String, VerifyPhoneNumber
             val user: User = cacheManager.getUser(otp.userId.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
             val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             otpDbService.disableOtp(otp)
-            val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
+            val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId)
             println("age = $age")
             if(!user.waiverSigned){
                 user.waiverSigned = age >= 18
             }
-            userRequest.firebaseTokenModel?.let {
+            request.request.tokenModel?.let {
                 phoneService.createPhone(it)
             }
-            messagingService.createUser(MessagingUser(
-                id = user.id,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                dob = user.dob,
-                email = user.email,
-                loggedInAt = user.loggedInAt,
-                phoneNumber = user.phoneNumber,
-                stripeId = user.stripeId,
-                sex = user.sex,
-                createdAt = user.createdAt,
-                lastSeenAt = null,
-                imageUrl = user.imageUrl
-
-            )).block()
             return VerifyPhoneNumberResponse(true, user, token)
         }
         return VerifyPhoneNumberResponse(false, null, null)
     }
 
+
+    class VerifyPhoneNumberControllerModel(val zoneId:String, val request:VerifyPhoneNumberRequest, val os:String, val model:String)
 }
