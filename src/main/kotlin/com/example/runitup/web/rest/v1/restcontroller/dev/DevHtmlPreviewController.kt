@@ -1,4 +1,4 @@
-package com.example.runitup.web.rest.v1.restcontroller
+package com.example.runitup.web.rest.v1.restcontroller.dev
 
 import com.example.runitup.service.TemplateRenderer
 import org.springframework.beans.factory.annotation.Autowired

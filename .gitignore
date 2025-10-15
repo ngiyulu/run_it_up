@@ -16,6 +16,7 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+/src/main/resources/AuthKey_6S93XC3FFV.p8
 
 ### IntelliJ IDEA ###
 .idea

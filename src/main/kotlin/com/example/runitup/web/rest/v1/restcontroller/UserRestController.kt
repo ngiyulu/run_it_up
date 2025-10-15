@@ -65,7 +65,7 @@ class UserRestController {
     fun init(@RequestBody model: com.example.runitup.web.rest.v1.dto.initialize.InitializeRequest,
              @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE,
              @RequestHeader("X-OS-Version", required = true) phoneOs: String): com.example.runitup.web.rest.v1.dto.initialize.InitializeResponse {
-        model.firebaseTokenModel?.type = type
+        model.tokenModel?.type = type
         model.os = phoneOs
         return userControllersProvider.initializeController.execute(model)
     }
