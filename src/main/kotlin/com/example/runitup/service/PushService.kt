@@ -1,4 +1,6 @@
 package  com.example.runitup.service
+import com.example.runitup.constants.AppConstant.apnsPushGateway
+import com.example.runitup.constants.AppConstant.fcmPushGateway
 import com.example.runitup.enum.PhoneType
 import com.example.runitup.model.Phone
 import com.example.runitup.push.PushGateway
@@ -18,11 +20,11 @@ class PushService{
     lateinit var phoneRepo: PhoneRepository
 
     @Autowired
-    @Qualifier("fcmPushGateway")
+    @Qualifier(fcmPushGateway)
     lateinit var fcm: PushGateway
 
     @Autowired
-    @Qualifier("apnsPushGateway")
+    @Qualifier(apnsPushGateway)
     lateinit var apns: PushGateway
 
 

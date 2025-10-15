@@ -5,6 +5,7 @@ import com.eatthepath.pushy.apns.ApnsClientBuilder
 import com.eatthepath.pushy.apns.auth.ApnsSigningKey
 import com.eatthepath.pushy.apns.util.SimpleApnsPushNotification
 import com.eatthepath.pushy.apns.util.TokenUtil
+import com.example.runitup.constants.AppConstant.apnsPushGateway
 import com.example.runitup.web.rest.v1.dto.PushNotification
 import com.example.runitup.web.rest.v1.dto.PushResult
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component
 import java.io.ByteArrayInputStream
 import java.util.Base64
 
-@Component("apnsPushGateway")
+@Component(apnsPushGateway)
 class ApnsPushGateway(
     // NEW: base64 content of the .p8 file (no quotes/newlines if possible)
     @Value("\${push.apns.keyBase64:}") private val keyBase64: String?,

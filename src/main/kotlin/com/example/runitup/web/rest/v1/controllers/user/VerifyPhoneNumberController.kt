@@ -50,7 +50,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
                 user.waiverSigned = age >= 18
             }
             request.request.tokenModel?.let {
-                phoneService.createPhone(it, request.os)
+                phoneService.createPhone(it, request.os, user.id.orEmpty())
             }
             return VerifyPhoneNumberResponse(true, user, token)
         }

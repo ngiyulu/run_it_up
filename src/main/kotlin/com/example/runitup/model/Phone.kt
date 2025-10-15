@@ -10,5 +10,6 @@ class Phone(
     var model: String,
     var token: String,
     var phoneId: String,
+    var userId:String,
     var type: PhoneType
 ): BaseModel()

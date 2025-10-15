@@ -46,9 +46,10 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 }
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
-            request.tokenModel?.let {
-                phoneService.createPhone(it, request.os)
+            if(request.tokenModel != null){
+                phoneService.createPhone(request.tokenModel, request.os, request.userId)
             }
+
         }
 //        emailService.sendEmailHtml(
 //            to = "cngiyulu@hotmail.com",
