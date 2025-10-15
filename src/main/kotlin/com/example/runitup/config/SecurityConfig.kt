@@ -54,7 +54,9 @@ class SecurityConfig{
                 "/api/v1/user/otp/verify",
                 "/api/v1/user/otp/request",
                 "/api/sms/send",
-                "api/push/send"
+                "api/push/send",
+                "api/queues/**",
+                "api/test/cache/**"
                 ).permitAll()
             // everything else needs to be authenticated
             it.anyRequest().authenticated()
