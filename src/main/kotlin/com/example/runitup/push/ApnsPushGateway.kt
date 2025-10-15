@@ -17,7 +17,7 @@ import java.util.Base64
 @Component("apnsPushGateway")
 class ApnsPushGateway(
     // NEW: base64 content of the .p8 file (no quotes/newlines if possible)
-    @Value("\${push.apns.keyPathBase64:}") private val keyBase64: String?,
+    @Value("\${push.apns.keyBase64:}") private val keyBase64: String?,
     // Optional fallback for file path if base64 not provided
     @Value("\${push.apns.keyPath:}") private val keyResource: Resource?,
     @Value("\${push.apns.keyId}") private val keyId: String,
