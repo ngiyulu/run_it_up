@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.*
 class QueueController(private val q: LightSqsService) {
 
     @PostMapping("/create")
-    fun create(@RequestBody req: CreateQueueRequest) =
+    suspend fun create(@RequestBody req: CreateQueueRequest) =
         q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, req.dlqName).let { mapOf("ok" to true) }
 
     @PostMapping("/{name}/messages")
-    fun send(@PathVariable name: String, @RequestBody req: SendMessageRequest) =
+    suspend fun send(@PathVariable name: String, @RequestBody req: SendMessageRequest) =
         mapOf("messageId" to q.sendMessage(name, req.body, req.attributes ?: emptyMap(), req.delaySeconds ?: 0))
 
     @GetMapping("/{name}/messages")
-    fun receive(@PathVariable name: String, query: ReceiveQuery) =
+    suspend fun receive(@PathVariable name: String, query: ReceiveQuery) =
         q.receiveMessages(
             ReceiveRequest(
                 queue = name,
@@ -27,24 +27,22 @@ class QueueController(private val q: LightSqsService) {
             )
         )
 
-    @GetMapping("/list")
-    fun listQueues(): List<Map<String, String>> = q.listQueues()
 
     @GetMapping("/list/stats")
-    fun listQueuesWithStats(): List<QueueOverview> = q.listQueuesWithStats()
+    suspend fun listQueuesWithStats(): List<QueueOverview> = q.listQueuesWithStats()
 
     @DeleteMapping("/{name}/messages")
-    fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
+    suspend fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
         mapOf("deleted" to q.deleteMessage(name, req.receiptHandle))
 
     @DeleteMapping("/delete/{name}")
-    fun deleteQueue(
+    suspend fun deleteQueue(
         @PathVariable name: String,
         @RequestParam(defaultValue = "true") includeDlq: Boolean
     ): Map<String, Any> = q.deleteQueue(name, includeDlq)
 
     @PostMapping("/{name}/visibility")
-    fun changeVisibility(@PathVariable name: String, @RequestBody req: ChangeVisibilityRequest) =
+    suspend fun changeVisibility(@PathVariable name: String, @RequestBody req: ChangeVisibilityRequest) =
         mapOf("changed" to q.changeMessageVisibility(name, req.receiptHandle, req.visibilitySeconds))
 }
 
