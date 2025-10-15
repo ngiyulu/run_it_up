@@ -1,6 +1,7 @@
 package com.example.runitup.web.rest.v1.restcontroller.dev
 
 import com.example.runitup.repository.PhoneRepository
+import com.example.runitup.repository.service.PhoneDbService
 import com.example.runitup.service.PushService
 import com.example.runitup.web.rest.v1.dto.PushNotification
 import com.example.runitup.web.rest.v1.dto.PushResult
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 class PushNotificationRestController {
 
     @Autowired
-    lateinit var phoneRepository: PhoneRepository
+    lateinit var phoneRepository: PhoneDbService
 
     @Autowired
     lateinit var pushService: PushService
