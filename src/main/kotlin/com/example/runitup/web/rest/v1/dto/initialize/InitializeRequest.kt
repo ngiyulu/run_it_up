@@ -1,9 +1,11 @@
 package com.example.runitup.web.rest.v1.dto.initialize
 
+import com.example.runitup.web.rest.v1.dto.MyLocationModel
+
 class InitializeRequest(
     val userId: String?,
-    val firebaseTokenModel: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel?,
-    val location: com.example.runitup.web.rest.v1.dto.MyLocationModel?,
+    val tokenModel: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel?,
+    val location: MyLocationModel?,
     var os: String = ""
 
 )

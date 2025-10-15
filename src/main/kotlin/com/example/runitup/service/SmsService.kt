@@ -32,7 +32,6 @@ class SmsService(): SmsSender {
 
             else -> error("Twilio is enabled but neither messagingServiceSid nor fromNumber is set.")
         }
-
         return creator.create().sid
     }
 

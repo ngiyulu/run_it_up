@@ -1,4 +1,4 @@
-package com.example.runitup.web.rest.v1.restcontroller
+package com.example.runitup.web.rest.v1.restcontroller.dev
 
 import com.example.runitup.service.SmsService
 import jakarta.validation.constraints.NotBlank
@@ -13,10 +13,17 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/sms")
 @Validated
-class SmsController() {
+class SmsRestController() {
 
     @Autowired
     lateinit var sms: SmsService
+    @PostMapping("/send")
+    fun send(@RequestBody req: SendSmsRequest): SendSmsResponse {
+        val sid = sms.sendSms(req.to, req.message)
+        val status = if (sid == null) "disabled" else "queued"
+        return SendSmsResponse(sid = sid, status = status)
+    }
+
     data class SendSmsRequest(
         // E.164 validation (simple)
         @field:NotBlank
@@ -27,11 +34,4 @@ class SmsController() {
     )
 
     data class SendSmsResponse(val sid: String?, val status: String)
-
-    @PostMapping("/send")
-    fun send(@RequestBody req: SendSmsRequest): SendSmsResponse {
-        val sid = sms.sendSms(req.to, req.message)
-        val status = if (sid == null) "disabled" else "queued"
-        return SendSmsResponse(sid = sid, status = status)
-    }
 }

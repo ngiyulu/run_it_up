@@ -41,7 +41,7 @@ dependencies {
     implementation 'com.sendgrid:sendgrid-java:4.10.0'
     implementation "com.github.loki4j:loki-logback-appender:1.4.0"
     implementation 'net.logstash.logback:logstash-logback-encoder:7.2'
-    implementation "com.google.firebase:firebase-admin:9.1.1"
+    implementation "com.google.firebase:firebase-admin:9.4.2"
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -57,6 +57,9 @@ dependencies {
     // optional: for HTML escaping utilities, etc.
     implementation("org.apache.commons:commons-text:1.11.0")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    // Optional: direct APNs (Pushy)
+    implementation("com.eatthepath:pushy:0.15.4")
+
 
 
 //    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
