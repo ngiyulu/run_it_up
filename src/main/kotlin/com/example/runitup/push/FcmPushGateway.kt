@@ -1,4 +1,5 @@
 package com.example.runitup.push
+import com.example.runitup.constants.AppConstant.fcmPushGateway
 import com.example.runitup.web.rest.v1.dto.PushNotification
 import com.example.runitup.web.rest.v1.dto.PushResult
 import com.google.firebase.messaging.*
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component
 //For iOS, FCM acts as a proxy — it forwards your message to Apple’s APNs behind the scenes.
 //
 //So you don’t need to manage Apple certificates or APNs connections yourself.
-@Component("fcmPushGateway")
+@Component(fcmPushGateway)
 class FcmPushGateway : PushGateway {
 
     // FCM allows up to 500 tokens per MulticastMessage

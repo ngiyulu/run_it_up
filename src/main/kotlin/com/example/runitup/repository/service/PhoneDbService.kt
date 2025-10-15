@@ -38,4 +38,8 @@ class PhoneDbService {
     fun findAllByUserId(userId: String): List<Phone>{
         return  phoneRepository.findAllByUserId(userId)
     }
+
+    fun findAllByUserIdIn(userIds: Collection<String>): List<Phone>{
+        return  phoneRepository.findAllByUserIdIn(userIds)
+    }
 }

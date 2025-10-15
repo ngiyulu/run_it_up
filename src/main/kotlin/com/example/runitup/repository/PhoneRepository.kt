@@ -37,4 +37,6 @@ interface PhoneRepository : MongoRepository<Phone, String> {
     fun findAllByIdIn(ids: Collection<String>): List<Phone>
 
     fun findAllByUserId(userId: String): List<Phone>
+
+    fun findAllByUserIdIn(userIds: Collection<String>): List<Phone>
 }
