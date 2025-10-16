@@ -15,6 +15,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.RedisPassword
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
@@ -23,31 +24,6 @@ import java.time.Duration
 @Configuration
 @EnableCaching
 class CacheConfig {
-
-//    @Bean
-//    fun redisConnectionFactory(props: AppRedisProperties): RedisConnectionFactory {
-////        val standalone = RedisStandaloneConfiguration().apply {
-////            hostName = props.host
-////            port = props.port
-////            username = props.username
-////            if (!props.password.isNullOrBlank()) setPassword(props.password!!)
-////            database = props.database
-////        }
-//        val standalone = RedisStandaloneConfiguration(
-//            "redis-17766.c245.us-east-1-3.ec2.redns.redis-cloud.com", 17766
-//        ).apply {
-//            username = "christian"                   // Redis Cloud ACL user
-//            password = RedisPassword.of("b500d99387269f88b66ddfbb602ddae71db6de2ef006e8b66cbcd347b50e5fe6")
-//            database = 0
-//        }
-//
-//        val clientCfg = LettuceClientConfiguration.builder()
-//            .commandTimeout(props.timeout)
-//            .apply { if (props.ssl) useSsl() }
-//            .build()
-//
-//        return LettuceConnectionFactory(standalone, clientCfg)
-//    }
 
     @Bean
     fun kotlinObjectMapper(): ObjectMapper =
@@ -63,10 +39,7 @@ class CacheConfig {
             port = props.port
             username = props.username
             password = RedisPassword.of(props.password)
-
-
         }
-
         return LettuceConnectionFactory(conf)
     }
 
@@ -101,4 +74,8 @@ class CacheConfig {
 //            .withInitialCacheConfigurations(perCache)
 //            .build()
     }
+
+    @Bean
+    fun redisTemplate(cf: RedisConnectionFactory): StringRedisTemplate =
+        StringRedisTemplate(cf)
 }
