@@ -6,9 +6,10 @@ import com.example.runitup.web.rest.v1.restcontroller.QueueOverview
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.*
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.*
 
@@ -43,7 +44,7 @@ class LightSqsService(
 
     /** Scan all queues, find DLQs, and redrive up to [limitPerDlq] messages each. */
     suspend fun retryAllDlqsOnce(limitPerDlq: Int = 50): Int = withContext(io) {
-        val cfgKeys = redis.keys("q:*:cfg") ?: emptySet()        // swap to SCAN if you expect many queues
+        val cfgKeys = scanKeys("q:*:cfg")   // was: redis.keys("q:*:cfg")
         var totalMoved = 0
         for (cfgKey in cfgKeys) {
             val qName = cfgKey.substringAfter("q:").substringBefore(":cfg")
@@ -208,7 +209,7 @@ class LightSqsService(
     }
 
     suspend fun listQueuesWithStats(): List<QueueOverview> = withContext(io) {
-        val cfgKeys = redis.keys("q:*:cfg")
+        val cfgKeys = scanKeys("q:*:cfg")   // was: redis.keys("q:*:cfg")
         val listOps = redis.opsForList()
         val zsetOps = redis.opsForZSet()
 
@@ -231,17 +232,14 @@ class LightSqsService(
     }
 
     suspend fun deleteQueue(name: String, includeDlq: Boolean): Map<String, Any> = withContext(io) {
-        val pattern = "q:$name:*"
-        val keys = redis.keys(pattern) ?: emptySet()
-        val deleted = if (keys.isNotEmpty()) redis.delete(keys) else 0
+        val deleted = deleteByPattern("q:$name:*")   // was: keys + delete(keys)
 
         var dlqDeleted = 0L
         if (includeDlq) {
             val cfg = redis.opsForHash<String, String>().entries(RedisKeys.cfg(name))
             val dlq = cfg["dlqName"].takeUnless { it.isNullOrBlank() }
             if (dlq != null) {
-                val dlqKeys = redis.keys("q:$dlq:*") ?: emptySet()
-                dlqDeleted = if (dlqKeys.isNotEmpty()) redis.delete(dlqKeys) else 0
+                dlqDeleted = deleteByPattern("q:$dlq:*")
             }
         }
         mapOf("queue" to name, "deletedKeys" to deleted, "deletedDlqKeys" to dlqDeleted)
@@ -261,29 +259,67 @@ class LightSqsService(
     //"move expired leased messages → ReadyQueue"
     private suspend fun maintenanceOnce() = withContext(io) {
         val now = System.currentTimeMillis().toDouble()
-        val delayedKeys = redis.keys("q:*:delayed") ?: emptySet()
+        val delayedKeys = scanKeys("q:*:delayed")   // was: redis.keys("q:*:delayed")
         for (delayedKey in delayedKeys) {
             val q = delayedKey.substringAfter("q:").substringBefore(":delayed")
 
-            // 1️⃣ Move due delayed -> ready
+            // move due delayed -> ready
             val due = redis.opsForZSet().rangeByScore(delayedKey, Double.NEGATIVE_INFINITY, now) ?: emptySet()
             if (due.isNotEmpty()) {
                 due.forEach { msgId ->
                     redis.opsForZSet().remove(delayedKey, msgId)
-                    redis.opsForList().leftPush("q:$q:ready", msgId)
+                    redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
                 }
             }
 
-            // 2️⃣ Requeue expired inflight
-            val inflightKey = "q:$q:inflight"
+            // requeue expired inflight
+            val inflightKey = RedisKeys.inflight(q)
             val expired = redis.opsForZSet().rangeByScore(inflightKey, Double.NEGATIVE_INFINITY, now) ?: emptySet()
             if (expired.isNotEmpty()) {
                 expired.forEach { msgId ->
                     redis.opsForZSet().remove(inflightKey, msgId)
-                    redis.opsForList().leftPush("q:$q:ready", msgId)
+                    redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
                 }
             }
         }
+    }
+    /** Non-blocking key scan. */
+    private suspend fun scanKeys(pattern: String, count: Long = 1000): Set<String> = withContext(io) {
+        val out = mutableSetOf<String>()
+        redis.execute { connection ->
+            val opts = ScanOptions.scanOptions().match(pattern).count(count).build()
+            connection.scan(opts).use { cursor ->
+                while (cursor.hasNext()) {
+                    val raw: ByteArray = cursor.next()
+                    out += String(raw, StandardCharsets.UTF_8)
+                }
+            }
+            null
+        }
+        out
+    }
+
+    /** Delete many keys matched by pattern using SCAN in batches (no KEYS). */
+    private suspend fun deleteByPattern(pattern: String, scanCount: Long = 1000, batch: Int = 500): Long = withContext(io) {
+        var deleted = 0L
+        redis.execute { connection ->
+            val opts = ScanOptions.scanOptions().match(pattern).count(scanCount).build()
+            connection.scan(opts).use { cursor ->
+                val buf = ArrayList<ByteArray>(batch)
+                while (cursor.hasNext()) {
+                    buf += cursor.next()
+                    if (buf.size >= batch) {
+                        deleted += connection.keyCommands().del(*buf.toTypedArray())!!
+                        buf.clear()
+                    }
+                }
+                if (buf.isNotEmpty()) {
+                    deleted += connection.keyCommands().del(*buf.toTypedArray())!!
+                }
+            }
+            null
+        }
+        deleted
     }
 
 

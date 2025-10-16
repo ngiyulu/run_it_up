@@ -9,41 +9,60 @@ import org.springframework.web.bind.annotation.*
 class QueueController(private val q: LightSqsService) {
 
     @PostMapping("/create")
-    suspend fun create(@RequestBody req: CreateQueueRequest) =
-        q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, req.dlqName).let { mapOf("ok" to true) }
+   fun create(@RequestBody req: CreateQueueRequest) =
+        kotlinx.coroutines.runBlocking{
+            q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, req.dlqName).let { mapOf("ok" to true) }
+        }
+
 
     @PostMapping("/{name}/messages")
     suspend fun send(@PathVariable name: String, @RequestBody req: SendMessageRequest) =
-        mapOf("messageId" to q.sendMessage(name, req.body, req.attributes ?: emptyMap(), req.delaySeconds ?: 0))
+        kotlinx.coroutines.runBlocking {
+            mapOf("messageId" to q.sendMessage(name, req.body, req.attributes ?: emptyMap(), req.delaySeconds ?: 0))
+        }
+
 
     @GetMapping("/{name}/messages")
-    suspend fun receive(@PathVariable name: String, query: ReceiveQuery) =
-        q.receiveMessages(
-            ReceiveRequest(
-                queue = name,
-                maxNumberOfMessages = query.maxNumberOfMessages ?: 1,
-                waitSeconds = query.waitSeconds,
-                visibilitySeconds = query.visibilitySeconds
+    fun receive(@PathVariable name: String, query: ReceiveQuery) =
+        kotlinx.coroutines.runBlocking {
+            q.receiveMessages(
+                ReceiveRequest(
+                    queue = name,
+                    maxNumberOfMessages = query.maxNumberOfMessages ?: 1,
+                    waitSeconds = query.waitSeconds,
+                    visibilitySeconds = query.visibilitySeconds
+                )
             )
-        )
+        }
 
 
     @GetMapping("/list/stats")
-    suspend fun listQueuesWithStats(): List<QueueOverview> = q.listQueuesWithStats()
+    fun listQueuesWithStats() =
+        kotlinx.coroutines.runBlocking {
+            q.listQueuesWithStats()
+        }
 
     @DeleteMapping("/{name}/messages")
-    suspend fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
-        mapOf("deleted" to q.deleteMessage(name, req.receiptHandle))
+    fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
+        kotlinx.coroutines.runBlocking {
+            mapOf("deleted" to q.deleteMessage(name, req.receiptHandle))
+        }
+
 
     @DeleteMapping("/delete/{name}")
-    suspend fun deleteQueue(
+    fun deleteQueue(
         @PathVariable name: String,
-        @RequestParam(defaultValue = "true") includeDlq: Boolean
-    ): Map<String, Any> = q.deleteQueue(name, includeDlq)
+        @RequestParam(defaultValue = "true") includeDlq: Boolean) =
+        kotlinx.coroutines.runBlocking {
+            q.deleteQueue(name, includeDlq)
+        }
 
     @PostMapping("/{name}/visibility")
-    suspend fun changeVisibility(@PathVariable name: String, @RequestBody req: ChangeVisibilityRequest) =
-        mapOf("changed" to q.changeMessageVisibility(name, req.receiptHandle, req.visibilitySeconds))
+    fun changeVisibility(@PathVariable name: String, @RequestBody req: ChangeVisibilityRequest) =
+        kotlinx.coroutines.runBlocking {
+            mapOf("changed" to q.changeMessageVisibility(name, req.receiptHandle, req.visibilitySeconds))
+        }
+
 }
 
 data class CreateQueueRequest(
