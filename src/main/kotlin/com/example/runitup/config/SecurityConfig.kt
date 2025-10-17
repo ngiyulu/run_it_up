@@ -56,14 +56,17 @@ class SecurityConfig{
                 "/api/sms/send",
                 "api/push/send",
                 "api/queues/**",
-                "api/test/cache/**"
+                "api/test/cache/**",
+                "/.well-known/apple-app-site-association", "/apple-app-site-association"
                 ).permitAll()
+
             // everything else needs to be authenticated
             it.anyRequest().authenticated()
         }.exceptionHandling {
             it.authenticationEntryPoint(jwtAuthEntryPoint)       // 401 path
             it.accessDeniedHandler(accessDeniedHandler)    // 403 path
         }
+            .csrf { it.ignoringRequestMatchers("/.well-known/**", "/apple-app-site-association") }
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
