@@ -1,6 +1,5 @@
 package com.example.runitup.web.rest.v1.restcontroller.dev
 
-import com.example.runitup.repository.PhoneRepository
 import com.example.runitup.repository.service.PhoneDbService
 import com.example.runitup.service.PushService
 import com.example.runitup.web.rest.v1.dto.PushNotification
@@ -28,7 +27,7 @@ class PushNotificationRestController {
         val notification = PushNotification(
             title = req.title,
             body = req.body,
-            data = mapOf("type" to "CHAT", "conversationId" to "abc123"),
+            data = req.data,
             clickAction = req.clickAction,
             badge = req.badge
         )
@@ -37,4 +36,4 @@ class PushNotificationRestController {
     }
 }
 
-data class PushTestData(val title: String, val body: String, val phoneId: String, val clickAction:String?, val badge: Int?)
+data class PushTestData(val title: String, val body: String, val phoneId: String, val clickAction:String?, val badge: Int?,  val data: Map<String, String> = emptyMap())
