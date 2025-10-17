@@ -66,7 +66,7 @@ class SecurityConfig{
             it.authenticationEntryPoint(jwtAuthEntryPoint)       // 401 path
             it.accessDeniedHandler(accessDeniedHandler)    // 403 path
         }
-            .csrf { it.ignoringRequestMatchers("/.well-known/**", "/apple-app-site-association") }
+//            .csrf { it.ignoringRequestMatchers("/.well-known/**", "/apple-app-site-association") }
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
