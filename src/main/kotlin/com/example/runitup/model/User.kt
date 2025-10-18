@@ -17,6 +17,7 @@ data class User(
     var waiverSigned: Boolean = false,
     var waiverUrl:String? = null,
     var waiverAuthorized:Boolean = false,
+    var firstSession: Boolean = false,
     var waiverAuthorizedAt: Long = 0,
     var waiverAuthorizedBy: String? = null,
     var verifiedPhone: Boolean = false,
