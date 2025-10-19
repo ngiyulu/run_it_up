@@ -21,6 +21,7 @@ class PhoneService: BaseService() {
             if(token.type == HeaderConstants.IOS_TYPE){
                 phoneType = PhoneType.IOS
             }
+            print("we didn't find phone")
             ph =phoneRepository.save(
                 Phone(os = os,
                     model = "",
@@ -31,9 +32,11 @@ class PhoneService: BaseService() {
                 ))
         }
         else{
+            print("we found phone")
             ph.token = token.token
             ph.phoneId = token.phoneId
             phoneRepository.save(ph)
+
         }
         return ph
     }
