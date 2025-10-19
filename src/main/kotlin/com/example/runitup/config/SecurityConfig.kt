@@ -52,6 +52,7 @@ class SecurityConfig{
                 "/api/v1/user/create",
                 "/api/v1/user/hello",
                 "/api/v1/user/otp/verify",
+                "/api/v1/user/logout",
                 "/api/v1/user/otp/request",
                 "/api/sms/send",
                 "api/push/send",

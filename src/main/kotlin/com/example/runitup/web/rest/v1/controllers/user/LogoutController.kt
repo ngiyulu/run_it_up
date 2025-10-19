@@ -15,7 +15,7 @@ class LogoutController: BaseController<LogoutRequest, Unit>() {
     @Autowired
     lateinit var phoneService: PhoneService
 
-    override fun execute(request: com.example.runitup.web.rest.v1.dto.LogoutRequest){
+    override fun execute(request: LogoutRequest){
         request.tokenModel?.let {
             phoneService.deletePhone(it)
         }
