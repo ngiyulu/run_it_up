@@ -38,7 +38,7 @@ class PhoneService: BaseService() {
         return ph
     }
 
-    fun deletePhone(token: com.example.runitup.web.rest.v1.dto.FirebaseTokenModel){
+    fun deletePhone(token: FirebaseTokenModel){
         val ph = phoneRepository.findByPhoneId(token.phoneId)
         if(ph != null){
             phoneRepository.delete(ph)
