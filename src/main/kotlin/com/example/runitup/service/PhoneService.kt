@@ -33,9 +33,15 @@ class PhoneService: BaseService() {
         }
         else{
             print("we found phone")
-            ph.token = token.token
-            ph.phoneId = token.phoneId
-            phoneRepository.save(ph)
+            print("old phone token = ${ph.token}")
+            print("new phone token = ${token.token}")
+            if(ph.token != token.token){
+                ph.token = token.token
+                ph.phoneId = token.phoneId
+                print("update phone")
+                phoneRepository.save(ph)
+            }
+
 
         }
         return ph
