@@ -58,6 +58,7 @@ class SecurityConfig{
                 "api/push/send",
                 "api/queues/**",
                 "api/test/cache/**",
+                "api/sms/status/**",
                 "/.well-known/apple-app-site-association", "/apple-app-site-association"
                 ).permitAll()
 
