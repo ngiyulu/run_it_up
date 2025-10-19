@@ -62,6 +62,17 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.9.0")
+    implementation("org.springframework.retry:spring-retry")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-webflux") // WebClient
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.9")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
+    // OPTIONAL if you ever use `.toMono()` / other Kotlin Reactor helpers:
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.2.2")
+
 
 
 

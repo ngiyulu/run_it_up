@@ -1,12 +1,14 @@
 package com.example.runitup.config
 
 import com.example.runitup.cache.MyCacheManager
+import com.example.runitup.clicksend.ClickSendProperties
 import com.example.runitup.repository.UserRepository
 import com.example.runitup.security.UserPrincipal
 import com.example.runitup.service.auth.UserAuthenticationProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationProvider
@@ -18,6 +20,7 @@ import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver
 import java.util.*
 
 @Configuration
+@EnableConfigurationProperties(ClickSendProperties::class)
 class ApplicationConfiguration {
 
     @Autowired
