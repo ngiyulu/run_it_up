@@ -1,33 +1,35 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
+import com.example.runitup.common.repo.PaymentRepository
+import com.example.runitup.mobile.model.Payment
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
-import com.example.runitup.model.User
-import com.example.runitup.web.rest.v1.controllerprovider.PaymentControllersProvider
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-
-@RequestMapping("/api/v1/payment")
 @RestController
-class PaymentRestController {
+@RequestMapping("/admin/payments")
+class PaymentController(private val repo: PaymentRepository) {
 
-    @Autowired
-    lateinit var  paymentControllersProvider: PaymentControllersProvider
+    // by RunSession
+    @GetMapping("/by-session/{sessionId}")
+    fun bySession(@PathVariable sessionId: String): List<Payment> =
+        repo.findAllBySessionId(sessionId)
 
-    @PostMapping("/create")
-    fun createPayment(@RequestBody model: com.example.runitup.web.rest.v1.dto.payment.CreatePaymentModel): List<com.example.runitup.web.rest.v1.dto.payment.CardModel>? {
-        return paymentControllersProvider.createCardController.execute(model)
-    }
+    // by user
+    @GetMapping("/by-user/{userId}")
+    fun byUser(@PathVariable userId: String): List<Payment> =
+        repo.findAllByUserId(userId)
 
-    @PostMapping("/update/default-payment")
-    fun updateDefaultPayment(@RequestBody model: com.example.runitup.web.rest.v1.dto.payment.UpdateDefaultCardModel): User {
-        return paymentControllersProvider.updateDefaultPaymentController.execute(model)
-    }
-
-    @PostMapping("/delete")
-    fun deletePayment(@RequestBody model: com.example.runitup.web.rest.v1.dto.payment.DeleteCardModel): com.example.runitup.web.rest.v1.dto.payment.CardModel {
-        return paymentControllersProvider.deleteCreateCardController.execute(model)
+    // by date range (local date -> UTC instants)
+    @GetMapping("/by-range")
+    fun byDateRange(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) start: LocalDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) end: LocalDate
+    ): List<Payment> {
+        val startInstant = start.atStartOfDay().toInstant(ZoneOffset.UTC)
+        val endInstant = end.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        return repo.findAllByCreatedAtBetween(startInstant, endInstant)
     }
 }

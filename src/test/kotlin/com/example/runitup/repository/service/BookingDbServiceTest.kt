@@ -1,7 +1,8 @@
 package com.example.runitup.repository.service
 
 import com.example.runitup.BaseTest
-import com.example.runitup.model.Booking
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.mongodb.client.result.DeleteResult
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
@@ -26,7 +27,7 @@ class BookingDbServiceTest: BaseTest() {
         val result = mock<DeleteResult>()
         whenever(result.deletedCount).thenReturn(0)
         val query = argumentCaptor<Query>()
-        whenever(mockMongoTemplate.remove(query.capture(), eq(Booking::class.java))).thenReturn(result)
+        whenever(mockMongoTemplate.remove(query.capture(), eq(com.example.runitup.mobile.model.Booking::class.java))).thenReturn(result)
         assertFalse(bookingDbService.cancelUserBooking(""))
 
         assertEquals("Query: { \"userId\" : \"\"}, Fields: {}, Sort: {}", query.firstValue.toString())
@@ -39,7 +40,7 @@ class BookingDbServiceTest: BaseTest() {
     @Test
     fun testGetBooking(){
         val query = argumentCaptor<Query>()
-        whenever(mockMongoTemplate.findOne(query.capture(), eq(Booking::class.java))).thenReturn(null)
+        whenever(mockMongoTemplate.findOne(query.capture(), eq(com.example.runitup.mobile.model.Booking::class.java))).thenReturn(null)
 
         assertNull(bookingDbService.getBooking("user", "session"))
         assertEquals("Query: { \"userId\" : \"user\", \"runSessionId\" : \"session\"}, Fields: {}, Sort: {}", query.firstValue.toString())
@@ -51,7 +52,7 @@ class BookingDbServiceTest: BaseTest() {
         val result = mock<DeleteResult>()
         whenever(result.deletedCount).thenReturn(0)
         val query = argumentCaptor<Query>()
-        whenever(mockMongoTemplate.remove(query.capture(), eq(Booking::class.java))).thenReturn(result)
+        whenever(mockMongoTemplate.remove(query.capture(), eq(com.example.runitup.mobile.model.Booking::class.java))).thenReturn(result)
         assertFalse(bookingDbService.cancelAllBooking("run"))
 
         assertEquals("Query: { \"runSessionId\" : \"run\"}, Fields: {}, Sort: {}", query.firstValue.toString())

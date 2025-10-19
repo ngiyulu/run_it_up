@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${param.id} != null ? 'Edit Gym • RunItUp Admin' : 'Create Gym • RunItUp Admin'">Gym • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+    <style>
+        /* Minimal modal / spinner styling (kept here so you don't have to edit styles.css) */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            display: none; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .modal {
+            background: #0b1220; border: 1px solid #1f2937; border-radius: 14px;
+            padding: 20px 24px; min-width: 260px; color: #e5e7eb; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+        }
+        .modal h4 { margin: 0 0 10px; font-weight: 600; }
+        .spinner {
+            width: 28px; height: 28px; border: 3px solid #334155; border-top-color: #93c5fd;
+            border-radius: 50%; margin: 10px auto 0; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .show { display: flex !important; }
+        .disabled { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar">
+        <h2 id="pageTitle">Create Gym</h2>
+        <div class="badge">JWT auth required</div>
+    </div>
+
+    <div id="status" class="alert hidden"></div>
+
+    <form id="gymForm" class="card" style="max-width:900px;">
+        <div class="row">
+            <div class="col">
+                <label for="title">Title *</label>
+                <input id="title" placeholder="Downtown Sports Center" required />
+            </div>
+            <div class="col">
+                <label for="phone">Phone Number *</label>
+                <input id="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 555-1234" maxlength="14" required />
+                <small class="help">Auto-formats as (###) ###-####</small>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="fee">Fee *</label>
+                <input id="fee" type="number" step="0.01" min="0" placeholder="15.00" required />
+                <small class="help">Cost per player or court fee.</small>
+            </div>
+            <div class="col">
+                <label>Image *</label>
+                <div id="imgPreview" style="width:200px;height:140px;border-radius:12px;border:1px solid #1f2937;display:flex;align-items:center;justify-content:center;color:#9ca3af;cursor:pointer;">
+                    Click to upload
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+                <small class="help">Select a photo from your computer.</small>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="addr1">Address line 1 *</label>
+                <input id="addr1" placeholder="123 Main St" required />
+            </div>
+            <div class="col">
+                <label for="addr2">Address line 2</label>
+                <input id="addr2" placeholder="Suite 200" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="city">City *</label>
+                <input id="city" placeholder="Chicago" required />
+            </div>
+            <div class="col">
+                <label for="state">State *</label>
+                <select id="state" required>
+                    <option value="" disabled selected>Select state…</option>
+                    <option value="AL">AL — Alabama</option><option value="AK">AK — Alaska</option>
+                    <option value="AZ">AZ — Arizona</option><option value="AR">AR — Arkansas</option>
+                    <option value="CA">CA — California</option><option value="CO">CO — Colorado</option>
+                    <option value="CT">CT — Connecticut</option><option value="DE">DE — Delaware</option>
+                    <option value="DC">DC — District of Columbia</option><option value="FL">FL — Florida</option>
+                    <option value="GA">GA — Georgia</option><option value="HI">HI — Hawaii</option>
+                    <option value="ID">ID — Idaho</option><option value="IL">IL — Illinois</option>
+                    <option value="IN">IN — Indiana</option><option value="IA">IA — Iowa</option>
+                    <option value="KS">KS — Kansas</option><option value="KY">KY — Kentucky</option>
+                    <option value="LA">LA — Louisiana</option><option value="ME">ME — Maine</option>
+                    <option value="MD">MD — Maryland</option><option value="MA">MA — Massachusetts</option>
+                    <option value="MI">MI — Michigan</option><option value="MN">MN — Minnesota</option>
+                    <option value="MS">MS — Mississippi</option><option value="MO">MO — Missouri</option>
+                    <option value="MT">MT — Montana</option><option value="NE">NE — Nebraska</option>
+                    <option value="NV">NV — Nevada</option><option value="NH">NH — New Hampshire</option>
+                    <option value="NJ">NJ — New Jersey</option><option value="NM">NM — New Mexico</option>
+                    <option value="NY">NY — New York</option><option value="NC">NC — North Carolina</option>
+                    <option value="ND">ND — North Dakota</option><option value="OH">OH — Ohio</option>
+                    <option value="OK">OK — Oklahoma</option><option value="OR">OR — Oregon</option>
+                    <option value="PA">PA — Pennsylvania</option><option value="RI">RI — Rhode Island</option>
+                    <option value="SC">SC — South Carolina</option><option value="SD">SD — South Dakota</option>
+                    <option value="TN">TN — Tennessee</option><option value="TX">TX — Texas</option>
+                    <option value="UT">UT — Utah</option><option value="VT">VT — Vermont</option>
+                    <option value="VA">VA — Virginia</option><option value="WA">WA — Washington</option>
+                    <option value="WV">WV — West Virginia</option><option value="WI">WI — Wisconsin</option>
+                    <option value="WY">WY — Wyoming</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="zip">ZIP *</label>
+                <input id="zip" inputmode="numeric" pattern="[0-9]{5}" placeholder="60601" required />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="description">Description (optional)</label>
+                <textarea id="description" rows="4" placeholder="Short description about the gym..."></textarea>
+            </div>
+            <div class="col">
+                <label for="note">Note (optional)</label>
+                <textarea id="note" rows="4" placeholder="Internal notes (not visible to users)..."></textarea>
+            </div>
+        </div>
+
+        <div class="row" style="align-items:flex-start;">
+            <div class="col" style="display:flex;gap:10px;align-items:center;">
+                <button class="primary" id="saveBtn" type="submit">Save</button>
+                <button id="resetBtn" type="button">Reset</button>
+                <button id="cancelBtn" type="button">Cancel</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<footer>
+    <div>© RunItUp Admin</div>
+</footer>
+
+<!-- Progress modal -->
+<div id="progressOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-live="assertive" aria-label="Progress">
+        <h4 id="progressText">Saving…</h4>
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        requireAuth();
+
+        const qs = (sel) => document.querySelector(sel);
+        const statusEl = qs('#status');
+        const pageTitle = qs('#pageTitle');
+        const form = qs('#gymForm');
+
+        const titleEl = qs('#title');
+        const phoneEl = qs('#phone');
+        const feeEl = qs('#fee');
+        const addr1El = qs('#addr1');
+        const addr2El = qs('#addr2');
+        const cityEl = qs('#city');
+        const stateEl = qs('#state');
+        const zipEl = qs('#zip');
+        const descriptionEl = qs('#description');
+        const noteEl = qs('#note');
+
+        const imgPreview = qs('#imgPreview');
+        const fileInput = qs('#fileInput');
+
+        const resetBtn = qs('#resetBtn');
+        const cancelBtn = qs('#cancelBtn');
+        const saveBtn = qs('#saveBtn');
+
+        const progressOverlay = qs('#progressOverlay');
+        const progressText = qs('#progressText');
+
+        document.getElementById('logoutBtn').addEventListener('click', e => {
+            e.preventDefault(); logout();
+        });
+
+        // Mode detection
+        const params = new URLSearchParams(location.search);
+        const gymId = params.get('id');
+        let imageChanged = false
+        let originalData = null;
+
+        if (gymId) {
+            pageTitle.textContent = 'Edit Gym';
+            const saveBtn = document.getElementById('saveBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            resetBtn.classList.add('hidden'); // 👈 hide reset button in edit mode
+            saveBtn.textContent = 'Update'; // 🔄 change button label
+            // Hide buttons and lock the form while loading the gym
+            setButtonsVisible(false);
+            setFormEnabled(false);
+            await loadGym(gymId);
+        } else {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.textContent = 'Create'; // 🔄 change button label
+            pageTitle.textContent = 'Create Gym';
+            resetBtn.classList.remove('hidden'); // 👈 show reset button in create mode
+            setButtonsVisible(true);
+            setFormEnabled(true);
+        }
+
+        // Phone auto-format: (###) ###-####
+        phoneEl.addEventListener('input', () => {
+            const digits = phoneEl.value.replace(/\D/g, '').slice(0, 10);
+            let out = digits;
+            if (digits.length > 6) out = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
+            else if (digits.length > 3) out = `(${digits.slice(0,3)}) ${digits.slice(3,6)}`;
+            else if (digits.length > 0) out = `(${digits.slice(0,3)}`;
+            phoneEl.value = out;
+        });
+
+        // Image upload and preview
+        imgPreview.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            imageChanged = true
+            const reader = new FileReader();
+            reader.onload = (ev) => renderImagePreview(ev.target.result);
+            reader.readAsDataURL(file);
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                validateRequired();
+
+                // Build multipart FormData
+                const fd = new FormData();
+                const payload = collectPayload();
+                fd.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+
+                const file = fileInput.files[0];
+                if (!gymId && !file) throw new Error('Please select an image.');
+                if (file) fd.append('image', file);
+
+                // show progress dialog + disable buttons
+                saveBtn.classList.add('disabled');
+                resetBtn.classList.add('disabled');
+                cancelBtn.classList.add('disabled');
+                showProgress(gymId ? 'Updating gym…' : 'Creating gym…');
+
+                if (gymId) {
+                    await fetch(`/admin/api/v1/gym/update/${gymId}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+                        body: fd
+                    }).then(checkResp);
+                    setStatus(statusEl, 'success', 'Gym updated.');
+                    window.location.href = '/admin/gyms';
+                } else {
+                    await fetch('/admin/api/v1/gym/create', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') },
+                        body: fd
+                    }).then(checkResp);
+                    setStatus(statusEl, 'success', 'Gym created.');
+                    window.location.href = '/admin/gyms';
+                    return;
+                }
+            } catch (err) {
+                console.error(err);
+                setStatus(statusEl, 'error', err.message || 'Failed to save gym.');
+            } finally {
+                // always hide progress + re-enable buttons (unless we redirected)
+                hideProgress();
+                saveBtn.classList.remove('disabled');
+                resetBtn.classList.remove('disabled');
+                cancelBtn.classList.remove('disabled');
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (gymId && originalData) fillForm(originalData);
+            else { form.reset(); imgPreview.textContent = 'Click to upload'; }
+        });
+
+        cancelBtn.addEventListener('click', () => window.location.href = '/admin/gyms');
+
+        // Helpers
+        async function loadGym(id) {
+            try {
+                setStatus(statusEl, 'success', 'Loading gym...');
+                const data = await api(`/admin/api/v1/gym/${id}`);
+                originalData = data;
+                fillForm(data);
+                setStatus(statusEl, 'success', 'Gym loaded.');
+                // ✅ Show buttons and enable form once data is ready
+                setFormEnabled(true);
+                setButtonsVisible(true);
+
+            } catch (e) {
+                // Keep the form locked and only show Cancel so the user can exit
+                setFormEnabled(false);
+                setButtonsVisible(false);
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) cancelBtn.classList.remove('hidden');
+                console.error(e);
+                setStatus(statusEl, 'error', 'Failed to load gym.');
+            }
+        }
+
+        function fillForm(g) {
+            titleEl.value = g.title || '';
+            phoneEl.value = g.phoneNumber || '';
+            feeEl.value = g.fee ?? 0;
+
+            addr1El.value = g.line1 || '';
+            addr2El.value = g.line2 || '';
+            cityEl.value = g.city || '';
+            stateEl.value = g.state || '';
+            zipEl.value = g.zipCode || '';
+
+            descriptionEl.value = g.description || '';
+            noteEl.value = g.notes || '';
+
+            const existingUrl = g.image
+            renderImagePreview(existingUrl || null);
+        }
+
+        function collectPayload() {
+            return {
+                title: titleEl.value.trim(),
+                phoneNumber: phoneEl.value.trim(),
+                fee: feeEl.value ? parseFloat(feeEl.value) : 0,
+                zipCode: feeEl.value ? parseFloat(zipEl.value.trim()) : 0,
+                address: {
+                    line1: addr1El.value.trim(),
+                    line2: addr2El.value.trim(),
+                    city: cityEl.value.trim(),
+                    state: stateEl.value, // send 2-letter code
+                    zip: zipEl.value.trim()
+                },
+                description: (document.querySelector('#description').value || '').trim(),
+                notes: (document.querySelector('#note').value || '').trim()
+            };
+        }
+
+        function validateRequired() {
+            if (!titleEl.value.trim()) throw new Error('Title is required.');
+            if (!phoneEl.value.trim()) throw new Error('Phone number is required.');
+            if (feeEl.value === '' || isNaN(parseFloat(feeEl.value)) || parseFloat(feeEl.value) < 0)
+                throw new Error('Fee must be a non-negative number.');
+            if (!addr1El.value.trim()) throw new Error('Address line 1 is required.');
+            if (!cityEl.value.trim()) throw new Error('City is required.');
+            if (!stateEl.value) throw new Error('State is required.');
+            if (!zipEl.value.trim() || !/^\d{5}$/.test(zipEl.value.trim()))
+                throw new Error('ZIP must be a 5-digit code.');
+            if (!gymId && fileInput.files.length === 0)
+                throw new Error('Please select an image.');
+        }
+
+        function renderImagePreview(url) {
+            if (url) {
+                imgPreview.innerHTML = `<img src="${url}" alt="Gym" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" onerror="this.parentNode.textContent='Click to upload';this.remove();">`;
+            } else {
+                imgPreview.textContent = 'Click to upload';
+            }
+        }
+
+        function showProgress(text) {
+            progressText.textContent = text || 'Saving…';
+            progressOverlay.classList.add('show');
+            progressOverlay.setAttribute('aria-hidden', 'false');
+        }
+        function hideProgress() {
+            progressOverlay.classList.remove('show');
+            progressOverlay.setAttribute('aria-hidden', 'true');
+        }
+
+        function setFormEnabled(enabled) {
+            // disable/enable all inputs, but not the Cancel button (so users can bail on error)
+            document.querySelectorAll('#gymForm input, #gymForm select, #gymForm textarea, #gymForm button')
+                .forEach(el => {
+                    if (el.id === 'cancelBtn') return;
+                    el.disabled = !enabled;
+                });
+        }
+
+        function setButtonsVisible(visible) {
+            const ids = ['saveBtn', 'resetBtn', 'cancelBtn'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (visible) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+
+        async function checkResp(resp) {
+            if (!resp.ok) {
+                if (resp.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/admin/login?msg=expired';
+                }
+                const text = await resp.text().catch(() => '');
+                throw new Error(text || `HTTP ${resp.status}`);
+            }
+            return resp;
+        }
+    });
+</script>
+</body>
+</html>

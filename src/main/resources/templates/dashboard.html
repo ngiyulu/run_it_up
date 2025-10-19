@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a th:href="@{/admin/runs}">Run Sessions</a>
+            <a th:href="@{/admin/payments}">Payments</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar">
+        <h2>Dashboard</h2>
+        <span class="badge">API: <code id="apiBaseTxt"></code></span>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <h3>Gyms</h3>
+                <p>Create and manage gym locations.</p>
+                <a class="badge" th:href="@{/admin/gyms}">Open Gyms</a>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card">
+                <h3>Run Sessions</h3>
+                <p>Create sessions and browse by date or range.</p>
+                <a class="badge" th:href="@{/admin/runs}">Open Runs</a>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card">
+                <h3>Payments</h3>
+                <p>View payments by session, user, or date range.</p>
+                <a class="badge" th:href="@{/admin/payments}">Open Payments</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div>© RunItUp Admin • v1.0</div>
+</footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    // Require a valid JWT to view the dashboard
+    requireAuth();
+
+    // Display which API base the UI will call
+    document.getElementById('apiBaseTxt').textContent = localStorage.getItem('apiBase') || 'http://localhost:8080';
+
+    // Logout action
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+    });
+</script>
+</body>
+</html>

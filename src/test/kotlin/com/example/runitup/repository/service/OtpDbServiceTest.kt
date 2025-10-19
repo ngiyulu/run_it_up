@@ -1,8 +1,9 @@
 package com.example.runitup.repository.service
 
 import com.example.runitup.BaseTest
-import com.example.runitup.model.Booking
-import com.example.runitup.model.Otp
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.Otp
+import com.example.runitup.mobile.repository.service.OtpDbService
 import com.mongodb.client.result.DeleteResult
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
@@ -63,7 +64,7 @@ class OtpDbServiceTest: BaseTest() {
 //    }
 //
     @Test fun testDisableOtp(){
-        val otp = Otp(null, "code", null, "", null)
+        val otp = com.example.runitup.mobile.model.Otp(null, "code", null, "", null)
         whenever(mockOtpRepository.save(otp)).thenReturn(otp)
 
         service.disableOtp(otp)
@@ -74,7 +75,7 @@ class OtpDbServiceTest: BaseTest() {
     @Test
     fun getOtp(){
         val query = argumentCaptor<Query>()
-        whenever(mockMongoTemplate.findOne(query.capture(), eq(Otp::class.java))).thenReturn(null)
+        whenever(mockMongoTemplate.findOne(query.capture(), eq(com.example.runitup.mobile.model.Otp::class.java))).thenReturn(null)
 
         assertNull(service.getOtp("760-571-7457"))
         assertEquals("Query: { \"phoneNumber\" : \"760-571-7457\", \"isActive\" : true}, Fields: {}, Sort: {}", query.firstValue.toString())
@@ -83,16 +84,16 @@ class OtpDbServiceTest: BaseTest() {
 
     @Test
     fun testGenerateOtp(){
-        val otp = Otp(null, "code", null, "", null)
+        val otp = com.example.runitup.mobile.model.Otp(null, "code", null, "", null)
         val query = argumentCaptor<Query>()
         val updateQuery = argumentCaptor<Update>()
-        val otpArg = argumentCaptor<Otp>()
+        val otpArg = argumentCaptor<com.example.runitup.mobile.model.Otp>()
 
         whenever(mockOtpRepository.save(otpArg.capture())).thenReturn(otp)
 
         service.generateOtp("oid", "760")
 
-        verify(mockMongoTemplate).updateFirst(query.capture(), updateQuery.capture(), eq( Otp::class.java))
+        verify(mockMongoTemplate).updateFirst(query.capture(), updateQuery.capture(), eq( com.example.runitup.mobile.model.Otp::class.java))
         assertEquals("Query: { \"phoneNumber\" : \"760\"}, Fields: {}, Sort: {}", query.firstValue.toString())
         assertEquals("{ \"\$set\" : { \"isActive\" : false}}", updateQuery.firstValue.toString())
         val otpCreated = otpArg.firstValue

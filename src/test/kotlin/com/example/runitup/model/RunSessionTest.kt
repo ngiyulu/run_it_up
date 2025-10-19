@@ -1,7 +1,7 @@
 package com.example.runitup.model
 
 import com.example.runitup.BaseTest
-import com.example.runitup.enum.RunStatus
+import com.example.runitup.mobile.enum.RunStatus
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import java.time.LocalDate
@@ -12,10 +12,11 @@ import kotlin.test.assertTrue
 
 class RunSessionTest: BaseTest() {
 
-    lateinit var runSession: RunSession
+    lateinit var runSession: com.example.runitup.mobile.model.RunSession
     override fun setUp() {
         super.setUp()
-        runSession = RunSession(allowGuest = true,
+        runSession = com.example.runitup.mobile.model.RunSession(
+            allowGuest = true,
             date = LocalDate.now(),
             description = "",
             duration = 1,
@@ -28,7 +29,8 @@ class RunSessionTest: BaseTest() {
             privateRun = true,
             startTime = LocalTime.now(),
             title = "",
-            zoneId = "")
+            zoneId = ""
+        )
     }
     @Test
     fun testIsFree(){
@@ -44,7 +46,7 @@ class RunSessionTest: BaseTest() {
         runSession.bookingList = mutableListOf()
         assertFalse(runSession.isParticiPant("oid"))
 
-        val booking = RunSession.SessionRunBooking("id", "oid", 2)
+        val booking = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid", 2)
         runSession.bookingList = mutableListOf(booking)
         assertTrue(runSession.isParticiPant("oid"))
 
@@ -96,12 +98,12 @@ class RunSessionTest: BaseTest() {
     @Test
     fun testAtFullCapacity(){
         runSession.maxPlayer = 5
-        val booking1 = RunSession.SessionRunBooking("id", "oid", 2)
-        val booking2 = RunSession.SessionRunBooking("id", "oid", 1)
+        val booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid", 2)
+        val booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         assertFalse(runSession.atFullCapacity())
 
-        val booking3 = RunSession.SessionRunBooking("id", "oid", 2)
+        val booking3 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid", 2)
         runSession.bookingList = mutableListOf(booking1, booking2, booking3)
         assertTrue(runSession.atFullCapacity())
 
@@ -111,8 +113,8 @@ class RunSessionTest: BaseTest() {
     @Test
     fun testUserHasBookingAlready(){
         runSession.maxPlayer = 5
-        val booking1 = RunSession.SessionRunBooking("id", "oid1", 2)
-        val booking2 = RunSession.SessionRunBooking("id", "oid2", 1)
+        val booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid1", 2)
+        val booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid2", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         assertTrue(runSession.userHasBookingAlready("oid1"))
         assertFalse(runSession.userHasBookingAlready("oid4"))
@@ -121,14 +123,14 @@ class RunSessionTest: BaseTest() {
     @Test
     fun testAvailableSpots(){
         runSession.maxPlayer = 5
-        var booking1 = RunSession.SessionRunBooking("id", "oid1", 2)
-        var booking2 = RunSession.SessionRunBooking("id", "oid2", 1)
+        var booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid1", 2)
+        var booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid2", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         assertEquals(2, runSession.availableSpots())
 
 
-        booking1 = RunSession.SessionRunBooking("id", "oid1", 4)
-        booking2 = RunSession.SessionRunBooking("id", "oid2", 1)
+        booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid1", 4)
+        booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid2", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         assertEquals(0, runSession.availableSpots())
     }
@@ -137,8 +139,8 @@ class RunSessionTest: BaseTest() {
     fun testUpdateTotal(){
         runSession.maxPlayer = 5
         runSession.amount = 10.00
-        val booking1 = RunSession.SessionRunBooking("id", "oid1", 2)
-        val booking2 = RunSession.SessionRunBooking("id", "oid2", 1)
+        val booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid1", 2)
+        val booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid2", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         runSession.updateTotal()
         assertEquals(30.00, runSession.total)
@@ -148,12 +150,12 @@ class RunSessionTest: BaseTest() {
     fun testUpdateStatus(){
         runSession.maxPlayer = 5
         runSession.status = RunStatus.PENDING
-        val booking1 = RunSession.SessionRunBooking("id", "oid1", 2)
-        val booking2 = RunSession.SessionRunBooking("id", "oid2", 1)
+        val booking1 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid1", 2)
+        val booking2 = com.example.runitup.mobile.model.RunSession.SessionRunBooking("id", "oid2", 1)
         runSession.bookingList = mutableListOf(booking1, booking2)
         runSession.updateStatus("oid1")
 
-        assertEquals( RunSession.JoinButtonStatus.UPDATE, runSession.buttonStatus)
+        assertEquals( com.example.runitup.mobile.model.RunSession.JoinButtonStatus.UPDATE, runSession.buttonStatus)
         assertEquals( true, runSession.showUpdatePaymentButton)
         assertEquals( true, runSession.guestUpdateAllowed)
         assertEquals( true, runSession.leaveSessionUpdateAllowed)
@@ -162,7 +164,7 @@ class RunSessionTest: BaseTest() {
         runSession.status = RunStatus.CONFIRMED
         runSession.updateStatus("")
 
-        assertEquals( RunSession.JoinButtonStatus.WAITLIST, runSession.buttonStatus)
+        assertEquals( com.example.runitup.mobile.model.RunSession.JoinButtonStatus.WAITLIST, runSession.buttonStatus)
         assertEquals( false, runSession.showUpdatePaymentButton)
         assertEquals( true, runSession.guestUpdateAllowed)
         assertEquals( true, runSession.leaveSessionUpdateAllowed)
@@ -171,7 +173,7 @@ class RunSessionTest: BaseTest() {
         runSession.status = RunStatus.CANCELLED
         runSession.updateStatus("")
 
-        assertEquals( RunSession.JoinButtonStatus.HIDE, runSession.buttonStatus)
+        assertEquals( com.example.runitup.mobile.model.RunSession.JoinButtonStatus.HIDE, runSession.buttonStatus)
         assertEquals( false, runSession.showUpdatePaymentButton)
         assertEquals( false, runSession.guestUpdateAllowed)
         assertEquals( false, runSession.leaveSessionUpdateAllowed)
@@ -181,7 +183,7 @@ class RunSessionTest: BaseTest() {
         runSession.status = RunStatus.PENDING
         runSession.updateStatus("")
 
-        assertEquals( RunSession.JoinButtonStatus.JOIN, runSession.buttonStatus)
+        assertEquals( com.example.runitup.mobile.model.RunSession.JoinButtonStatus.JOIN, runSession.buttonStatus)
         assertEquals( true, runSession.showUpdatePaymentButton)
         assertEquals( true, runSession.guestUpdateAllowed)
         assertEquals( true, runSession.leaveSessionUpdateAllowed)
