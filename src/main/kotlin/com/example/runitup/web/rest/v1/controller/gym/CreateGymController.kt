@@ -35,7 +35,7 @@ class CreateGymController:BaseGymController() {
             id = ObjectId().toString(),
             line1 = ad?.line1.orEmpty(),
             line2 = ad?.line2.orEmpty(),
-            location = GeoJsonPoint(-87.629799, 41.878113),
+            location = GeoJsonPoint(-83.749112, 42.488622),
             image = null,
             fee = data.fee,
             phoneNumber = data.phoneNumber,
