@@ -121,6 +121,11 @@ function hideOverlay() {
     if (overlay) overlay.style.display = 'none';
 }
 
+function setToken(t) {
+    localStorage.setItem("token", t);
+}
+
+
 /* Spinner animation */
 const style = document.createElement('style');
 style.innerHTML = `
