@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gyms • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar" style="gap:12px; flex-wrap:wrap;">
+        <h2 style="margin:0;">Gyms</h2>
+        <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+            <input id="searchBox" type="search" placeholder="Search by title…" style="min-width:240px;" />
+            <button class="primary" id="createBtn">+ Add Gym</button>
+        </div>
+    </div>
+
+    <div id="status" class="alert hidden"></div>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th style="width:56px;">Image</th>
+                <th>Title</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th style="width:180px;">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="gymsBody">
+            <tr><td colspan="5" style="text-align:center;color:gray;">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<footer>
+    <div>© RunItUp Admin</div>
+</footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        requireAuth();
+
+        const statusEl = document.getElementById('status');
+        const bodyEl = document.getElementById('gymsBody');
+        const searchBox = document.getElementById('searchBox');
+
+        // Wire up navigation
+        document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
+        document.getElementById('createBtn').addEventListener('click', () => {
+            window.location.href = '/admin/gyms/create';
+        });
+
+        let allGyms = [];
+        await loadGyms();
+
+        // --- Search (debounced, client-side) ---
+        let t;
+        searchBox.addEventListener('input', () => {
+            clearTimeout(t);
+            t = setTimeout(applyFilter, 200);
+        });
+
+        function applyFilter() {
+            const q = (searchBox.value || '').trim().toLowerCase();
+            const list = !q ? allGyms : allGyms.filter(g => (g.title || '').toLowerCase().includes(q));
+            render(list);
+        }
+
+        async function loadGyms() {
+            setStatus(statusEl, 'success', 'Loading gyms...');
+            try {
+                // If your backend supports server-side search/sort, you could call:
+                // const resp = await api('/admin/api/v1/gyms?sort=title,asc');
+                // For now, fetch all then client-sort by title:
+                const resp = await api('/admin/api/v1/gym/list');
+                allGyms = Array.isArray(resp) ? resp.slice() : [];
+                allGyms.sort((a,b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }));
+                render(allGyms);
+                setStatus(statusEl, 'success', `Loaded ${allGyms.length} gyms`);
+            } catch (e) {
+                console.error(e);
+                setStatus(statusEl, 'error', 'Failed to load gyms.');
+                bodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:gray;">Unable to load gyms.</td></tr>`;
+            }
+        }
+
+        function render(list) {
+            if (!list || list.length === 0) {
+                bodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:gray;">No gyms found.</td></tr>`;
+                return;
+            }
+            bodyEl.innerHTML = '';
+            list.forEach(gym => {
+                const tr = document.createElement('tr');
+
+                const imgUrl = gym.imageUrl || gym.photoUrl || gym.image?.url || '';
+                const safeImg = imgUrl ? `<img src="${imgUrl}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid #1f2937;" />`
+                    : `<div style="width:40px;height:40px;border-radius:8px;border:1px solid #1f2937;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:10px;">N/A</div>`;
+
+                const address = [
+                    gym.address?.line1, gym.address?.line2,
+                    gym.address?.city, gym.address?.state, gym.address?.zip
+                ].filter(Boolean).join(', ') || gym.addressText || '—';
+
+                const phone = gym.phone || gym.phoneNumber || '—';
+
+                tr.innerHTML = `
+        <td>${safeImg}</td>
+        <td>${gym.title || gym.name || '—'}</td>
+        <td>${address}</td>
+        <td>${phone}</td>
+        <td>
+          <div style="display:flex;gap:8px;">
+            <button class="badge" data-action="edit" data-id="${gym.id}">Edit</button>
+            <button class="danger" data-action="delete" data-id="${gym.id}">Delete</button>
+          </div>
+        </td>
+      `;
+                bodyEl.appendChild(tr);
+            });
+
+            // Attach action handlers after render
+            bodyEl.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    window.location.href = `/admin/gyms/edit?id=${id}`;
+                });
+            });
+
+            bodyEl.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    if (!confirm('Delete this gym? This cannot be undone.')) return;
+                    try {
+                        await api(`/admin/api/v1/gyms/${id}`, { method: 'DELETE' });
+                        setStatus(statusEl, 'success', 'Gym deleted.');
+                        // Remove locally & re-render
+                        allGyms = allGyms.filter(g => String(g.id) !== String(id));
+                        applyFilter();
+                    } catch (err) {
+                        console.error(err);
+                        setStatus(statusEl, 'error', 'Failed to delete gym.');
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

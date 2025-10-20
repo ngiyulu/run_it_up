@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="container">
+    <div class="card" style="max-width:480px;margin:40px auto;">
+        <h2>Admin Login</h2>
+
+        <div id="status" class="alert hidden"></div>
+
+        <label>Email</label>
+        <input id="email" type="email" placeholder="admin@runitup.com" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" />
+
+        <button class="primary" id="loginBtn">Login</button>
+        <small class="help">Calls <code>POST /admin/auth/v1/login</code>, saves the JWT, then navigates to dashboard.</small>
+    </div>
+</div>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    const statusEl = document.getElementById('status');
+
+    // ✅ Check if token already exists
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('token');
+        const apiBase = "admin/auth/v1";
+
+        if (token && token.trim().length > 10) {
+            try {
+                // optional: validate token before redirect
+                const res = await fetch(`auth/v1/validate`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.valid) {
+                        console.log('Already authenticated as', data.userId || '');
+                        window.location.href = '/admin/dashboard';
+                    }
+                }
+            } catch (err) {
+                console.warn('Token validation failed', err);
+            }
+        }
+    });
+
+    // ✅ Handle login click
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        try {
+            setStatus(statusEl, 'success', 'Signing in...');
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            const resp = await api('/admin/auth/v1/login', {
+                method: 'POST',
+                data: { email, password }
+            });
+
+            if (resp && resp.token) {
+                console.log("token =", resp.token);
+                const admin = resp.admin;
+                const name = `${admin.first} ${admin.last}`.trim();
+
+                // save token + optional name
+                setToken(resp.token, name);
+                // ✅ redirect to dashboard
+                window.location.href = '/admin/dashboard';
+            } else {
+                setStatus(statusEl, 'error', 'No token returned.');
+            }
+        } catch (e) {
+            setStatus(statusEl, 'error', e.message || 'Login failed');
+        }
+    });
+
+    // Handle session-expired redirect
+    const msg = new URLSearchParams(location.search).get('msg');
+    if (msg === 'expired') setStatus(statusEl, 'error', 'Session expired. Please log in again.');
+</script>
+</body>
+</html>

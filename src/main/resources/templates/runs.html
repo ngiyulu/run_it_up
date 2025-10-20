@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run Sessions • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+        <div>
+            <h2>Run Sessions</h2>
+            <div>
+                <label for="sessionDate">Select Date</label>
+                <input id="sessionDate" type="date" />
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button class="primary" id="loadBtn">Load</button>
+            <button class="secondary" id="createBtn">+ Create New Session</button>
+        </div>
+    </div>
+
+    <div id="status" class="alert hidden"></div>
+
+    <div id="sessionsContainer" class="card">
+        <table id="sessionsTable">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Gym</th>
+                <th>Hosted By</th>
+                <th>Players</th>
+                <th>Spots</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody id="sessionsBody">
+            <tr><td colspan="7" style="text-align:center;color:rgb(128,128,128);">No sessions loaded.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<footer>
+    <div>© RunItUp Admin</div>
+</footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        requireAuth();
+
+        const dateInput = document.getElementById('sessionDate');
+        const loadBtn = document.getElementById('loadBtn');
+        const createBtn = document.getElementById('createBtn');
+        const tableBody = document.getElementById('sessionsBody');
+        const statusEl = document.getElementById('status');
+
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        await loadSessions(today);
+
+        const openPicker = () => {
+            if (typeof dateInput.showPicker === 'function') dateInput.showPicker();
+            else { dateInput.focus(); dateInput.click(); }
+        };
+        dateInput.addEventListener('focus', openPicker);
+        dateInput.addEventListener('click', openPicker);
+
+        dateInput.addEventListener('change', async () => {
+            await loadSessions(dateInput.value || today);
+        });
+        loadBtn.addEventListener('click', async () => {
+            await loadSessions(dateInput.value || today);
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', e => {
+            e.preventDefault(); logout();
+        });
+
+        // ✅ Handle Create Session click
+        createBtn.addEventListener('click', () => {
+            // Option 1: Navigate to session creation page
+            window.location.href = '/admin/runsessions/create';
+
+            // Option 2 (alternative): open inline modal form instead
+            // openCreateSessionForm();
+        });
+
+        async function loadSessions(date) {
+            setStatus(statusEl, 'success', 'Loading sessions...');
+            try {
+                const resp = await api(`/admin/api/v1/run-session/by-date/${date}`);
+                renderSessions(resp);
+                setStatus(statusEl, 'success', `Showing sessions for ${date}`);
+            } catch (err) {
+                console.error(err);
+                setStatus(statusEl, 'error', 'Failed to load sessions.');
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgb(128,128,128);">No sessions found.</td></tr>`;
+            }
+        }
+
+        function renderSessions(list) {
+            if (!Array.isArray(list) || list.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgb(128,128,128);">No sessions found for this date.</td></tr>`;
+                return;
+            }
+            tableBody.innerHTML = '';
+            list.forEach(session => {
+                const row = document.createElement('tr');
+                const pretty = (t) => {
+                    if (!t) return '';
+                    const [h, m, s = '00'] = String(t).split(':');
+                    const d = new Date();
+                    d.setHours(parseInt(h,10), parseInt(m,10), parseInt(s,10), 0);
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                };
+                row.innerHTML = `
+        <td>${pretty(session.startTime)} - ${pretty(session.endTime)}</td>
+        <td>${session.gym?.title ?? '—'}</td>
+        <td>${session.hostedBy ?? '—'}</td>
+        <td>${(session.players?.length ?? 0)}</td>
+        <td>${(session.maxPlayer ?? 0)}</td>
+        <td>${fmtMoney(session.amount ?? 0)}</td>
+        <td>${session.status ?? '—'}</td>
+      `;
+                tableBody.appendChild(row);
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 package com.example.runitup.extensions
 
 import com.example.runitup.BaseTest
-import com.example.runitup.enum.SkillLevel
+import com.example.runitup.mobile.enum.SkillLevel
+import com.example.runitup.mobile.extensions.mapFromString
 import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

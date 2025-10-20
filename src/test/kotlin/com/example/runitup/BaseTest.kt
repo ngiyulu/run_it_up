@@ -1,9 +1,7 @@
 package com.example.runitup
 
-import com.example.runitup.model.RunSession
-import com.example.runitup.repository.BookingRepository
-import com.example.runitup.repository.OtpRepository
-import org.junit.jupiter.api.BeforeAll
+import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.repository.OtpRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
@@ -24,7 +22,7 @@ open class BaseTest {
     lateinit var mockMongoTemplate: MongoTemplate
 
     @Mock
-    lateinit var mockRSession: RunSession
+    lateinit var mockRSession: com.example.runitup.mobile.model.RunSession
 
     open fun setUp(){
         var a = 1

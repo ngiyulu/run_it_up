@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>RunItUp Admin</h1>
+        <p>Welcome. Choose an option below.</p>
+
+        <div class="row">
+            <div class="col"><a class="badge" th:href="@{/admin/login}">Login</a></div>
+            <div class="col"><a class="badge" th:href="@{/admin/dashboard}">Dashboard</a></div>
+        </div>
+
+        <hr />
+
+        <label>API Base URL</label>
+        <input id="apiBase" placeholder="http://localhost:8080" />
+        <button class="primary" id="saveApi">Save</button>
+        <small class="help">This is where your Spring Boot Admin API is running.</small>
+    </div>
+</div>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('apiBase');
+        const saved = localStorage.getItem('apiBase') || 'http://localhost:8080';
+        input.value = saved;
+
+        // save API base URL
+        document.getElementById('saveApi').addEventListener('click', () => {
+            localStorage.setItem('apiBase', input.value.trim());
+            alert('Saved!');
+        });
+
+        // check if user is already authenticated
+        const jwt = localStorage.getItem('token');
+        // if (jwt && jwt.trim().length > 10) {
+        //     api('/auth/validate', { method: 'GET' })
+        //         .then(() => window.location.href = '/admin/dashboard')
+        //         .catch(() => clearToken()); // invalid token, stay on page
+        // }
+        if (jwt && jwt.trim().length > 10) {
+            // optional: you can ping a small endpoint to verify token validity before redirect
+            window.location.href = '/admin/dashboard';
+        }
+    });
+</script>
+</body>
+</html>

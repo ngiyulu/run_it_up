@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer>
+    <div>© RunItUp Admin • v1.0</div>
+</footer>
+<script>
+    const out = document.getElementById('logoutBtn');
+    if (out) out.addEventListener('click', (e)=>{ e.preventDefault(); localStorage.removeItem('token'); location.href='/admin/login'; });
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 package com.example.runitup.extensions
 
 import com.example.runitup.BaseTest
+import com.example.runitup.mobile.extensions.convertToCents
+import com.example.runitup.mobile.extensions.mapToUserPayment
 import com.stripe.model.PaymentMethod
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
