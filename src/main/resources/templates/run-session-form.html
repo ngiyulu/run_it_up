@@ -12,17 +12,20 @@
         .tabpanel { display:none; }
         .tabpanel.active { display:block; }
         .muted { opacity:0.5; pointer-events:none; }
-        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
-        .modal { background:#0b1220; border:1px solid #1f2937; border-radius:14px; padding:16px; width:min(900px, 95vw); max-height:85vh; overflow:auto; }
-        .show { display:flex !important; }
-        .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-        .gym-item { display:flex; gap:10px; align-items:center; border:1px solid #1f2937; border-radius:10px; padding:8px; }
-        .gym-item img { width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #1f2937;}
-        .list { display:grid; gap:8px; }
-        .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #1f2937; }
-        .rowline { display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #1f2937; border-radius:10px; }
         .hidden { display:none !important; }
         .danger { background:#7f1d1d; border-color:#7f1d1d; }
+
+        /* Gym modal styles */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
+        .modal { background:#0b1220; border:1px solid #1f2937; border-radius:14px; padding:16px; width:min(900px,95vw); max-height:85vh; overflow:auto; }
+        .modal .toolbar { display:flex; align-items:center; gap:8px; margin:0 0 10px 0; }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+        .gym-card { display:flex; gap:12px; align-items:center; border:1px solid #1f2937; border-radius:12px; padding:10px; }
+        .gym-thumb { width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; background:#0f172a; }
+        .gym-body { flex:1; min-width:0; }
+        .gym-title { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .gym-address { color:#9ca3af; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     </style>
 </head>
 <body>
@@ -41,17 +44,18 @@
 <div class="container">
     <div class="toolbar">
         <h2 id="pageTitle">Create Run Session</h2>
-        <div class="badge">JWT auth required</div>
     </div>
 
     <div id="status" class="alert hidden"></div>
 
+    <!-- Tabs -->
     <div class="tabs">
         <div class="tab active" data-tab="details">Details</div>
         <div class="tab" data-tab="players">Players</div>
         <div class="tab" data-tab="waitlist">Waitlist</div>
     </div>
 
+    <!-- Details -->
     <form id="runForm" class="card tabpanel active" data-panel="details" style="max-width:1000px;">
         <div class="row">
             <div class="col">
@@ -88,10 +92,7 @@
 
         <div class="row">
             <div class="col">
-                <label class="checkbox">
-                    <input id="allowGuest" type="checkbox" />
-                    Allow Guests
-                </label>
+                <label class="checkbox"><input id="allowGuest" type="checkbox" /> Allow Guests</label>
             </div>
             <div class="col">
                 <label for="maxGuest">Max Guests</label>
@@ -102,10 +103,7 @@
 
         <div class="row">
             <div class="col">
-                <label class="checkbox">
-                    <input id="privateRun" type="checkbox" />
-                    Private run (unlisted)
-                </label>
+                <label class="checkbox"><input id="privateRun" type="checkbox" /> Private run (unlisted)</label>
             </div>
             <div class="col">
                 <label for="hostedBy">Hosted By *</label>
@@ -135,7 +133,7 @@
                 <input type="hidden" id="gymId" />
             </div>
             <div class="col">
-                <label for="zoneId">Time Zone (IANA) *</label>
+                <label for="zoneId">Time Zone *</label>
                 <input id="zoneId" placeholder="America/Chicago" required />
             </div>
         </div>
@@ -149,90 +147,122 @@
         </div>
     </form>
 
+    <!-- Players -->
     <div class="card tabpanel" data-panel="players">
         <div class="toolbar"><h3>Players</h3></div>
-        <div id="playersList" class="list">
-            <div class="rowline" style="justify-content:center; color:gray;">No data.</div>
-        </div>
+        <div id="playersList" class="list"><div class="rowline" style="justify-content:center;color:gray;">No data.</div></div>
     </div>
 
+    <!-- Waitlist -->
     <div class="card tabpanel" data-panel="waitlist">
         <div class="toolbar"><h3>Waitlist</h3></div>
-        <div id="waitList" class="list">
-            <div class="rowline" style="justify-content:center; color:gray;">No data.</div>
-        </div>
+        <div id="waitList" class="list"><div class="rowline" style="justify-content:center;color:gray;">No data.</div></div>
     </div>
 </div>
 
 <footer><div>© RunItUp Admin</div></footer>
 
-<!-- Gym Picker Modal -->
+<!-- ✅ Gym Picker Modal -->
 <div id="gymModal" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-label="Choose Gym">
         <div class="toolbar">
-            <h3>Choose Gym</h3>
-            <div style="display:flex; gap:8px; margin-left:auto;">
-                <input id="gymSearch" type="search" placeholder="Search gyms…" />
-                <button id="gymCloseBtn" type="button">Close</button>
-            </div>
+            <h3 style="margin:0;">Choose Gym</h3>
+            <input id="gymSearch" type="search" placeholder="Search gyms…" style="margin-left:auto;" />
+            <button id="gymCloseBtn" type="button">Close</button>
         </div>
         <div id="gymList" class="grid"></div>
-        <div id="gymEmpty" class="alert hidden">No gyms found.</div>
+        <div id="gymEmpty" class="alert hidden" style="margin-top:10px;">No gyms found.</div>
     </div>
 </div>
 
 <script th:src="@{/app.js}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        requireAuth();
-        const $ = (q) => document.querySelector(q);
-        const statusEl = $('#status');
-        const dateEl = $('#date');
-        const startEl = $('#startTime');
-        const endEl = $('#endTime');
-        const maxPlayerEl = $('#maxPlayer');
-        const maxGuestEl = $('#maxGuest');
-        const allowGuestEl = $('#allowGuest');
-        const guestHelp = $('#guestHelp');
+    // --- Address helper
+    function formatGymAddress(g) {
+        return [g.line1, g.line2, g.city, g.state, g.zip].filter(Boolean).join(', ') || 'No address';
+    }
 
-        // --- Open pickers when clicked/focused ---
-        function openPicker(el) {
-            if (typeof el.showPicker === 'function') el.showPicker();
-            else { el.focus(); el.click(); }
+    // --- Gym Modal Renderer
+    function renderGyms(gyms) {
+        const gymList = document.getElementById('gymList');
+        const gymEmpty = document.getElementById('gymEmpty');
+        const gymIdEl = document.getElementById('gymId');
+        const gymTitleEl = document.getElementById('gymTitle');
+        const gymAddrEl = document.getElementById('gymAddress');
+
+        gymList.innerHTML = '';
+        if (!gyms || gyms.length === 0) {
+            gymEmpty.classList.remove('hidden');
+            return;
         }
-        [dateEl, startEl, endEl].forEach(el => {
-            el.addEventListener('click', () => openPicker(el));
-            el.addEventListener('focus', () => openPicker(el));
-        });
+        gymEmpty.classList.add('hidden');
 
-        // --- Enforce Max Players >= 10 & Max Guests ≤ Max Players ---
-        function syncMaxGuestCap() {
-            const maxPlayers = parseInt(maxPlayerEl.value || '0', 10);
-            maxGuestEl.max = Math.max(0, maxPlayers);
-            const mg = parseInt(maxGuestEl.value || '0', 10);
-            if (!Number.isNaN(mg) && mg > maxPlayers) maxGuestEl.value = String(maxPlayers);
+        gyms.sort((a,b) => (a.title).localeCompare(b.title , undefined, {sensitivity:'base'}));
+
+        gyms.forEach(g => {
+            const card = document.createElement('div');
+            card.className = 'gym-card';
+
+            const imgUrl = g.image
+            const title = g.title
+            const address = formatGymAddress(g);
+            console.log(address)
+            console.log(title)
+            const img = document.createElement('img');
+            img.className = 'gym-thumb';
+            img.alt = title;
+            if (imgUrl) img.src = imgUrl; else img.style.display = 'none';
+
+            const body = document.createElement('div');
+            body.className = 'gym-body';
+            body.innerHTML = `<div class="gym-title">${title}</div><div class="gym-address">${address}</div>`;
+
+            const btn = document.createElement('button');
+            btn.className = 'primary';
+            btn.textContent = 'Select';
+            btn.onclick = () => {
+                gymIdEl.value = g.id;
+                gymTitleEl.value = title;
+                gymAddrEl.textContent = address;
+                closeGymPicker();
+            };
+
+            card.appendChild(img);
+            card.appendChild(body);
+            card.appendChild(btn);
+            gymList.appendChild(card);
+        });
+    }
+
+    function closeGymPicker() {
+        const modal = document.getElementById('gymModal');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden','true');
+    }
+
+    function openGymPicker() {
+        const modal = document.getElementById('gymModal');
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden','false');
+        loadGyms();
+    }
+
+    async function loadGyms() {
+        try {
+            let gyms = await api('/admin/api/v1/gym/list');
+            const search = document.getElementById('gymSearch').value.trim().toLowerCase();
+            if (search) gyms = gyms.filter(g => (g.title || '').toLowerCase().includes(search));
+            renderGyms(gyms);
+        } catch (e) {
+            console.error(e);
+            renderGyms([]);
         }
+    }
 
-        maxPlayerEl.addEventListener('input', () => {
-            const val = parseInt(maxPlayerEl.value || '0', 10);
-            if (!Number.isNaN(val) && val < 10) maxPlayerEl.value = '10';
-            syncMaxGuestCap();
-        });
-
-        allowGuestEl.addEventListener('change', () => {
-            syncGuest();
-            syncMaxGuestCap();
-        });
-
-        function syncGuest() {
-            const enabled = allowGuestEl.checked;
-            maxGuestEl.disabled = !enabled;
-            guestHelp.classList.toggle('hidden', enabled);
-            maxGuestEl.classList.toggle('muted', !enabled);
-            if (!enabled) maxGuestEl.value = '';
-        }
-        syncGuest();
-        syncMaxGuestCap();
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('chooseGymBtn').onclick = openGymPicker;
+        document.getElementById('gymCloseBtn').onclick = closeGymPicker;
+        document.getElementById('gymSearch').oninput = () => loadGyms();
     });
 </script>
 </body>
