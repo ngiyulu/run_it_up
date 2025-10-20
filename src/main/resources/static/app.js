@@ -1,130 +1,175 @@
-// ============================
-// Global Config
-// ============================
+/* ===========================================================
+   RunItUp Admin – Shared JS Helpers
+   =========================================================== */
 
-// The API base URL (change to your backend)
-const API_BASE = localStorage.getItem("apiBase") ||
-    (location.origin.includes("127.0.0.1") || location.origin.includes("localhost")
-        ? "http://localhost:8080"
-        : location.origin);
+console.log("RunItUp Admin JS loaded");
 
-function setApiBase(url) {
-    localStorage.setItem("apiBase", url);
-}
+const API_HEADERS = {
+    'Content-Type': 'application/json'
+};
 
-// ============================
-// Auth helpers
-// ============================
+/* -------------------------------
+   Unified API Wrapper
+--------------------------------*/
+async function api(path, options = {}) {
+    const token = localStorage.getItem('token') || '';
+    const method = options.method || 'GET';
+    const headers = Object.assign({}, API_HEADERS, options.headers || {});
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-function token() {
-    return localStorage.getItem("token");
-}
+    const init = { method, headers };
+    if (options.data) {
+        if (options.data instanceof FormData) {
+            // If FormData, override headers (browser sets correct boundary)
+            delete headers['Content-Type'];
+            init.body = options.data;
+        } else {
+            init.body = JSON.stringify(options.data);
+        }
+    }
 
-function setToken(token, name) {
-    localStorage.setItem("token", token);
-}
-
-function clearToken() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("name");
-}
-
-function authHeaders(extra = {}) {
-    const headers = { "Content-Type": "application/json", ...extra };
-    if (token()) headers["Authorization"] = "Bearer " + token();
-    return headers;
-}
-
-// ============================
-// API Wrapper
-// ============================
-
-async function api(path, { method = "GET", data, headers = {}, raw = false } = {}) {
-    const opts = { method, headers: authHeaders(headers) };
-    if (data !== undefined && !raw) opts.body = JSON.stringify(data);
-
-    const res = await fetch(API_BASE + path, opts);
-
-    if (res.status === 401) {
-        clearToken();
-        window.location.href = "./login.html?msg=expired";
+    const resp = await fetch(path, init);
+    if (resp.status === 401) {
+        console.warn('Unauthorized → redirecting to login');
+        localStorage.removeItem('token');
+        window.location.href = '/admin/login?msg=expired';
         return;
     }
 
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || res.statusText);
+    if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        throw new Error(text || `HTTP ${resp.status}`);
     }
 
-    const ct = res.headers.get("content-type") || "";
-    if (ct.includes("application/json")) return res.json();
-    return res.text();
+    const contentType = resp.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) return resp.json();
+    return resp.text();
 }
 
-// ============================
-// UI Helpers
-// ============================
-
+/* -------------------------------
+   Authentication helpers
+--------------------------------*/
 function requireAuth() {
-    if (!token()) {
-        window.location.href = "./login.html?next=" + encodeURIComponent(location.pathname);
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.warn("No JWT found → redirecting to login");
+        window.location.href = '/admin/login';
     }
 }
 
 function logout() {
-    clearToken();
-    window.location.href = "./login";
+    localStorage.removeItem('token');
+    window.location.href = '/admin/login';
 }
 
+/* -------------------------------
+   Status / Alert handling
+--------------------------------*/
 function setStatus(el, type, msg) {
-    el.className = "alert " + type;
-    el.textContent = msg;
-    el.classList.remove("hidden");
+    if (!el) return;
+    el.classList.remove('hidden', 'success', 'error');
+    el.classList.add(type);
+    el.textContent = msg || '';
+    // auto-hide after 5s
+    if (type !== 'success') return;
+    setTimeout(() => {
+        el.classList.add('hidden');
+    }, 5000);
 }
 
-function qs(sel, root = document) {
-    return root.querySelector(sel);
+/* -------------------------------
+   Money formatting
+--------------------------------*/
+function fmtMoney(value, currency = 'USD') {
+    const num = parseFloat(value || 0);
+    return num.toLocaleString('en-US', {
+        style: 'currency',
+        currency
+    });
 }
 
-function qsa(sel, root = document) {
-    return [...root.querySelectorAll(sel)];
-}
-
-function fmtMoney(n) {
-    return (n ?? 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
-}
-
-function todayISO() {
-    return new Date().toISOString().slice(0, 10);
-}
-
-function toISODate(d) {
-    return new Date(d).toISOString().slice(0, 10);
-}
-
-
-function validate() {
-    if (!titleEl.value.trim()) throw new Error('Title is required.');
-    if (!dateEl.value) throw new Error('Date is required.');
-    if (!startEl.value) throw new Error('Start time is required.');
-    if (!endEl.value) throw new Error('End time is required.');
-    if (!zoneIdEl.value.trim()) throw new Error('Time zone is required.');
-    if (!hostedByEl.value.trim()) throw new Error('Hosted By is required.');
-
-    const amount = Number.parseFloat(amountEl.value);
-    if (Number.isNaN(amount) || amount < 0) throw new Error('Amount must be a non-negative number.');
-
-    const maxPlayers = Number.parseInt(maxPlayerEl.value, 10);
-    if (Number.isNaN(maxPlayers) || maxPlayers < 10)
-        throw new Error('Max players must be at least 10.');
-
-    if (!gymIdEl.value) throw new Error('Please choose a gym.');
-
-    if (allowGuestEl.checked) {
-        const maxGuest = Number.parseInt(maxGuestEl.value || '0', 10);
-        if (Number.isNaN(maxGuest) || maxGuest < 0)
-            throw new Error('Max guests must be a non-negative number.');
-        if (maxGuest > maxPlayers)
-            throw new Error('Max guests must be less than or equal to Max players.');
+/* -------------------------------
+   Loading Overlay
+--------------------------------*/
+function showOverlay(msg = 'Loading...') {
+    let overlay = document.getElementById('progressOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'progressOverlay';
+        overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; color: white; font-size: 18px; font-weight: 600;
+    `;
+        overlay.innerHTML = `<div style="text-align:center;">
+      <div class="spinner" style="
+        width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+        border-top: 4px solid #3b82f6; border-radius: 50%; 
+        margin: 0 auto 10px auto; animation: spin 1s linear infinite;">
+      </div>
+      <div>${msg}</div>
+    </div>`;
+        document.body.appendChild(overlay);
+    } else {
+        overlay.querySelector('div:last-child').textContent = msg;
+        overlay.style.display = 'flex';
     }
 }
+
+function hideOverlay() {
+    const overlay = document.getElementById('progressOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+/* Spinner animation */
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`;
+document.head.appendChild(style);
+
+/* -------------------------------
+   Utility – Query Params
+--------------------------------*/
+function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+/* -------------------------------
+   Helper – Validate email/phone
+--------------------------------*/
+function isValidEmail(email) {
+    return /^[^@]+@[^@]+\.[^@]+$/.test(email);
+}
+
+function isValidPhone(phone) {
+    return /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(phone);
+}
+
+/* -------------------------------
+   Hook overlay into form submits
+--------------------------------*/
+document.addEventListener('submit', (e) => {
+    const btn = e.submitter;
+    if (btn && btn.classList.contains('primary')) {
+        showOverlay(btn.textContent.includes('Update') ? 'Updating...' : 'Saving...');
+    }
+});
+window.addEventListener('load', hideOverlay);
+window.addEventListener('pageshow', hideOverlay);
+
+/* -------------------------------
+   Export globally
+--------------------------------*/
+window.api = api;
+window.setStatus = setStatus;
+window.requireAuth = requireAuth;
+window.logout = logout;
+window.fmtMoney = fmtMoney;
+window.showOverlay = showOverlay;
+window.hideOverlay = hideOverlay;
+window.getParam = getParam;
+window.isValidEmail = isValidEmail;
+window.isValidPhone = isValidPhone;
