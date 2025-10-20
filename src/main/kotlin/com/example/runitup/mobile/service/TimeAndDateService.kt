@@ -12,7 +12,7 @@ class TimeAndDateService {
     }
 
     /** Convert the event's local date/time + zone to an Instant, resolving DST overlaps to the later offset. */
-    private fun eventInstant(event: com.example.runitup.mobile.model.RunSession): Instant {
+    private fun eventInstant(event: RunSession): Instant {
         event.startAtUtc?.let { return it } // use cached value if present
         val zone = ZoneId.of(event.zoneId)
         val ldt  = LocalDateTime.of(event.date, event.startTime)
@@ -25,14 +25,14 @@ class TimeAndDateService {
 
 
     /** Hours from NOW to the event (positive => in the future; negative => in the past). */
-    fun hoursUntil(event: com.example.runitup.mobile.model.RunSession, clock: Clock = Clock.systemUTC()): Double {
+    fun hoursUntil(event: RunSession, clock: Clock = Clock.systemUTC()): Double {
         val now = Instant.now(clock)
         val diffMillis = Duration.between(now, eventInstant(event)).toMillis()
         return diffMillis / 3_600_000.0
     }
 
     /** Whole hours difference (truncated toward zero). */
-    fun wholeHoursUntil(runSession: com.example.runitup.mobile.model.RunSession, clock: Clock = Clock.systemUTC()): Long =
+    fun wholeHoursUntil(runSession: RunSession, clock: Clock = Clock.systemUTC()): Long =
         Duration.between(Instant.now(clock), eventInstant(runSession)).toHours()
 
 }

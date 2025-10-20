@@ -162,6 +162,18 @@ document.addEventListener('submit', (e) => {
         showOverlay(btn.textContent.includes('Update') ? 'Updating...' : 'Saving...');
     }
 });
+
+function prettyDate(iso) {
+    if (!iso) return '';
+    // Handles "2025-11-12" or ISO string
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso; // fallback
+    return d.toLocaleDateString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
 window.addEventListener('load', hideOverlay);
 window.addEventListener('pageshow', hideOverlay);
 

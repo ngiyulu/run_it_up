@@ -1,5 +1,7 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
+import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
@@ -20,6 +22,9 @@ class AdminRunSessionRestController {
     lateinit var repo: RunSessionRepository
 
     @Autowired
+    lateinit var cacheManager: MyCacheManager
+
+    @Autowired
     lateinit var createSessionController: CreateSessionController
     @PostMapping("/create")
     fun create(@RequestBody model: CreateRunSessionRequest): RunSession {
@@ -32,7 +37,10 @@ class AdminRunSessionRestController {
     ): List<RunSession> {
         val startUtc = date.atStartOfDay(ZoneOffset.UTC).toInstant()
         val endUtc = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc))
+        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc)).map {
+            it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
+            it
+        }
         // If you used the Instant overload, pass startUtc/endUtc directly.
     }
 
@@ -43,11 +51,22 @@ class AdminRunSessionRestController {
     ): List<RunSession> {
         val startUtc = start.atStartOfDay(ZoneOffset.UTC).toInstant()
         val endUtc = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc))
+        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc)).map {
+            it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
+            it
+        }
     }
 
     @GetMapping("/{id}")
-    fun get(@PathVariable id: String) = repo.findById(id)
+    fun get(@PathVariable id: String): RunSession? {
+        val runDb = repo.findById(id)
+        if (!runDb.isPresent) {
+            throw ApiRequestException("invalid_gym")
+        }
+        val run = runDb.get()
+        run.host = cacheManager.getAdmin(run.hostedBy.orEmpty())
+        return run
+    }
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: String) = repo.deleteById(id)

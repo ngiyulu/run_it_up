@@ -63,9 +63,10 @@ class SecurityConfig{
                     "admin/dashboard",
                     "/admin/gyms",
                     "/admin/auth/login",
-                    "/admin/runs",
+                    "/admin/runsessions",
                     "/admin/gyms/create",
                     "/admin/runsessions/create",
+                    "admin/runsessions/edit/**",
                     "/admin/gyms/edit/**",
                 ).permitAll()
                 // everything else needs to be authenticated

@@ -1,8 +1,10 @@
 package com.example.runitup.mobile.model
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import org.bson.types.ObjectId
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
@@ -26,6 +28,7 @@ data class RunSession(
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
     val startAtUtc: Instant? = null, // optional cache
     var hostedBy: String?,
+    var host:AdminUser? = null,
     var allowGuest: Boolean,
     var duration: Int, // in hours
     var notes:String,
@@ -47,7 +50,7 @@ data class RunSession(
     var showUpdatePaymentButton: Boolean = true,
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true
-): com.example.runitup.mobile.model.BaseModel(){
+): BaseModel(){
 
 
     fun isFree(): Boolean{
