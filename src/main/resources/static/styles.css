@@ -270,3 +270,60 @@ small.help {
     inline-size: 18px;         /* optional: consistent size */
     block-size: 18px;
 }
+
+/* Gym section card */
+.gym-section {
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 12px;
+    background: #0b1220;
+}
+.gym-section .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.gym-section .label {
+    font-weight: 600;
+}
+.gym-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9ca3af;
+    font-size: 14px;
+    padding: 12px;
+    border: 1px dashed #374151;
+    border-radius: 10px;
+    background: rgba(55,65,81,.15);
+}
+.gym-picked {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.gym-picked-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    flex: 0 0 auto;
+}
+.gym-picked .text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.gym-picked .title {
+    font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gym-picked .addr {
+    color: #9ca3af;
+    font-size: 12px;
+    margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

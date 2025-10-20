@@ -15,17 +15,32 @@
         .hidden { display:none !important; }
         .danger { background:#7f1d1d; border-color:#7f1d1d; }
 
-        /* Gym modal styles */
+        /* Inline checkbox label */
+        .checkline { display:inline-flex; align-items:center; gap:8px; line-height:1.2; margin:0; padding:0; font-weight:500; }
+        .checkline input[type="checkbox"]{ margin:0; inline-size:18px; block-size:18px; }
+
+        /* Gym section card */
+        .gym-section { border:1px solid #1f2937; border-radius:12px; padding:12px; background:#0b1220; }
+        .gym-section .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .gym-section .label { font-weight:600; }
+        .gym-empty { display:flex; align-items:center; gap:10px; color:#9ca3af; font-size:14px; padding:12px; border:1px dashed #374151; border-radius:10px; background:rgba(55,65,81,.15); }
+        .gym-picked { display:flex; align-items:center; gap:12px; }
+        .gym-picked-thumb{ width:80px; height:80px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; background:#0f172a; flex:0 0 auto; }
+        .gym-picked .text{ display:flex; flex-direction:column; min-width:0; }
+        .gym-picked .title{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .gym-picked .addr{ color:#9ca3af; font-size:12px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+        /* Modal */
         .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
         .modal { background:#0b1220; border:1px solid #1f2937; border-radius:14px; padding:16px; width:min(900px,95vw); max-height:85vh; overflow:auto; }
         .modal .toolbar { display:flex; align-items:center; gap:8px; margin:0 0 10px 0; }
         .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-
         .gym-card { display:flex; gap:12px; align-items:center; border:1px solid #1f2937; border-radius:12px; padding:10px; }
         .gym-thumb { width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; background:#0f172a; }
-        .gym-body { flex:1; min-width:0; }
+        .gym-body { flex:1 1 auto; min-width:0; }
         .gym-title { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .gym-address { color:#9ca3af; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #gymModal .primary{ width:auto !important; flex:0 0 auto; padding:8px 16px; }
     </style>
 </head>
 <body>
@@ -111,10 +126,6 @@
                     <span>Private run (unlisted)</span>
                 </label>
             </div>
-            <div class="col">
-                <label for="hostedBy">Hosted By *</label>
-                <input id="hostedBy" placeholder="Coach / Organizer" required />
-            </div>
         </div>
 
         <div class="row">
@@ -128,16 +139,35 @@
             </div>
         </div>
 
+        <!-- Gym row (full width, bordered, rounded) -->
         <div class="row">
-            <div class="col">
-                <label>Gym *</label>
-                <div class="row" style="gap:10px; align-items:center;">
-                    <input id="gymTitle" placeholder="Select a gym..." readonly required />
-                    <button type="button" class="primary" id="chooseGymBtn">Choose Gym</button>
+            <div class="col" style="width:100%;">
+                <div class="gym-section">
+                    <div class="section-head">
+                        <div class="label">Gym *</div>
+                        <button type="button" class="primary" id="chooseGymBtn">Choose Gym</button>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="gymEmptyState" class="gym-empty">
+                        <span>No gym selected</span>
+                    </div>
+
+                    <!-- Selected state -->
+                    <div id="gymPickedState" class="gym-picked hidden">
+                        <img id="gymThumb" class="gym-picked-thumb" alt="Gym image" />
+                        <div class="text">
+                            <div id="gymTitleText" class="title">—</div>
+                            <div id="gymAddrText" class="addr">—</div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="gymId" />
                 </div>
-                <small id="gymAddress" class="help">No gym selected.</small>
-                <input type="hidden" id="gymId" />
             </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
             <div class="col">
                 <label for="zoneId">Time Zone *</label>
                 <input id="zoneId" placeholder="America/Chicago" required />
@@ -168,7 +198,7 @@
 
 <footer><div>© RunItUp Admin</div></footer>
 
-<!-- ✅ Gym Picker Modal -->
+<!-- Gym Picker Modal -->
 <div id="gymModal" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-label="Choose Gym">
         <div class="toolbar">
@@ -183,103 +213,194 @@
 
 <script th:src="@{/app.js}"></script>
 <script>
-    // --- Address helper
-    function formatGymAddress(g) {
-        return [g.line1, g.line2, g.city, g.state, g.zip].filter(Boolean).join(', ') || 'No address';
+    document.addEventListener('DOMContentLoaded', () => {
+        requireAuth();
+
+        // Tabs
+        const tabs = Array.from(document.querySelectorAll('.tab'));
+        const panels = Array.from(document.querySelectorAll('.tabpanel'));
+        tabs.forEach(t => t.addEventListener('click', () => {
+            tabs.forEach(x => x.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            t.classList.add('active');
+            document.querySelector(`.tabpanel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+        }));
+
+        // Date defaults & picker UX
+        const dateEl = document.getElementById('date');
+        dateEl.value = new Date().toISOString().split('T')[0];
+        [dateEl, document.getElementById('startTime'), document.getElementById('endTime')].forEach(el=>{
+            const openPicker = ()=> typeof el.showPicker==='function'? el.showPicker() : (el.focus(), el.click());
+            el.addEventListener('click', openPicker); el.addEventListener('focus', openPicker);
+        });
+
+        // Guest rules
+        const allowGuestEl = document.getElementById('allowGuest');
+        const maxGuestEl = document.getElementById('maxGuest');
+        const guestHelp = document.getElementById('guestHelp');
+        const maxPlayerEl = document.getElementById('maxPlayer');
+
+        function syncGuest(){ const on = allowGuestEl.checked;
+            maxGuestEl.disabled = !on; guestHelp.classList.toggle('hidden', on);
+            maxGuestEl.classList.toggle('muted', !on); if(!on) maxGuestEl.value='';
+        }
+        function syncMaxGuestCap(){
+            const mp = parseInt(maxPlayerEl.value||'0',10);
+            maxGuestEl.max = Math.max(0, mp);
+            const mg = parseInt(maxGuestEl.value||'0',10);
+            if(!Number.isNaN(mg) && mg>mp) maxGuestEl.value = String(mp);
+        }
+        allowGuestEl.addEventListener('change', ()=>{syncGuest();syncMaxGuestCap();});
+        maxPlayerEl.addEventListener('input', ()=>{
+            const v = parseInt(maxPlayerEl.value||'0',10);
+            if(!Number.isNaN(v) && v<10) maxPlayerEl.value = '10';
+            syncMaxGuestCap();
+        });
+        syncGuest(); syncMaxGuestCap();
+
+        // Form submit
+        const statusEl = document.getElementById('status');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        document.getElementById('runForm').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            try{
+                validate();
+                const payload = collectPayload();
+                setStatus(statusEl,'success','Saving session…');
+                await api('/admin/api/v1/run-session',{ method:'POST', data:payload });
+                setStatus(statusEl,'success','Session created.');
+                window.location.href='/admin/runsessions';
+            }catch(err){ console.error(err); setStatus(statusEl,'error',err.message||'Failed to save.');}
+        });
+        resetBtn.addEventListener('click', ()=>{ document.getElementById('runForm').reset(); setSelectedGym(null); });
+
+        cancelBtn.addEventListener('click', ()=> history.back());
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', e=>{ e.preventDefault(); logout(); });
+
+        function validate(){
+            const title = document.getElementById('title').value.trim();
+            const date = document.getElementById('date').value;
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const maxPlayers = parseInt(document.getElementById('maxPlayer').value,10);
+            const zoneId = document.getElementById('zoneId').value.trim();
+            const gymId = document.getElementById('gymId').value;
+
+            if(!title) throw new Error('Title is required.');
+            if(!date) throw new Error('Date is required.');
+            if(!start) throw new Error('Start time is required.');
+            if(!end) throw new Error('End time is required.');
+            if(Number.isNaN(amount) || amount<0) throw new Error('Amount must be a non-negative number.');
+            if(Number.isNaN(maxPlayers) || maxPlayers<10) throw new Error('Max players must be at least 10.');
+            if(!zoneId) throw new Error('Time zone is required.');
+            if(!gymId) throw new Error('Please choose a gym.');
+
+            if(allowGuestEl.checked){
+                const mg = parseInt(maxGuestEl.value||'0',10);
+                if(Number.isNaN(mg) || mg<0) throw new Error('Max guests must be a non-negative number.');
+                if(mg>maxPlayers) throw new Error('Max guests must be ≤ Max players.');
+            }
+        }
+
+        function collectPayload(){
+            return {
+                title: document.getElementById('title').value.trim(),
+                date: document.getElementById('date').value,
+                startTime: document.getElementById('startTime').value,
+                endTime: document.getElementById('endTime').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                maxPlayer: parseInt(document.getElementById('maxPlayer').value,10),
+                allowGuest: document.getElementById('allowGuest').checked,
+                maxGuest: document.getElementById('allowGuest').checked ? parseInt(document.getElementById('maxGuest').value||'0',10) : 0,
+                privateRun: document.getElementById('privateRun').checked,
+                notes: (document.getElementById('notes').value||'').trim(),
+                description: (document.getElementById('description').value||'').trim(),
+                zoneId: document.getElementById('zoneId').value.trim(),
+                gymId: document.getElementById('gymId').value
+            };
+        }
+    });
+
+    // ---------- Gym picker integration ----------
+    function formatGymAddress(g){
+        return [g.line1, g.line2, g.city, g.state, g.zipCode].filter(Boolean).join(', ') || 'No address';
     }
 
-    // --- Gym Modal Renderer
-    function renderGyms(gyms) {
+    function setSelectedGym(gym){
+        const empty = document.getElementById('gymEmptyState');
+        const picked = document.getElementById('gymPickedState');
+        const idEl = document.getElementById('gymId');
+        const titleEl = document.getElementById('gymTitleText');
+        const addrEl = document.getElementById('gymAddrText');
+        const thumbEl = document.getElementById('gymThumb');
+
+        if(!gym){
+            idEl.value=''; titleEl.textContent='—'; addrEl.textContent='—';
+            thumbEl.src=''; thumbEl.style.display='none';
+            picked.classList.add('hidden'); empty.classList.remove('hidden'); return;
+        }
+        idEl.value = gym.id || '';
+        titleEl.textContent = gym.title || '—';
+        addrEl.textContent = formatGymAddress(gym);
+        if(gym.image){ thumbEl.src=gym.image; thumbEl.style.display=''; thumbEl.onerror=()=>{thumbEl.style.display='none';}; }
+        else { thumbEl.style.display='none'; }
+        empty.classList.add('hidden'); picked.classList.remove('hidden');
+    }
+
+    // Modal open/close/load
+    (function gymModalInit(){
+        const chooseBtn = document.getElementById('chooseGymBtn');
+        const modal = document.getElementById('gymModal');
+        const closeBtn = document.getElementById('gymCloseBtn');
+        const searchEl = document.getElementById('gymSearch');
+
+        chooseBtn.addEventListener('click', openGymPicker);
+        closeBtn.addEventListener('click', closeGymPicker);
+        searchEl.addEventListener('input', loadGyms);
+
+        async function loadGyms(){
+            try{
+                let gyms = await api('/admin/api/v1/gym/list');
+                const q = searchEl.value.trim().toLowerCase();
+                if(q) gyms = gyms.filter(g => (g.title||'').toLowerCase().includes(q));
+                renderGyms(gyms);
+            }catch(e){ console.error(e); renderGyms([]); }
+        }
+        window.loadGyms = loadGyms;
+
+        window.openGymPicker = function(){
+            modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); loadGyms();
+        }
+        window.closeGymPicker = function(){
+            modal.style.display='none'; modal.setAttribute('aria-hidden','true');
+        }
+    })();
+
+    function renderGyms(gyms){
         const gymList = document.getElementById('gymList');
         const gymEmpty = document.getElementById('gymEmpty');
-        const gymIdEl   = document.getElementById('gymId');
-        const gymTitleEl= document.getElementById('gymTitle');
-        const gymAddrEl = document.getElementById('gymAddress');
-
-        gymList.innerHTML = '';
-        if (!Array.isArray(gyms) || gyms.length === 0) {
-            gymEmpty.classList.remove('hidden');
-            return;
-        }
+        gymList.innerHTML='';
+        if(!Array.isArray(gyms) || gyms.length===0){ gymEmpty.classList.remove('hidden'); return; }
         gymEmpty.classList.add('hidden');
 
-        gyms.sort((a,b)=> a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
+        gyms.sort((a,b)=> (a.title||'').localeCompare(b.title||'', undefined, {sensitivity:'base'}));
 
-        gyms.forEach(g => {
-            const card = document.createElement('div');
-            card.className = 'gym-card';
-
-            const imgUrl = g.image;
-            const title  = g.title || g.name || '—';
-            const address= formatGymAddress(g);
-
-            const img = document.createElement('img');
-            img.className = 'gym-thumb';
-            img.alt = title;
-            if (imgUrl) img.src = imgUrl; else {
-                img.remove(); // fallback box next
-                const box = document.createElement('div');
-                box.className = 'gym-thumb-fallback';
-                box.textContent = 'No Image';
-                card.appendChild(box);
-            }
-
-            const body = document.createElement('div');
-            body.className = 'gym-body';
-            body.innerHTML = `
-      <div class="gym-title">${title}</div>
-      <div class="gym-address">${address}</div>
-    `;
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'primary';
-            btn.textContent = 'Select';
-            btn.addEventListener('click', () => {
-                gymIdEl.value = g.id;
-                gymTitleEl.value = title;
-                gymAddrEl.textContent = address;
-                closeGymPicker();
-            });
-
-            card.appendChild(imgUrl ? img : card.lastChild); // ensures a thumb element exists first
-            card.appendChild(body);  // text column in the middle
-            card.appendChild(btn);   // button on the right
-            gymList.appendChild(card);
+        gyms.forEach(g=>{
+            const card = document.createElement('div'); card.className='gym-card';
+            const img = document.createElement('img'); img.className='gym-thumb'; img.alt=g.title||'Gym'; if(g.image) img.src=g.image; else img.style.display='none';
+            const body = document.createElement('div'); body.className='gym-body';
+            body.innerHTML = `<div class="gym-title">${g.title||'—'}</div><div class="gym-address">${formatGymAddress(g)}</div>`;
+            const btn = document.createElement('button'); btn.className='primary'; btn.textContent='Select';
+            btn.onclick = ()=>{ setSelectedGym(g); closeGymPicker(); };
+            card.append(img, body, btn); gymList.appendChild(card);
         });
     }
-
-
-    function closeGymPicker() {
-        const modal = document.getElementById('gymModal');
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden','true');
-    }
-
-    function openGymPicker() {
-        const modal = document.getElementById('gymModal');
-        modal.style.display = 'flex';
-        modal.setAttribute('aria-hidden','false');
-        loadGyms();
-    }
-
-    async function loadGyms() {
-        try {
-            let gyms = await api('/admin/api/v1/gym/list');
-            const search = document.getElementById('gymSearch').value.trim().toLowerCase();
-            if (search) gyms = gyms.filter(g => (g.title || '').toLowerCase().includes(search));
-            renderGyms(gyms);
-        } catch (e) {
-            console.error(e);
-            renderGyms([]);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('chooseGymBtn').onclick = openGymPicker;
-        document.getElementById('gymCloseBtn').onclick = closeGymPicker;
-        document.getElementById('gymSearch').oninput = () => loadGyms();
-    });
 </script>
 </body>
 </html>
