@@ -201,3 +201,72 @@ small.help {
 .hidden {
     display: none !important;
 }
+
+
+/* Scope fixes to the modal only so the rest of the app stays the same */
+#gymModal .gym-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+#gymModal .gym-thumb,
+#gymModal .gym-thumb-fallback {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    flex: 0 0 auto;
+}
+
+#gymModal .gym-body {
+    flex: 1 1 auto;          /* <-- let the text take available space */
+    min-width: 0;            /* <-- allow text to shrink with ellipsis */
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#gymModal .gym-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#gymModal .gym-address {
+    color: #9ca3af;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The big fix: make the Select button NOT full width inside cards */
+#gymModal .primary {
+    width: auto !important;  /* override any global width:100% */
+    flex: 0 0 auto;          /* do not flex-grow */
+    padding: 8px 16px;
+}
+
+/* Inline, centered checkbox + text */
+.checkline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+    margin: 0;                 /* override any global label margins */
+    padding: 0;
+    font-weight: 500;          /* optional, matches your UI weight */
+}
+.checkline input[type="checkbox"] {
+    margin: 0;                 /* remove default checkbox offset */
+    inline-size: 18px;         /* optional: consistent size */
+    block-size: 18px;
+}

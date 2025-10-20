@@ -92,7 +92,10 @@
 
         <div class="row">
             <div class="col">
-                <label class="checkbox"><input id="allowGuest" type="checkbox" /> Allow Guests</label>
+                <label class="checkline" for="allowGuest">
+                    <input id="allowGuest" type="checkbox" />
+                    <span>Allow Guests</span>
+                </label>
             </div>
             <div class="col">
                 <label for="maxGuest">Max Guests</label>
@@ -103,7 +106,10 @@
 
         <div class="row">
             <div class="col">
-                <label class="checkbox"><input id="privateRun" type="checkbox" /> Private run (unlisted)</label>
+                <label class="checkline" for="privateRun">
+                    <input id="privateRun" type="checkbox" />
+                    <span>Private run (unlisted)</span>
+                </label>
             </div>
             <div class="col">
                 <label for="hostedBy">Hosted By *</label>
@@ -186,53 +192,63 @@
     function renderGyms(gyms) {
         const gymList = document.getElementById('gymList');
         const gymEmpty = document.getElementById('gymEmpty');
-        const gymIdEl = document.getElementById('gymId');
-        const gymTitleEl = document.getElementById('gymTitle');
+        const gymIdEl   = document.getElementById('gymId');
+        const gymTitleEl= document.getElementById('gymTitle');
         const gymAddrEl = document.getElementById('gymAddress');
 
         gymList.innerHTML = '';
-        if (!gyms || gyms.length === 0) {
+        if (!Array.isArray(gyms) || gyms.length === 0) {
             gymEmpty.classList.remove('hidden');
             return;
         }
         gymEmpty.classList.add('hidden');
 
-        gyms.sort((a,b) => (a.title).localeCompare(b.title , undefined, {sensitivity:'base'}));
+        gyms.sort((a,b)=> a.title.localeCompare(b.title, undefined, {sensitivity:'base'}));
 
         gyms.forEach(g => {
             const card = document.createElement('div');
             card.className = 'gym-card';
 
-            const imgUrl = g.image
-            const title = g.title
-            const address = formatGymAddress(g);
-            console.log(address)
-            console.log(title)
+            const imgUrl = g.image;
+            const title  = g.title || g.name || '—';
+            const address= formatGymAddress(g);
+
             const img = document.createElement('img');
             img.className = 'gym-thumb';
             img.alt = title;
-            if (imgUrl) img.src = imgUrl; else img.style.display = 'none';
+            if (imgUrl) img.src = imgUrl; else {
+                img.remove(); // fallback box next
+                const box = document.createElement('div');
+                box.className = 'gym-thumb-fallback';
+                box.textContent = 'No Image';
+                card.appendChild(box);
+            }
 
             const body = document.createElement('div');
             body.className = 'gym-body';
-            body.innerHTML = `<div class="gym-title">${title}</div><div class="gym-address">${address}</div>`;
+            body.innerHTML = `
+      <div class="gym-title">${title}</div>
+      <div class="gym-address">${address}</div>
+    `;
 
             const btn = document.createElement('button');
+            btn.type = 'button';
             btn.className = 'primary';
             btn.textContent = 'Select';
-            btn.onclick = () => {
+            btn.addEventListener('click', () => {
                 gymIdEl.value = g.id;
                 gymTitleEl.value = title;
                 gymAddrEl.textContent = address;
                 closeGymPicker();
-            };
+            });
 
-            card.appendChild(img);
-            card.appendChild(body);
-            card.appendChild(btn);
+            card.appendChild(imgUrl ? img : card.lastChild); // ensures a thumb element exists first
+            card.appendChild(body);  // text column in the middle
+            card.appendChild(btn);   // button on the right
             gymList.appendChild(card);
         });
     }
+
 
     function closeGymPicker() {
         const modal = document.getElementById('gymModal');
