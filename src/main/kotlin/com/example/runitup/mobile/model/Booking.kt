@@ -19,5 +19,5 @@ class Booking (
     var sessionAmount: Double,
     var total: Double,
     var checkInNumber: Int = 0
-): com.example.runitup.mobile.model.BaseModel()
+): BaseModel()
 class  BookingPayment(var amount: Double, var stripePaymentId:String,  var paymentStatus: PaymentStatus = PaymentStatus.PENDING)

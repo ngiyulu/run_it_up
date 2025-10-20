@@ -174,30 +174,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPlayers(s) {
-        const list = s.players || [];
+        const list = s.bookings || s.bookingList || [];
+        const playersList = document.getElementById('playersList');
+        const playersCount = document.getElementById('playersCount'); // optional badge
+
         if (!Array.isArray(list) || list.length === 0) {
+            if (playersCount) playersCount.textContent = '0 signed up';
             playersList.innerHTML = `<div style="text-align:center;color:gray;">No players.</div>`;
             return;
         }
+
+        // total signed up = sum of partySize
+        const totalSignedUp = list.reduce((sum, b) => sum + (b.partySize || 1), 0);
+        if (playersCount) playersCount.textContent = `${totalSignedUp} signed up`;
+
         playersList.innerHTML = '';
-        list.forEach(p => {
+
+        list.forEach(booking => {
+            const p = booking.user || {};
             const row = document.createElement('div');
             row.className = 'rowline';
+            row.style.alignItems = 'center';
+
+            // Avatar
             const avatar = document.createElement('img');
-            avatar.src = p.photoUrl || p.avatar || '';
-            avatar.alt = p.name || p.fullName || p.displayName || 'Player';
-            Object.assign(avatar.style, { width:'36px', height:'36px', borderRadius:'50%', objectFit:'cover' });
+            avatar.src = p.imageUrl || '';
+            avatar.alt = `${p.first || ''} ${p.last || ''}`.trim() || 'Player';
+            Object.assign(avatar.style, {
+                width:'70px', height:'70px', borderRadius:'50%', objectFit:'cover'
+            });
             avatar.onerror = () => { avatar.style.display = 'none'; };
+
+            // Name
             const name = document.createElement('div');
-            name.textContent = p.name || p.fullName || p.displayName || (p.firstName && p.lastName ? `${p.firstName} ${p.lastName}` : '—');
+            name.textContent = `${p.first || ''} ${p.last || ''}`.trim();
             name.style.marginLeft = '10px';
+            name.style.fontWeight = '600';
+
+            // Skill
             const skill = document.createElement('div');
-            skill.textContent = p.skill || p.level || '';
-            skill.style.marginLeft = 'auto'; skill.style.opacity = .7;
-            row.append(avatar, name, skill);
+            skill.textContent = p.level || '';
+            skill.style.marginLeft = 'auto';
+            skill.style.opacity = .7;
+
+            // Guest badge
+            let rightSide = document.createElement('div');
+            rightSide.style.display = 'flex';
+            rightSide.style.alignItems = 'center';
+            rightSide.style.gap = '8px';
+            rightSide.style.marginLeft = '12px';
+
+            if (booking.partySize && booking.partySize > 1) {
+                const badge = document.createElement('div');
+                badge.className = 'badge';
+                badge.textContent = `+${booking.partySize - 1} guest${booking.partySize > 2 ? 's' : ''}`;
+                rightSide.appendChild(badge);
+            }
+
+            // Remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'secondary danger';  // style as needed
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = async () => {
+                const uid = p.userId || booking.userId;
+                if (!uid) { setStatus(statusEl, 'error', 'User id not found for this booking.'); return; }
+                // optional confirm:
+                if (!confirm(`Remove ${p.first || ''} ${p.last || ''}? This will remove any guests in their party.`)) return;
+                removeBtn.disabled = true;
+                await removePlayer(uid);
+                removeBtn.disabled = false;
+            };
+            rightSide.appendChild(removeBtn);
+
+            row.append(avatar, name, skill, rightSide);
             playersList.appendChild(row);
         });
     }
+
 
     function renderWaitlist(s) {
         const list = s.waitList || [];
@@ -406,5 +460,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatGymAddress(g) {
         console.error(g)
         return [g.line1, g.line2, g.city, g.state, g.zipCode].filter(Boolean).join(', ') || 'No address';
+    }
+
+    async function removePlayer(userId) {
+        if (!sessionId) return setStatus(statusEl, 'error', 'Missing session id.');
+        if (!userId)     return setStatus(statusEl, 'error', 'Missing user id.');
+
+        try {
+            setStatus(statusEl, 'success', 'Removing player…');
+            const updated = await api('/admin/api/v1/run-session/remove', {
+                method: 'POST',
+                data: { sessionId, userId } // CancelSessionModel
+            });
+            // Re-render from returned RunSession
+            original = updated;
+            renderPlayers(updated);
+            renderWaitlist?.(updated);
+            setStatus(statusEl, 'success', 'Player removed.');
+        } catch (e) {
+            console.error(e);
+            setStatus(statusEl, 'error', e.message || 'Failed to remove player.');
+        }
     }
 });
