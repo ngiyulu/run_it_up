@@ -101,3 +101,30 @@ function todayISO() {
 function toISODate(d) {
     return new Date(d).toISOString().slice(0, 10);
 }
+
+
+function validate() {
+    if (!titleEl.value.trim()) throw new Error('Title is required.');
+    if (!dateEl.value) throw new Error('Date is required.');
+    if (!startEl.value) throw new Error('Start time is required.');
+    if (!endEl.value) throw new Error('End time is required.');
+    if (!zoneIdEl.value.trim()) throw new Error('Time zone is required.');
+    if (!hostedByEl.value.trim()) throw new Error('Hosted By is required.');
+
+    const amount = Number.parseFloat(amountEl.value);
+    if (Number.isNaN(amount) || amount < 0) throw new Error('Amount must be a non-negative number.');
+
+    const maxPlayers = Number.parseInt(maxPlayerEl.value, 10);
+    if (Number.isNaN(maxPlayers) || maxPlayers < 10)
+        throw new Error('Max players must be at least 10.');
+
+    if (!gymIdEl.value) throw new Error('Please choose a gym.');
+
+    if (allowGuestEl.checked) {
+        const maxGuest = Number.parseInt(maxGuestEl.value || '0', 10);
+        if (Number.isNaN(maxGuest) || maxGuest < 0)
+            throw new Error('Max guests must be a non-negative number.');
+        if (maxGuest > maxPlayers)
+            throw new Error('Max guests must be less than or equal to Max players.');
+    }
+}
