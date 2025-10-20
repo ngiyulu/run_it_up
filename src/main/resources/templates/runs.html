@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Run Sessions • RunItUp Admin</title>
     <link th:href="@{/styles.css}" rel="stylesheet" />
+    <style>
+        /* put this in your styles.css if you prefer */
+        #sessionsTable tbody tr.clickable { cursor: pointer; }
+        #sessionsTable tbody tr.clickable:hover { background: rgba(255,255,255,0.04); }
+    </style>
 </head>
 <body>
 <header>
@@ -12,7 +17,7 @@
         <div class="brand">RunItUp • Admin</div>
         <nav class="nav">
             <a th:href="@{/admin/dashboard}">Dashboard</a>
-            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/runs}">Run Sessions</a>
             <a href="#" id="logoutBtn">Logout</a>
         </nav>
     </div>
@@ -40,6 +45,7 @@
         <table id="sessionsTable">
             <thead>
             <tr>
+                <th>Date</th>
                 <th>Time</th>
                 <th>Gym</th>
                 <th>Hosted By</th>
@@ -123,6 +129,10 @@
             tableBody.innerHTML = '';
             list.forEach(session => {
                 const row = document.createElement('tr');
+                row.classList.add('clickable');
+                row.setAttribute('tabindex', '0');              // a11y: focusable
+                row.setAttribute('role', 'button');             // a11y: announces as button
+                row.dataset.id = session.id || ''; // support both id/_id
                 const pretty = (t) => {
                     if (!t) return '';
                     const [h, m, s = '00'] = String(t).split(':');
@@ -131,15 +141,26 @@
                     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 };
                 row.innerHTML = `
+        <td>${prettyDate(session.date)}</td>
         <td>${pretty(session.startTime)} - ${pretty(session.endTime)}</td>
         <td>${session.gym?.title ?? '—'}</td>
-        <td>${session.hostedBy ?? '—'}</td>
+        <td>${session.host.first ?? session.hostedBy}</td>
         <td>${(session.players?.length ?? 0)}</td>
         <td>${(session.maxPlayer ?? 0)}</td>
         <td>${fmtMoney(session.amount ?? 0)}</td>
-        <td>${session.status ?? '—'}</td>
-      `;
+        <td>${session.status ?? '—'}</td>`;
+
+                // Click to edit
+                const go = () => {
+                    const id = row.dataset.id;
+                    if (id) window.location.href = `/admin/runsessions/edit?id=${encodeURIComponent(id)}`;
+                };
+                row.addEventListener('click', go);
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+                });
                 tableBody.appendChild(row);
+
             });
         }
     });

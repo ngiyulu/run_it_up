@@ -16,7 +16,7 @@ class AdminPageController {
     @GetMapping("/gyms")
     fun gyms(): String = "gyms"
 
-    @GetMapping("/runs")
+    @GetMapping("/runsessions")
     fun runs(): String = "runs"
 
     @GetMapping("/payments")

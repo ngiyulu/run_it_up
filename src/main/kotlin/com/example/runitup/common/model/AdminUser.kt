@@ -1,8 +1,10 @@
 package com.example.runitup.common.model
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class AdminUser(
     @Id val id: String? = null,
     val email: String = "",

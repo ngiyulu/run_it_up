@@ -1,7 +1,20 @@
 package com.example.runitup.mobile.rest.v1.dto
-
-import com.example.runitup.mobile.model.RunSession
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 class CreateRunSessionRequest(
     val gymId:String,
-    val runSession: RunSession)
+    val date: LocalDate,
+    var startTime: LocalTime,      // local time at the venue
+    var endTime: LocalTime,      // local time at the venue
+    val zoneId: String,       // IANA zone, e.g. "America/Chicago"
+    var allowGuest: Boolean,
+    var notes:String,
+    var privateRun : Boolean,
+    var description: String,
+    var amount: Double = 0.0,
+    var maxPlayer: Int,
+    var title: String,
+    var maxGuest: Int,
+)

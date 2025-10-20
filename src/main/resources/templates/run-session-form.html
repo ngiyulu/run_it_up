@@ -14,21 +14,24 @@
         .muted { opacity:0.5; pointer-events:none; }
         .hidden { display:none !important; }
         .danger { background:#7f1d1d; border-color:#7f1d1d; }
-        .checkline { display:inline-flex; align-items:center; gap:8px; line-height:1.2; margin:0; padding:0; font-weight:500; }
-        .checkline input[type="checkbox"]{ margin:0; width:18px; height:18px; }
+
+        .checkline { display:inline-flex; align-items:center; gap:8px; font-weight:500; }
+        .checkline input[type="checkbox"] { width:18px; height:18px; }
+
+        /* Gym section */
         .gym-section { border:1px solid #1f2937; border-radius:12px; padding:12px; background:#0b1220; }
         .gym-section .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-        .gym-empty { display:flex; align-items:center; gap:10px; color:#9ca3af; font-size:14px; padding:12px; border:1px dashed #374151; border-radius:10px; background:rgba(55,65,81,.15); }
+        .gym-empty { color:#9ca3af; padding:10px; border:1px dashed #374151; border-radius:10px; }
         .gym-picked { display:flex; align-items:center; gap:12px; }
-        .gym-picked-thumb{ width:80px; height:80px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; background:#0f172a; flex:0 0 auto; }
-        .gym-picked .title{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .gym-picked .addr{ color:#9ca3af; font-size:12px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .gym-picked-thumb { width:80px; height:80px; border-radius:10px; object-fit:cover; border:1px solid #1f2937; }
+
+        /* Modal */
         .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
         .modal { background:#0b1220; border:1px solid #1f2937; border-radius:14px; padding:16px; width:min(900px,95vw); max-height:85vh; overflow:auto; }
         .modal .toolbar { display:flex; align-items:center; gap:8px; margin:0 0 10px 0; }
         .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-        .gym-card { display:flex; gap:12px; align-items:center; border:1px solid #1f2937; border-radius:12px; padding:10px; }
-        .gym-thumb { width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; background:#0f172a; }
+        .gym-card { display:flex; align-items:center; gap:12px; border:1px solid #1f2937; border-radius:12px; padding:10px; }
+        .gym-thumb { width:72px; height:72px; object-fit:cover; border-radius:10px; border:1px solid #1f2937; }
     </style>
 </head>
 <body>
@@ -37,7 +40,7 @@
         <div class="brand">RunItUp • Admin</div>
         <nav class="nav">
             <a th:href="@{/admin/dashboard}">Dashboard</a>
-            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/runs}">Run Sessions</a>
             <a th:href="@{/admin/gyms}">Gyms</a>
             <a href="#" id="logoutBtn">Logout</a>
         </nav>
@@ -58,7 +61,7 @@
         <div class="tab" data-tab="waitlist">Waitlist</div>
     </div>
 
-    <!-- Details -->
+    <!-- Details Tab -->
     <form id="runForm" class="card tabpanel active" data-panel="details" style="max-width:1000px;">
         <div class="row">
             <div class="col">
@@ -103,7 +106,7 @@
             <div class="col">
                 <label for="maxGuest">Max Guests</label>
                 <input id="maxGuest" type="number" min="0" placeholder="0" />
-                <small class="help" id="guestHelp">Disabled when "Allow Guests" is off.</small>
+                <small id="guestHelp">Disabled when "Allow Guests" is off.</small>
             </div>
         </div>
 
@@ -111,7 +114,7 @@
             <div class="col">
                 <label class="checkline" for="privateRun">
                     <input id="privateRun" type="checkbox" />
-                    <span>Private run (unlisted)</span>
+                    <span>Private Run (Unlisted)</span>
                 </label>
             </div>
         </div>
@@ -135,9 +138,7 @@
                         <div class="label">Gym *</div>
                         <button type="button" class="primary" id="chooseGymBtn">Choose Gym</button>
                     </div>
-                    <div id="gymEmptyState" class="gym-empty">
-                        <span>No gym selected</span>
-                    </div>
+                    <div id="gymEmptyState" class="gym-empty">No gym selected</div>
                     <div id="gymPickedState" class="gym-picked hidden">
                         <img id="gymThumb" class="gym-picked-thumb" alt="Gym image" />
                         <div>
@@ -150,10 +151,22 @@
             </div>
         </div>
 
+        <!-- Time zone -->
         <div class="row" style="margin-top:12px;">
             <div class="col">
                 <label for="zoneId">Time Zone *</label>
-                <input id="zoneId" placeholder="America/Chicago" required />
+                <select id="zoneId" required>
+                    <option value="" disabled selected>Select time zone…</option>
+                    <option value="America/New_York">America/New_York (ET)</option>
+                    <option value="America/Chicago">America/Chicago (CT)</option>
+                    <option value="America/Denver">America/Denver (MT)</option>
+                    <option value="America/Phoenix">America/Phoenix (No DST)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PT)</option>
+                    <option value="America/Anchorage">America/Anchorage</option>
+                    <option value="Pacific/Honolulu">Pacific/Honolulu</option>
+                    <option disabled>──────────</option>
+                    <option value="UTC">UTC</option>
+                </select>
             </div>
         </div>
 
@@ -169,17 +182,13 @@
     <!-- Players -->
     <div class="card tabpanel" data-panel="players">
         <div class="toolbar"><h3>Players</h3></div>
-        <div id="playersList" class="list">
-            <div class="rowline" style="justify-content:center;color:gray;">No data.</div>
-        </div>
+        <div id="playersList" class="list"><div style="text-align:center;color:gray;">No players.</div></div>
     </div>
 
     <!-- Waitlist -->
     <div class="card tabpanel" data-panel="waitlist">
         <div class="toolbar"><h3>Waitlist</h3></div>
-        <div id="waitList" class="list">
-            <div class="rowline" style="justify-content:center;color:gray;">No data.</div>
-        </div>
+        <div id="waitList" class="list"><div style="text-align:center;color:gray;">No players.</div></div>
     </div>
 </div>
 
@@ -199,211 +208,6 @@
 </div>
 
 <script th:src="@{/app.js}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        requireAuth();
-
-        // Tabs
-        const tabs = [...document.querySelectorAll('.tab')];
-        const panels = [...document.querySelectorAll('.tabpanel')];
-        tabs.forEach(t => t.addEventListener('click', () => {
-            tabs.forEach(x => x.classList.remove('active'));
-            panels.forEach(p => p.classList.remove('active'));
-            t.classList.add('active');
-            document.querySelector(`.tabpanel[data-panel="${t.dataset.tab}"]`).classList.add('active');
-        }));
-
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
-
-        // Default date
-        const dateEl = document.getElementById('date');
-        const startEl = document.getElementById('startTime');
-        const endEl = document.getElementById('endTime');
-        dateEl.value = new Date().toISOString().split('T')[0];
-
-        // --- Show native pickers on click/focus & reflect chosen values ---
-        function openPicker(el) {
-            if (typeof el.showPicker === 'function') el.showPicker();
-            else { el.focus(); el.click(); }
-        }
-        [dateEl, startEl, endEl].forEach(el => {
-            el.addEventListener('click', () => openPicker(el));
-            el.addEventListener('focus', () => openPicker(el));
-            el.addEventListener('change', () => {
-                // Ensure the UI reflects the selection (native already sets .value)
-                // Hook is useful if you later display a pretty label somewhere.
-                // Example (optional): console.log(el.id, 'selected:', el.value);
-            });
-        });
-
-        // Guest constraints
-        const allowGuestEl = document.getElementById('allowGuest');
-        const maxGuestEl = document.getElementById('maxGuest');
-        const guestHelp = document.getElementById('guestHelp');
-        const maxPlayerEl = document.getElementById('maxPlayer');
-
-        function syncGuest(){
-            const on = allowGuestEl.checked;
-            maxGuestEl.disabled = !on;
-            guestHelp.classList.toggle('hidden', on);
-            maxGuestEl.classList.toggle('muted', !on);
-            if(!on) maxGuestEl.value = '';
-        }
-        function syncMaxGuestCap(){
-            const mp = parseInt(maxPlayerEl.value||'0',10);
-            maxGuestEl.max = Math.max(0, mp);
-            const mg = parseInt(maxGuestEl.value||'0',10);
-            if(!Number.isNaN(mg) && mg > mp) maxGuestEl.value = String(mp);
-        }
-        allowGuestEl.addEventListener('change', () => { syncGuest(); syncMaxGuestCap(); });
-        maxPlayerEl.addEventListener('input', () => {
-            const v = parseInt(maxPlayerEl.value||'0',10);
-            if (!Number.isNaN(v) && v < 10) maxPlayerEl.value = '10';
-            syncMaxGuestCap();
-        });
-        syncGuest(); syncMaxGuestCap();
-
-        // Form submit
-        const statusEl = document.getElementById('status');
-        document.getElementById('runForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try{
-                validate();
-                const payload = collectPayload();
-                setStatus(statusEl, 'success', 'Saving session…');
-                await api('/admin/api/v1/run-session', { method:'POST', data: payload });
-                setStatus(statusEl, 'success', 'Session created.');
-                window.location.href = '/admin/runsessions';
-            }catch(err){
-                console.error(err);
-                setStatus(statusEl, 'error', err.message || 'Failed to save.');
-            }
-        });
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            document.getElementById('runForm').reset();
-            setSelectedGym(null);
-            // keep helpers consistent after reset
-            dateEl.value = new Date().toISOString().split('T')[0];
-            syncGuest(); syncMaxGuestCap();
-        });
-        document.getElementById('cancelBtn').addEventListener('click', () => history.back());
-
-        function validate(){
-            const title = document.getElementById('title').value.trim();
-            const date = dateEl.value;
-            const start = startEl.value;
-            const end = endEl.value;
-            const amount = parseFloat(document.getElementById('amount').value);
-            const maxPlayers = parseInt(maxPlayerEl.value,10);
-            const zoneId = document.getElementById('zoneId').value.trim();
-            const gymId = document.getElementById('gymId').value;
-
-            if(!title) throw new Error('Title is required.');
-            if(!date) throw new Error('Date is required.');
-            if(!start) throw new Error('Start time is required.');
-            if(!end) throw new Error('End time is required.');
-            if(Number.isNaN(amount) || amount < 0) throw new Error('Amount must be a non-negative number.');
-            if(Number.isNaN(maxPlayers) || maxPlayers < 10) throw new Error('Max players must be at least 10.');
-            if(!zoneId) throw new Error('Time zone is required.');
-            if(!gymId) throw new Error('Please choose a gym.');
-
-            if(allowGuestEl.checked){
-                const mg = parseInt(maxGuestEl.value||'0',10);
-                if(Number.isNaN(mg) || mg < 0) throw new Error('Max guests must be a non-negative number.');
-                if(mg > maxPlayers) throw new Error('Max guests must be ≤ Max players.');
-            }
-        }
-
-        function collectPayload(){
-            return {
-                title: document.getElementById('title').value.trim(),
-                date: dateEl.value,
-                startTime: startEl.value,
-                endTime: endEl.value,
-                amount: parseFloat(document.getElementById('amount').value),
-                maxPlayer: parseInt(maxPlayerEl.value,10),
-                allowGuest: allowGuestEl.checked,
-                maxGuest: allowGuestEl.checked ? parseInt(maxGuestEl.value||'0',10) : 0,
-                privateRun: document.getElementById('privateRun').checked,
-                notes: (document.getElementById('notes').value||'').trim(),
-                description: (document.getElementById('description').value||'').trim(),
-                zoneId: document.getElementById('zoneId').value.trim(),
-                gymId: document.getElementById('gymId').value
-            };
-        }
-
-        // ---------- Gym modal ----------
-        (function gymModalInit(){
-            const modal = document.getElementById('gymModal');
-            const chooseBtn = document.getElementById('chooseGymBtn');
-            const closeBtn = document.getElementById('gymCloseBtn');
-            const searchEl = document.getElementById('gymSearch');
-            const gymList = document.getElementById('gymList');
-            const gymEmpty = document.getElementById('gymEmpty');
-
-            async function loadGyms(){
-                try{
-                    let gyms = await api('/admin/api/v1/gym/list');
-                    const q = (searchEl.value||'').trim().toLowerCase();
-                    if(q) gyms = gyms.filter(g => (g.title||'').toLowerCase().includes(q));
-                    renderGyms(gyms);
-                }catch(e){ console.error(e); renderGyms([]); }
-            }
-
-            function renderGyms(gyms){
-                gymList.innerHTML = '';
-                if(!Array.isArray(gyms) || gyms.length===0){ gymEmpty.classList.remove('hidden'); return; }
-                gymEmpty.classList.add('hidden');
-                gyms.sort((a,b)=> (a.title||'').localeCompare(b.title||'', undefined, {sensitivity:'base'}));
-                gyms.forEach(g=>{
-                    const card = document.createElement('div'); card.className='gym-card';
-                    const img = document.createElement('img'); img.className='gym-thumb'; img.alt=g.title||'Gym';
-                    if(g.imageUrl || g.image){ img.src = g.imageUrl || g.image; } else { img.style.display='none'; }
-                    const body = document.createElement('div'); body.className='gym-body';
-                    body.innerHTML = `<div class="gym-title">${g.title||'—'}</div><div class="gym-address">${formatGymAddress(g)}</div>`;
-                    const btn = document.createElement('button'); btn.className='primary'; btn.textContent='Select';
-                    btn.onclick = ()=>{ setSelectedGym(g); closeGymPicker(); };
-                    card.append(img, body, btn); gymList.appendChild(card);
-                });
-            }
-
-            function openGymPicker(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); loadGyms(); }
-            function closeGymPicker(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); gymList.innerHTML=''; searchEl.value=''; gymEmpty.classList.add('hidden'); }
-
-            chooseBtn.addEventListener('click', openGymPicker);
-            closeBtn.addEventListener('click', closeGymPicker);
-            searchEl.addEventListener('input', () => loadGyms());
-        })();
-
-        function setSelectedGym(gym){
-            const empty = document.getElementById('gymEmptyState');
-            const picked = document.getElementById('gymPickedState');
-            const idEl = document.getElementById('gymId');
-            const titleEl = document.getElementById('gymTitleText');
-            const addrEl = document.getElementById('gymAddrText');
-            const thumbEl = document.getElementById('gymThumb');
-
-            if(!gym){
-                idEl.value=''; titleEl.textContent='—'; addrEl.textContent='—';
-                thumbEl.src=''; thumbEl.style.display='none';
-                picked.classList.add('hidden'); empty.classList.remove('hidden'); return;
-            }
-            idEl.value = gym.id || '';
-            titleEl.textContent = gym.title || '—';
-            addrEl.textContent = formatGymAddress(gym);
-            const img = gym.imageUrl || gym.image;
-            if(img){ thumbEl.src=img; thumbEl.style.display=''; thumbEl.onerror=()=>{ thumbEl.style.display='none'; }; } else { thumbEl.style.display='none'; }
-            empty.classList.add('hidden'); picked.classList.remove('hidden');
-        }
-
-        function formatGymAddress(g){
-            // supports {address:{line1,line2,city,state,zip}} OR flat {line1,...}
-            const a = g.address || g;
-            return [a.line1, a.line2, a.city, a.state, a.zip || a.zipCode].filter(Boolean).join(', ') || 'No address';
-        }
-
-    });
-</script>
+<script th:src="@{/run-session-form.js}"></script>
 </body>
 </html>
