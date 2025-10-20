@@ -40,7 +40,7 @@ data class RunSession(
     var title: String,
     var bookings: MutableList<Booking> = mutableListOf(),
     var waitList: MutableList<RunUser> = mutableListOf(),
-    var players:  MutableList<User>? = null,
+    var players:  MutableList<User> = mutableListOf(),
     var courtFee: Double = 0.0,
     var maxGuest: Int,
     var bookingList:MutableList<SessionRunBooking> = mutableListOf(),
