@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.rest.v1.dto.initialize
 
-import com.example.runitup.mobile.model.Gym
 import com.example.runitup.mobile.model.User
 import org.springframework.beans.factory.annotation.Value
 

@@ -1,5 +1,4 @@
 package com.example.runitup.mobile.rest.v1.dto
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 

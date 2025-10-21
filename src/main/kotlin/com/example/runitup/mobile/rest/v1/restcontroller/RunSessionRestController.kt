@@ -1,7 +1,6 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.rest.v1.controllerprovider.SessionControllersProvider
-import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.mobile.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel

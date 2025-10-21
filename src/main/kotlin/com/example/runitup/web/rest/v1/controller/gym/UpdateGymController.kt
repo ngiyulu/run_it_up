@@ -3,18 +3,11 @@ package com.example.runitup.web.rest.v1.controller.gym
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.Gym
 import com.example.runitup.mobile.repository.GymRepository
-import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateGymRequest
 import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.service.ImageService
-import com.example.runitup.web.dto.GymCreateDto
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
 
 @Service
 class UpdateGymController:BaseGymController() {
@@ -33,7 +26,7 @@ class UpdateGymController:BaseGymController() {
         val ad = data.address
         val gymDb =   gymRepository.findById(request.id)
         if(!gymDb.isPresent){
-            throw ApiRequestException(text(""))
+            throw ApiRequestException(text(text("gym_not_found")))
         }
         val gym = gymDb.get()
         request.image?.let {

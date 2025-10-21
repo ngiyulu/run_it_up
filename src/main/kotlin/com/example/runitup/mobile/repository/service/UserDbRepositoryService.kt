@@ -2,7 +2,6 @@ package com.example.runitup.mobile.repository.service
 
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.service.BaseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

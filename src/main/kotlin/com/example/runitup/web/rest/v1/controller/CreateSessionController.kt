@@ -1,6 +1,5 @@
 package com.example.runitup.web.rest.v1.controller
 
-import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
@@ -8,7 +7,6 @@ import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.web.security.AdminPrincipal
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel

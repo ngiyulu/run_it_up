@@ -8,12 +8,10 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
-import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.web.dto.Role
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -46,6 +44,11 @@ class LeaveSessionService() {
         if(!run.isDeletable()){
             throw  ApiRequestException(textService.getText("invalid_session_cancel", locale))
         }
+         if(admin != null){
+             if(admin.role != Role.SUPER_ADMIN && run.hostedBy != admin.id){
+                 throw ApiRequestException(textService.getText("unauthorized_user", locale))
+             }
+         }
         val booking: com.example.runitup.mobile.model.Booking = bookingDbService.getBooking(user.id.orEmpty(), run.id.orEmpty())
             ?: throw  ApiRequestException(textService.getText("invalid_params", locale))
         // this means a hold payment was created so we have to cancel it

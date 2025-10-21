@@ -2,7 +2,6 @@ package com.example.runitup.common.repo
 
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.constants.CollectionConstants
-import com.example.runitup.mobile.model.User
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
