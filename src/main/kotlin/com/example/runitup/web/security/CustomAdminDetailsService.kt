@@ -2,7 +2,6 @@ package com.example.runitup.web.security
 
 
 import com.example.runitup.common.repo.AdminUserRepository
-import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.service.TextService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder

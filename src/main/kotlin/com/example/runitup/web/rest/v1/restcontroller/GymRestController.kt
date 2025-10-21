@@ -1,9 +1,8 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
 import com.example.runitup.mobile.model.Gym
-import com.example.runitup.web.rest.v1.controller.gym.CreateGymController
 import com.example.runitup.mobile.rest.v1.dto.CreateGymRequest
-import com.example.runitup.web.dto.UpdateGymRequest
+import com.example.runitup.web.rest.v1.controller.gym.CreateGymController
 import com.example.runitup.web.rest.v1.controller.gym.GetGym
 import com.example.runitup.web.rest.v1.controller.gym.GetGymList
 import com.example.runitup.web.rest.v1.controller.gym.UpdateGymController

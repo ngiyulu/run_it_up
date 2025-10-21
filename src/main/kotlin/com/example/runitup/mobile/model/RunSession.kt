@@ -4,7 +4,6 @@ import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import org.bson.types.ObjectId
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType

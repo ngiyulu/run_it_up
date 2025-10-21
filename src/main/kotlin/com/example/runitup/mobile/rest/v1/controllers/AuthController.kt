@@ -1,12 +1,10 @@
 package com.example.runitup.mobile.rest.v1.controllers
 
 
-import com.example.runitup.mobile.constants.ConfigConstant
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.security.JwtTokenService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken

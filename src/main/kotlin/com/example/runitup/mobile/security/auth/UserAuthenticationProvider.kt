@@ -2,10 +2,8 @@ package com.example.runitup.mobile.security.auth
 
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.web.security.auth.AdminJwtAuthenticationToken
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.AuthenticationProvider
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.stereotype.Component

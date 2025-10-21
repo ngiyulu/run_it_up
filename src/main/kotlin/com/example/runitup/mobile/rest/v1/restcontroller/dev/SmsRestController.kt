@@ -3,12 +3,12 @@ package com.example.runitup.mobile.rest.v1.restcontroller.dev
 
 import com.example.runitup.mobile.clicksend.SmsService
 import jakarta.validation.constraints.NotBlank
+import kotlinx.coroutines.runBlocking
 import org.hibernate.validator.constraints.Length
+import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
-import kotlinx.coroutines.runBlocking
-import org.springframework.context.annotation.Profile
 
 @Validated
 @RestController

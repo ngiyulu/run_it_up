@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.service
 
-import com.example.runitup.mobile.model.QueueMessage
 import com.example.runitup.mobile.queue.RedisKeys
 import com.example.runitup.mobile.rest.v1.restcontroller.QueueOverview
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
