@@ -5,7 +5,10 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
+import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
+import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.web.rest.v1.controller.CreateSessionController
+import com.example.runitup.web.rest.v1.controller.runsession.LeaveSessionAdminController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
@@ -26,6 +29,12 @@ class AdminRunSessionRestController {
 
     @Autowired
     lateinit var createSessionController: CreateSessionController
+
+    @Autowired
+    lateinit var leaveSessionAdminController: LeaveSessionAdminController
+
+    @Autowired
+    lateinit var runSessionService: RunSessionService
     @PostMapping("/create")
     fun create(@RequestBody model: CreateRunSessionRequest): RunSession {
         return createSessionController.execute(model)
@@ -59,15 +68,19 @@ class AdminRunSessionRestController {
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: String): RunSession? {
-        val runDb = repo.findById(id)
-        if (!runDb.isPresent) {
-            throw ApiRequestException("invalid_gym")
-        }
-        val run = runDb.get()
-        run.host = cacheManager.getAdmin(run.hostedBy.orEmpty())
-        return run
+        val runSession = runSessionService.getRunSession(id) ?: throw ApiRequestException("invalid_gym")
+        runSession.host = cacheManager.getAdmin(runSession.hostedBy.orEmpty())
+        return runSession
     }
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: String) = repo.deleteById(id)
+
+    @PostMapping("/remove")
+    fun leaveSession(@RequestBody model: CancelSessionModel): RunSession {
+        var runSession= leaveSessionAdminController.execute(model)
+        runSession = runSessionService.getRunSession(runSession.id.orEmpty()) ?: throw ApiRequestException("invalid_gym")
+        runSession.host = cacheManager.getAdmin(runSession.hostedBy.orEmpty())
+        return runSession
+    }
 }

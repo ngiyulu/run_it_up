@@ -43,13 +43,16 @@ data class RunSession(
     var players:  MutableList<User> = mutableListOf(),
     var courtFee: Double = 0.0,
     var maxGuest: Int,
+    //booking has more data than bookingList
     var bookingList:MutableList<SessionRunBooking> = mutableListOf(),
     var waitListBooking:MutableList<Booking> = mutableListOf(),
     var status: RunStatus = RunStatus.PENDING,
     var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
     var showUpdatePaymentButton: Boolean = true,
     var guestUpdateAllowed: Boolean = true,
-    var leaveSessionUpdateAllowed: Boolean = true
+    var leaveSessionUpdateAllowed: Boolean = true,
+    // show remove button on the web portal
+    var showRemoveButton: Boolean = true,
 ): BaseModel(){
 
 

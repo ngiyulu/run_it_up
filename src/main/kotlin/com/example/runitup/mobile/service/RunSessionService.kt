@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class RunSessionService(): com.example.runitup.mobile.service.BaseService(){
+class RunSessionService(): BaseService(){
 
     @Autowired
     lateinit var paymentService: PaymentService
