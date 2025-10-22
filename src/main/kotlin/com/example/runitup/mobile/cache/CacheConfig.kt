@@ -1,14 +1,13 @@
 package com.example.runitup.mobile.cache
 
-import com.example.runitup.mobile.constants.CollectionConstants
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
@@ -22,11 +21,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
 
 @Configuration
-@EnableCaching
 class CacheConfig {
 
+    /** Make this the primary mapper used by MVC, WebFlux, etc. */
     @Bean
-    fun kotlinObjectMapper(): ObjectMapper =
+    @Primary
+    fun objectMapper(): ObjectMapper =
         jacksonObjectMapper()
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -45,18 +45,8 @@ class CacheConfig {
 
     @Bean
     fun cacheManager(cf: RedisConnectionFactory, objectMapper: ObjectMapper): RedisCacheManager {
-        val valueSerializer = GenericJackson2JsonRedisSerializer()
-        val defaultCfg = RedisCacheConfiguration.defaultCacheConfig()
-            .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(valueSerializer)
-            )
-            .disableCachingNullValues()
-            .entryTtl(Duration.ofMinutes(10)) // default TTL
-
-        val perCache = mapOf(
-            CollectionConstants.USER_COLLECTION to defaultCfg.entryTtl(Duration.ofMinutes(5000))
-        )
-
+        // Use the same, properly-configured ObjectMapper for Redis values
+        val valueSerializer = GenericJackson2JsonRedisSerializer(objectMapper)
 
         val config = RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(
@@ -65,14 +55,12 @@ class CacheConfig {
             .serializeValuesWith(
                 RedisSerializationContext.SerializationPair.fromSerializer(valueSerializer)
             )
+            .disableCachingNullValues()
+            .entryTtl(Duration.ofMinutes(10))
+
         return RedisCacheManager.builder(cf)
             .cacheDefaults(config)
             .build()
-
-//        return RedisCacheManager.builder(cf)
-//            .cacheDefaults(defaultCfg)
-//            .withInitialCacheConfigurations(perCache)
-//            .build()
     }
 
     @Bean

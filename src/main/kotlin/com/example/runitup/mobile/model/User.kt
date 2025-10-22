@@ -35,14 +35,25 @@ data class User(
     var auth:String = "",
     var imageUrl: String? = null,
     var runSessions:MutableList<RunSession>? = null,
-    var skillLevel: SkillLevel? = null
-): com.example.runitup.mobile.model.BaseModel(){
+    var skillLevel: SkillLevel? = null,
+    var creator: Creator = Creator.USER
+): BaseModel(){
 
     fun getFullName(): String{
         return "$firstName ${lastName}"
     }
 
-    fun removeAuth(){
-        auth = ""
+    fun approveWaiver(adminId:String, timeStamp:Long, waiverImageUrl:String?){
+        waiverAuthorized = true
+        waiverSigned = true
+        waiverAuthorizedBy = adminId
+        waiverAuthorizedAt = timeStamp
+        waiverImageUrl?.let {
+            waiverUrl = it
+        }
     }
+}
+
+enum class Creator{
+    ADMIN, USER
 }

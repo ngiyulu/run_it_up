@@ -7,9 +7,11 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.ContentDisposition
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import java.nio.channels.Channels
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -53,7 +55,6 @@ class GcsImageService(
             println(ex)
             null
         }
-
     }
 
     fun delete(objectName: String): Boolean {
@@ -98,6 +99,68 @@ class GcsImageService(
             null
         }
 
+    }
+
+
+
+    /**
+     * Upload a user's waiver as a PDF.
+     * - Stores at: uploads/waivers/{userId}/{epochMillis}.pdf
+     * - Sets content-type to application/pdf
+     * - Adds Content-Disposition so browsers render inline with a friendly name
+     * - Returns a signed URL by default (ttlMinutes), or a public URL if signed=false
+     */
+    fun uploadUserWaiverPdf(
+        user: User,
+        file: MultipartFile,
+        signed: Boolean = true,
+        ttlMinutes: Long = 60
+    ): UploadResult? {
+        val contentType = file.contentType ?: ""
+        if (contentType != MediaType.APPLICATION_PDF_VALUE) {
+            error("Only PDF files are allowed for waivers (got: $contentType).")
+        }
+
+        // Keep multiple versions per user (timestamped)
+        val objectName = "uploads/waivers/${user.id}/waiver.pdf"
+
+        // Optional: give the object a readable download/inline name
+        val disposition = ContentDisposition.inline()
+            .filename("waiver-${user.id}.pdf")
+            .build()
+            .toString()
+
+        val blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
+            .setContentType(MediaType.APPLICATION_PDF_VALUE)
+            .setContentDisposition(disposition)
+            .build()
+
+        return try {
+            // Stream upload to support larger files safely
+            storage.writer(blobInfo).use { writer ->
+                Channels.newOutputStream(writer).use { out ->
+                    file.inputStream.use { it.copyTo(out) }
+                }
+            }
+
+            val url = if (signed) {
+                storage
+                    .signUrl(
+                        blobInfo,
+                        ttlMinutes,
+                        TimeUnit.MINUTES,
+                        Storage.SignUrlOption.withV4Signature()
+                    )
+                    .toString()
+            } else {
+                "https://storage.googleapis.com/$bucketName/$objectName"
+            }
+
+            UploadResult(objectName, url, MediaType.APPLICATION_PDF_VALUE)
+        } catch (ex: Exception) {
+            println(ex)
+            null
+        }
     }
 
 

@@ -8,6 +8,7 @@ import com.eatthepath.pushy.apns.util.TokenUtil
 import com.example.runitup.mobile.constants.ConfigConstant.apnsPushGateway
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
@@ -94,6 +95,6 @@ class ApnsPushGateway(
         n.clickAction?.let { root["click_action"] = it }
         if (n.data.isNotEmpty()) root.putAll(n.data)
 
-        return jacksonObjectMapper().writeValueAsString(root)
+        return jacksonObjectMapper().registerModule(JavaTimeModule()).writeValueAsString(root)
     }
 }

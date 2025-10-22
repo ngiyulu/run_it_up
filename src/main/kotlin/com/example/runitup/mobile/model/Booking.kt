@@ -14,7 +14,7 @@ class Booking (
     var runSessionId: String,
     // this is the object that gets created when we join a run
     // a new object will be made for each request to join
-    var stripePayment:List<com.example.runitup.mobile.model.BookingPayment>,
+    var stripePayment:List<BookingPayment>,
     var paymentStatus: PaymentStatus = PaymentStatus.PENDING,
     var sessionAmount: Double,
     var total: Double,

@@ -24,7 +24,7 @@ class GymImageUploader: BaseController<FileUploadModel, Gym>() {
 
     override fun execute(request: FileUploadModel): com.example.runitup.mobile.model.Gym {
         val resized = imageService.resizeToAvatarJpeg(request.file, maxSize = 512, quality = 0.85)
-        val gymRes = gymRepository.findById(request.gymId.orEmpty())
+        val gymRes = gymRepository.findById(request.data.orEmpty())
         if(!gymRes.isPresent){
             throw ApiRequestException(text("gym_not_found"))
         }

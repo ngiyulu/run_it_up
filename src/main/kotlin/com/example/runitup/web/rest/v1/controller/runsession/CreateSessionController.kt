@@ -1,4 +1,4 @@
-package com.example.runitup.web.rest.v1.controller
+package com.example.runitup.web.rest.v1.controller.runsession
 
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
@@ -16,6 +16,7 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.util.*
 
 @Service
@@ -58,7 +59,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             duration = 0
             ).apply {
             val timestamp = getTimeStamp()
-            createdAt = timestamp
+            createdAt = LocalDate.now()
             status = RunStatus.PENDING
             gym = runGym
             total = 0.0

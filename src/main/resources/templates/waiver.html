@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pending Waivers • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+    <style>
+        .table-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .nowrap { white-space: nowrap; }
+        .muted { color:#9ca3af; }
+        .clickable { cursor:pointer; text-decoration:underline; }
+        textarea.note {
+            width: 100%;
+            min-width: 220px;
+            resize: vertical;
+            height: 4em;
+            font-family: inherit;
+            font-size: 14px;
+            padding: 4px;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            background: #0b1220;
+            color: white;
+        }
+        @media (max-width: 900px) {
+            table#waiversTable { font-size: 14px; }
+            table#waiversTable th, table#waiversTable td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a th:href="@{/admin/waivers}">Waivers</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;">Pending Waivers</h2>
+    </div>
+
+    <div id="status" class="alert hidden"></div>
+
+    <div class="card">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input id="searchBox" type="search" placeholder="Filter by name or user id…" style="max-width:320px;">
+            <button id="reloadBtn" class="secondary">Reload</button>
+        </div>
+
+        <div style="overflow:auto;">
+            <table id="waiversTable">
+                <thead>
+                <tr>
+                    <th>User</th>
+                    <th>User ID</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Note (editable)</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+                </thead>
+                <tbody id="waiversBody">
+                <tr><td colspan="6" class="muted" style="text-align:center;">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer><div>© RunItUp Admin</div></footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        requireAuth();
+
+        const statusEl   = document.getElementById('status');
+        const bodyEl     = document.getElementById('waiversBody');
+        const searchBox  = document.getElementById('searchBox');
+        const reloadBtn  = document.getElementById('reloadBtn');
+
+        document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+        let allWaivers = [];
+
+        reloadBtn.addEventListener('click', loadWaivers);
+        searchBox.addEventListener('input', () => render(filter(allWaivers)));
+
+        loadWaivers();
+
+        async function loadWaivers() {
+            setStatus(statusEl, 'success', 'Loading waivers…');
+            try {
+                const list = await api('/admin/api/v1/waiver/list', { method: 'GET' });
+                allWaivers = Array.isArray(list) ? list.filter(w => (w.status || '').toUpperCase() === 'PENDING') : [];
+                render(filter(allWaivers));
+                setStatus(statusEl, 'success', 'Waivers loaded.');
+            } catch (e) {
+                console.error(e);
+                bodyEl.innerHTML = `<tr><td colspan="6" class="muted" style="text-align:center;">Failed to load waivers.</td></tr>`;
+                setStatus(statusEl, 'error', 'Failed to load waivers.');
+            }
+        }
+
+        function filter(list) {
+            const q = (searchBox.value || '').trim().toLowerCase();
+            if (!q) return list;
+            return list.filter(w => {
+                const u = w.user || {};
+                const first = u.firstName || u.first || '';
+                const last  = u.lastName || u.last || '';
+                const uid   = w.userId || u.id || u.userId || '';
+                return (first + ' ' + last).toLowerCase().includes(q) || String(uid).toLowerCase().includes(q);
+            });
+        }
+
+        function render(list) {
+            if (!Array.isArray(list) || list.length === 0) {
+                bodyEl.innerHTML = `<tr><td colspan="6" class="muted" style="text-align:center;">No pending waivers.</td></tr>`;
+                return;
+            }
+
+            bodyEl.innerHTML = '';
+            list.sort((a,b) => cmpDate(a.createdAt, b.createdAt));
+
+            list.forEach(w => {
+                const tr = document.createElement('tr');
+
+                const u = w.user || {};
+                const first = u.firstName || u.first || '';
+                const last  = u.lastName || u.last || '';
+                const fullName = (first || last) ? `${first} ${last}`.trim() : '—';
+                const uid = w.userId || u.id || u.userId || '';
+
+                // User name (clickable)
+                const tdUser = document.createElement('td');
+                if (uid) {
+                    const a = document.createElement('a');
+                    a.href = `/admin/users/view?id=${encodeURIComponent(uid)}`;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    a.textContent = fullName;
+                    tdUser.appendChild(a);
+                } else tdUser.textContent = fullName;
+
+                // User ID (clickable)
+                const tdUid = document.createElement('td');
+                if (uid) {
+                    const a = document.createElement('a');
+                    a.href = `/admin/users/view?id=${encodeURIComponent(uid)}`;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    a.textContent = uid;
+                    tdUid.appendChild(a);
+                } else tdUid.textContent = '—';
+
+                const tdCreated = document.createElement('td');
+                tdCreated.textContent = prettyDate(w.createdAt);
+
+                const tdStatus = document.createElement('td');
+                tdStatus.textContent = w.status || '—';
+
+                // ✅ Multi-line note field
+                const tdNote = document.createElement('td');
+                const noteInput = document.createElement('textarea');
+                noteInput.className = 'note';
+                noteInput.rows = 4;
+                noteInput.placeholder = 'Add a note…';
+                noteInput.value = w.note || '';
+                tdNote.appendChild(noteInput);
+
+                // Actions
+                const tdActions = document.createElement('td');
+                tdActions.className = 'nowrap';
+                const actions = document.createElement('div');
+                actions.className = 'table-actions';
+
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'secondary';
+                viewBtn.textContent = 'View';
+                viewBtn.onclick = () => {
+                    const url = w.url || w.waiverUrl || w.imageUrl || (w.waiver && (w.waiver.url || w.waiver.imageUrl));
+                    if (!url) { setStatus(statusEl, 'error', 'No waiver image/url available.'); return; }
+                    window.open(url, '_blank', 'noopener');
+                };
+
+                const approveBtn = document.createElement('button');
+                approveBtn.className = 'primary';
+                approveBtn.textContent = 'Approve';
+                approveBtn.onclick = async () => {
+                    await submitDecision({ waiverId: w.id || w.waiverId, isApproved: true, notes: noteInput.value || '', userId: uid }, approveBtn);
+                };
+
+                const rejectBtn = document.createElement('button');
+                rejectBtn.className = 'secondary danger';
+                rejectBtn.textContent = 'Reject';
+                rejectBtn.onclick = async () => {
+                    const notes = (noteInput.value || '').trim();
+                    if (!notes) {
+                        setStatus(statusEl, 'error', 'Please enter a rejection note before rejecting.');
+                        noteInput.focus();
+                        return;
+                    }
+                    await submitDecision({ waiverId: w.id || w.waiverId, isApproved: false, notes, userId: uid }, rejectBtn);
+                };
+
+                actions.append(viewBtn, approveBtn, rejectBtn);
+                tdActions.appendChild(actions);
+
+                tr.append(tdUser, tdUid, tdCreated, tdStatus, tdNote, tdActions);
+                bodyEl.appendChild(tr);
+            });
+        }
+
+        async function submitDecision(model, btn) {
+            if (!model.waiverId) { setStatus(statusEl, 'error', 'Missing waiver id.'); return; }
+            if (!model.userId)   { setStatus(statusEl, 'error', 'Missing user id.');   return; }
+
+            try {
+                btn.disabled = true;
+                setStatus(statusEl, 'success', model.isApproved ? 'Approving waiver…' : 'Rejecting waiver…');
+                await api('/admin/api/v1/waiver/approve', { method: 'POST', data: model });
+                setStatus(statusEl, 'success', model.isApproved ? 'Waiver approved.' : 'Waiver rejected.');
+                await loadWaivers();
+            } catch (e) {
+                console.error(e);
+                setStatus(statusEl, 'error', e.message || 'Failed to submit decision.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function prettyDate(val) {
+            if (!val) return '—';
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return String(val);
+            return d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
+        }
+
+        function cmpDate(a, b) {
+            const da = new Date(a || 0).getTime();
+            const db = new Date(b || 0).getTime();
+            return (da || 0) - (db || 0);
+        }
+    });
+</script>
+</body>
+</html>

@@ -252,7 +252,6 @@
                 const fd = new FormData();
                 const payload = collectPayload();
                 fd.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-
                 const file = fileInput.files[0];
                 if (!gymId && !file) throw new Error('Please select an image.');
                 if (file) fd.append('image', file);
@@ -369,6 +368,7 @@
             if (!stateEl.value) throw new Error('State is required.');
             if (!zipEl.value.trim() || !/^\d{5}$/.test(zipEl.value.trim()))
                 throw new Error('ZIP must be a 5-digit code.');
+            console.log(fileInput.files.length)
             if (!gymId && fileInput.files.length === 0)
                 throw new Error('Please select an image.');
         }

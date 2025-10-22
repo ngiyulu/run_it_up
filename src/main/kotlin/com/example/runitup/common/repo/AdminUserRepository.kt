@@ -14,4 +14,5 @@ interface AdminUserRepository : MongoRepository<AdminUser, String> {
 
     @Query("{id:'?0'}")
     fun findByIdentifier(identifier: String): AdminUser?
+
 }

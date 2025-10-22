@@ -7,7 +7,8 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.web.rest.v1.controller.CreateSessionController
+import com.example.runitup.web.rest.v1.controller.runsession.CreateSessionController
+import com.example.runitup.web.rest.v1.controller.runsession.GetUserRunSessionController
 import com.example.runitup.web.rest.v1.controller.runsession.LeaveSessionAdminController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
@@ -32,6 +33,9 @@ class AdminRunSessionRestController {
 
     @Autowired
     lateinit var leaveSessionAdminController: LeaveSessionAdminController
+
+    @Autowired
+    lateinit var runSessionController: GetUserRunSessionController
 
     @Autowired
     lateinit var runSessionService: RunSessionService
@@ -75,6 +79,11 @@ class AdminRunSessionRestController {
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: String) = repo.deleteById(id)
+
+    @GetMapping("/{id}/list")
+    fun listRunSession(@PathVariable id: String): List<RunSession> {
+        return runSessionController.execute(id)
+    }
 
     @PostMapping("/remove")
     fun leaveSession(@RequestBody model: CancelSessionModel): RunSession {
