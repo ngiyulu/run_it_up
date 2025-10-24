@@ -18,6 +18,8 @@ class UserRestController {
     @Autowired
     lateinit var userControllersProvider: com.example.runitup.mobile.rest.v1.controllerprovider.UserControllersProvider
 
+
+
     @PostMapping("/verify")
     fun verifyUser(@RequestBody model: VerifyUserRequest,
                    @RequestHeader("X-Timezone", required = true) tzHeader: String): VerifyUserResponse? {
@@ -113,6 +115,8 @@ class UserRestController {
     fun logout(@RequestBody model: LogoutRequest) {
         return userControllersProvider.logOutController.execute(model)
     }
+
+
 
 
 }

@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPlayers(s) {
         const list = s.bookings || s.bookingList || [];
         const playersList = document.getElementById('playersList');
-        const playersCount = document.getElementById('playersCount'); // optional badge
+        const playersCount = document.getElementById('playersCount');
 
         if (!Array.isArray(list) || list.length === 0) {
             if (playersCount) playersCount.textContent = '0 signed up';
@@ -184,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // total signed up = sum of partySize
         const totalSignedUp = list.reduce((sum, b) => sum + (b.partySize || 1), 0);
         if (playersCount) playersCount.textContent = `${totalSignedUp} signed up`;
 
@@ -192,17 +191,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         list.forEach(booking => {
             const p = booking.user || {};
+            const uid = p.userId || booking.userId;
             const row = document.createElement('div');
             row.className = 'rowline';
             row.style.alignItems = 'center';
+            row.style.cursor = uid ? 'pointer' : 'default';
 
             // Avatar
             const avatar = document.createElement('img');
             avatar.src = p.imageUrl || '';
             avatar.alt = `${p.first || ''} ${p.last || ''}`.trim() || 'Player';
-            Object.assign(avatar.style, {
-                width:'70px', height:'70px', borderRadius:'50%', objectFit:'cover'
-            });
+            Object.assign(avatar.style, { width:'70px', height:'70px', borderRadius:'50%', objectFit:'cover' });
             avatar.onerror = () => { avatar.style.display = 'none'; };
 
             // Name
@@ -217,8 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
             skill.style.marginLeft = 'auto';
             skill.style.opacity = .7;
 
-            // Guest badge
-            let rightSide = document.createElement('div');
+            // Right-side badges & remove
+            const rightSide = document.createElement('div');
             rightSide.style.display = 'flex';
             rightSide.style.alignItems = 'center';
             rightSide.style.gap = '8px';
@@ -231,15 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 rightSide.appendChild(badge);
             }
 
-            // Remove button
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'secondary danger';  // style as needed
+            removeBtn.className = 'secondary danger';
             removeBtn.textContent = 'Remove';
-            removeBtn.onclick = async () => {
-                const uid = p.userId || booking.userId;
+            removeBtn.onclick = async (e) => {
+                e.stopPropagation(); // don't trigger row click
                 if (!uid) { setStatus(statusEl, 'error', 'User id not found for this booking.'); return; }
-                // optional confirm:
                 if (!confirm(`Remove ${p.first || ''} ${p.last || ''}? This will remove any guests in their party.`)) return;
                 removeBtn.disabled = true;
                 await removePlayer(uid);
@@ -248,33 +245,63 @@ document.addEventListener('DOMContentLoaded', () => {
             rightSide.appendChild(removeBtn);
 
             row.append(avatar, name, skill, rightSide);
+
+            // Open user detail in new tab
+            if (uid) {
+                const go = () => window.open(`/admin/users/view?id=${encodeURIComponent(uid)}`, '_blank');
+                row.addEventListener('click', go);
+                row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }});
+                row.tabIndex = 0;
+                row.role = 'button';
+            }
+
             playersList.appendChild(row);
         });
     }
 
-
     function renderWaitlist(s) {
         const list = s.waitList || [];
+        const waitList = document.getElementById('waitList');
+
         if (!Array.isArray(list) || list.length === 0) {
             waitList.innerHTML = `<div style="text-align:center;color:gray;">No players.</div>`;
             return;
         }
+
         waitList.innerHTML = '';
-        list.forEach(p => {
+        list.forEach(u => {
+            const uid = u.userId;
             const row = document.createElement('div');
             row.className = 'rowline';
+            row.style.alignItems = 'center';
+            row.style.cursor = uid ? 'pointer' : 'default';
+
             const avatar = document.createElement('img');
-            avatar.src = p.photoUrl || p.avatar || '';
-            avatar.alt = p.name || 'Player';
+            avatar.src = u.imageUrl || u.photoUrl || u.avatar || '';
+            avatar.alt = `${u.first || ''} ${u.last || ''}`.trim() || u.name || 'Player';
             Object.assign(avatar.style, { width:'36px', height:'36px', borderRadius:'50%', objectFit:'cover' });
             avatar.onerror = () => { avatar.style.display = 'none'; };
+
             const name = document.createElement('div');
-            name.textContent = p.name || p.fullName || p.displayName || '—';
+            name.textContent = `${u.first || ''} ${u.last || ''}`.trim() || u.name || u.fullName || u.displayName || '—';
             name.style.marginLeft = '10px';
+            name.style.fontWeight = '600';
+
             const skill = document.createElement('div');
-            skill.textContent = p.skill || p.level || '';
-            skill.style.marginLeft = 'auto'; skill.style.opacity = .7;
+            skill.textContent = u.level || u.skill || '';
+            skill.style.marginLeft = 'auto';
+            skill.style.opacity = .7;
+
             row.append(avatar, name, skill);
+
+            if (uid) {
+                const go = () => window.open(`/admin/users/view?id=${encodeURIComponent(uid)}`, '_blank');
+                row.addEventListener('click', go);
+                row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }});
+                row.tabIndex = 0;
+                row.role = 'button';
+            }
+
             waitList.appendChild(row);
         });
     }

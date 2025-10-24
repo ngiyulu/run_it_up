@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 
 @Service
 // user decides not to participate anymore
-class LeaveSessionService() {
+class LeaveSessionService {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
@@ -38,7 +38,6 @@ class LeaveSessionService() {
          val runDb = runSessionRepository.findById(request.sessionId)
          if(!runDb.isPresent){
             throw ApiRequestException(textService.getText("invalid_session_id",locale ))
-
         }
         val run = runDb.get()
         if(!run.isDeletable()){
@@ -60,7 +59,6 @@ class LeaveSessionService() {
         run.bookingList.removeAll {
             it.userId == user.id.orEmpty()
         }
-
         bookingDbService.cancelUserBooking(user.id.orEmpty())
         return runSessionRepository.save(run)
     }

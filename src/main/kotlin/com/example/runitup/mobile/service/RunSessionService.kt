@@ -62,7 +62,6 @@ class RunSessionService(): BaseService(){
                     booking.runSessionId,
                     it.amount,
                     it.amount,
-                    emptyMap(),
                     it.paymentStatus,
                     com.example.runitup.mobile.model.PaymentType.FEE
                 )

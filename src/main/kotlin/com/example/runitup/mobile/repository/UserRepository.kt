@@ -2,6 +2,8 @@ package com.example.runitup.mobile.repository
 
 import com.example.runitup.mobile.constants.CollectionConstants
 import com.example.runitup.mobile.model.User
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
@@ -20,4 +22,5 @@ interface UserRepository : MongoRepository<User, String> {
 
     @Query("{auth:'?0'}")
     fun findByAuth(auth: String): User?
+    fun findAllByVerifiedPhone(verifiedPhone: Boolean, pageable: Pageable): Page<User>
 }

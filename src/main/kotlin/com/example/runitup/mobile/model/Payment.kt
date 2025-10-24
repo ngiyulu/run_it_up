@@ -14,9 +14,8 @@ class Payment(
     val initialAmount: Double,
     // the initial amount when the payment is created
     val amount: Double,
-    val metadata: Map<String, String> = emptyMap(),
     val paymentStatus: PaymentStatus,
-    val type: com.example.runitup.mobile.model.PaymentType
+    val type: PaymentType
 ): com.example.runitup.mobile.model.BaseModel()
 
 enum class PaymentType{

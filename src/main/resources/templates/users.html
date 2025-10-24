@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Users • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+    <style>
+        .muted { color:#9ca3af; }
+        .clickable { cursor:pointer; }
+        .badge.success { background:#065f46; border-color:#065f46; }
+        .badge.warn { background:#92400e; border-color:#92400e; }
+        .pagination { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        tr.hover:hover { background: rgba(255,255,255,0.05); }
+        .searchbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .searchbar input[type="search"] { min-width:250px; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a th:href="@{/admin/waivers}">Waivers</a>
+            <a th:href="@{/admin/users}">Users</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+        <h2 style="margin:0;">Users</h2>
+        <div class="badge">JWT auth required</div>
+    </div>
+
+    <div id="status" class="alert hidden"></div>
+
+    <div class="card">
+        <div class="searchbar" style="margin-bottom:10px;">
+            <input id="searchBox" type="search" placeholder="Search by first or last name…" />
+            <button id="reloadBtn" class="secondary">Reload</button>
+            <div id="pageInfo" class="muted" style="margin-left:auto;"></div>
+        </div>
+
+        <div style="overflow:auto;">
+            <table id="usersTable">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User ID</th>
+                    <th>Phone</th>
+                    <th>Verified</th>
+                    <th>Skill</th>
+                    <th>DOB</th>
+                    <th>Age</th>
+                </tr>
+                </thead>
+                <tbody id="usersBody">
+                <tr><td colspan="7" class="muted" style="text-align:center;">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" style="margin-top:10px;">
+            <button id="prevBtn" class="secondary">Previous</button>
+            <button id="nextBtn" class="secondary">Next</button>
+            <div id="rangeInfo" class="muted" style="margin-left:auto;"></div>
+        </div>
+    </div>
+</div>
+
+<footer><div>© RunItUp Admin</div></footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        requireAuth();
+
+        const statusEl   = document.getElementById('status');
+        const bodyEl     = document.getElementById('usersBody');
+        const searchBox  = document.getElementById('searchBox');
+        const reloadBtn  = document.getElementById('reloadBtn');
+        const prevBtn    = document.getElementById('prevBtn');
+        const nextBtn    = document.getElementById('nextBtn');
+        const pageInfo   = document.getElementById('pageInfo');
+        const rangeInfo  = document.getElementById('rangeInfo');
+
+        document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+        let page = 0;
+        const size = 50; // ✅ fixed page size
+        let q = '';
+        let pageData = null;
+        let isLoading = false;
+
+        reloadBtn.addEventListener('click', () => loadPage());
+        let searchTimer = null;
+        searchBox.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                q = (searchBox.value || '').trim();
+                page = 0;
+                loadPage();
+            }, 250);
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (page > 0 && !isLoading) { page--; loadPage(); }
+        });
+        nextBtn.addEventListener('click', () => {
+            if (!isLoading) {
+                if (pageData?.totalPages && page < pageData.totalPages - 1) {
+                    page++;
+                    loadPage();
+                }
+            }
+        });
+
+        loadPage();
+
+        async function loadPage() {
+            isLoading = true;
+            setStatus(statusEl, 'success', 'Loading users…');
+            bodyEl.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;">Loading…</td></tr>`;
+            try {
+                const url = `/admin/api/v1/user/list?page=${page}&size=${size}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+                const resp = await api(url, { method: 'GET' });
+
+                const list = Array.isArray(resp) ? resp : (resp.content || []);
+                pageData = Array.isArray(resp) ? null : resp;
+
+                const totalPages = pageData?.totalPages ?? null;
+                const totalElements = pageData?.totalElements ?? null;
+
+                pageInfo.textContent = totalPages != null ? `Page ${page + 1} of ${totalPages}` : `Page ${page + 1}`;
+                if (totalElements != null) {
+                    const start = page * size + 1;
+                    const end = Math.min((page + 1) * size, totalElements);
+                    rangeInfo.textContent = `Showing ${start}-${end} of ${totalElements}`;
+                } else {
+                    rangeInfo.textContent = '';
+                }
+
+                render(list);
+
+                prevBtn.disabled = page <= 0;
+                if (totalPages != null) {
+                    nextBtn.disabled = page >= (totalPages - 1);
+                } else {
+                    nextBtn.disabled = list.length < size;
+                }
+
+                setStatus(statusEl, 'success', 'Users loaded.');
+            } catch (err) {
+                console.error(err);
+                setStatus(statusEl, 'error', 'Failed to load users.');
+                bodyEl.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;">Failed to load.</td></tr>`;
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function render(list) {
+            if (!Array.isArray(list) || list.length === 0) {
+                bodyEl.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;">No users found.</td></tr>`;
+                return;
+            }
+            bodyEl.innerHTML = '';
+            list.forEach(u => {
+                const id = u.id || u.userId || '';
+                const first = u.firstName || u.first || '';
+                const last  = u.lastName  || u.last  || '';
+                const phone = u.phoneNumber || u.phone || '—';
+                const verified = (u.verifiedPhone === true);
+                const skill = u.skillLevel || u.level || '—';
+                const dob   = u.dob || u.dateOfBirth || '';
+                const age = calcAge(dob);
+                const isMinor = (age != null && age < 18);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover clickable';
+                tr.onclick = () => {
+                    if (id) window.open(`/admin/users/view?id=${encodeURIComponent(id)}`, '_blank', 'noopener');
+                };
+
+                tr.innerHTML = `
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${escapeHtml(first)} ${escapeHtml(last)}</span>
+            ${isMinor ? `<span class="badge warn">Under 18</span>` : ``}
+          </div>
+        </td>
+        <td>${escapeHtml(id)}</td>
+        <td>${escapeHtml(phone)}</td>
+        <td>${verified ? '<span class="badge success">Verified</span>' : '<span class="badge">Not verified</span>'}</td>
+        <td>${escapeHtml(skill)}</td>
+        <td>${prettyDate(dob)}</td>
+        <td>${age == null ? '—' : age}</td>
+      `;
+                bodyEl.appendChild(tr);
+            });
+        }
+
+        function prettyDate(val) {
+            if (!val) return '—';
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return val;
+            return d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
+        }
+
+        function calcAge(dobVal) {
+            if (!dobVal) return null;
+            const match = String(dobVal).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const dob = match ? new Date(match[1], match[2]-1, match[3]) : new Date(dobVal);
+            if (isNaN(dob.getTime())) return null;
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+            return age;
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+    });
+</script>
+</body>
+</html>

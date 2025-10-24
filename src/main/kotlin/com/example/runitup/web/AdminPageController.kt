@@ -19,6 +19,12 @@ class AdminPageController {
     @GetMapping("/runsessions")
     fun runs(): String = "runs"
 
+    @GetMapping("/users/view")
+    fun userView(@RequestParam id: String): String = "user-detail"
+
+    @GetMapping("/users")
+    fun userList(): String = "users"
+
     @GetMapping("/payments")
     fun payments(): String = "payments"
 
@@ -36,4 +42,7 @@ class AdminPageController {
 
     @GetMapping("/gyms/create")
     fun createGym() = "gym-form" // creation form
+
+    @GetMapping("/waiver")
+    fun waiver() = "waiver" // creation form
 }

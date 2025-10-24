@@ -179,19 +179,23 @@
         </div>
     </form>
 
-    <!-- Players -->
-    <div class="toolbar" style="display:flex;align-items:center;gap:10px;">
-        <h3 style="margin:0;">Players</h3>
-        <div id="playersCount" class="badge">0 signed up</div>
-    </div>
-    <div id="playersList" class="list">
-        <div style="text-align:center;color:gray;">No players.</div>
+    <!-- Players Tab -->
+    <div class="card tabpanel" data-panel="players">
+        <div class="toolbar" style="display:flex;align-items:center;gap:10px;">
+            <h3 style="margin:0;">Players</h3>
+            <div id="playersCount" class="badge">0 signed up</div>
+        </div>
+        <div id="playersList" class="list">
+            <div style="text-align:center;color:gray;">No players.</div>
+        </div>
     </div>
 
-    <!-- Waitlist -->
+    <!-- Waitlist Tab -->
     <div class="card tabpanel" data-panel="waitlist">
         <div class="toolbar"><h3>Waitlist</h3></div>
-        <div id="waitList" class="list"><div style="text-align:center;color:gray;">No players.</div></div>
+        <div id="waitList" class="list">
+            <div style="text-align:center;color:gray;">No players.</div>
+        </div>
     </div>
 </div>
 
