@@ -40,7 +40,7 @@ class UploadWaiverController: BaseController<Pair<String, FileUploadModel>, User
         val waiver = waiverRepository.findByUserId(user.id.orEmpty()) ?: throw ApiRequestException("invalid_request")
 
         val waiverUrl = service.uploadUserWaiverPdf(user, file.file) ?: throw ApiRequestException("error")
-        user.approveWaiver(savedAdmin.admin.id.orEmpty(), getTimeStamp(), waiverUrl.url)
+        user.approveWaiver(savedAdmin.admin.id.orEmpty(), getTimeStamp(), waiverUrl.url, true)
         waiver.approve(savedAdmin.admin.id.orEmpty(), true, "")
         waiver.approvedAt = LocalDate.now()
         waiver.approvedBy = savedAdmin.admin.id

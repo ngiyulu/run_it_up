@@ -3,6 +3,7 @@ package com.example.runitup.web.rest.v1.controller.waiver
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.Waiver
+import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.WaiverRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.service.GcsImageService
@@ -31,11 +32,11 @@ class ApproveWaiverController: BaseController<ApproveWaiverModel, Waiver>() {
             throw ApiRequestException("invalid_request")
         }
         val waiver = waiverDb.get()
-        // no need to take action because the waiver is already procesesed
-        if(waiver.approvedAt != null){
+        // no need to take action because the waiver is already processed
+        if(waiver.status == WaiverStatus.APPROVED){
             return  waiver
         }
-        user.approveWaiver(savedAdmin.admin.id.orEmpty(), getTimeStamp(), null)
+        user.approveWaiver(savedAdmin.admin.id.orEmpty(), getTimeStamp(), waiver.url, request.isApproved)
         cacheManager.updateUser(user)
         waiver.approve(savedAdmin.admin.id.orEmpty(), request.isApproved, request.notes)
         return waiverRepository.save(waiver)

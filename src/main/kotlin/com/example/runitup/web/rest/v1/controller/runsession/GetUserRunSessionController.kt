@@ -19,13 +19,13 @@ class GetUserRunSessionController: BaseController<String, List<RunSession>>() {
 
     override fun execute(request: String): List<RunSession> {
         val booking = bookingRepository.findBySessionId(request)
-//        val list: MutableList<RunSession> = mutableListOf()
-//        booking.forEach {
-//            val session = runSessionRepository.findById(it.runSessionId)
-//            if (session.isPresent){
-//                list.add(session.get())
-//            }
-//        }
+        val list: MutableList<RunSession> = mutableListOf()
+        booking.forEach {
+            val session = runSessionRepository.findById(it.runSessionId)
+            if (session.isPresent){
+                list.add(session.get())
+            }
+        }
         return listOf()
     }
 }
