@@ -43,8 +43,8 @@ data class User(
         return "$firstName ${lastName}"
     }
 
-    fun approveWaiver(adminId:String, timeStamp:Long, waiverImageUrl:String?){
-        waiverAuthorized = true
+    fun approveWaiver(adminId:String, timeStamp:Long, waiverImageUrl:String?, isAuthorized:Boolean){
+        waiverAuthorized = isAuthorized
         waiverSigned = true
         waiverAuthorizedBy = adminId
         waiverAuthorizedAt = timeStamp

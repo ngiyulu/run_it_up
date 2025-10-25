@@ -1,11 +1,20 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>User • RunItUp Admin</title>
     <link th:href="@{/styles.css}" rel="stylesheet" />
     <style>
+        .tabs { display:flex; gap:12px; border-bottom:1px solid #1f2937; margin-bottom:12px; }
+        .tab { padding:8px 12px; border:1px solid #1f2937; border-bottom:none; border-radius:10px 10px 0 0; cursor:pointer; }
+        .tab.active { background:#0b1220; font-weight:600; }
+        .tabpanel { display:none; }
+        .tabpanel.active { display:block; }
+        .hidden { display:none !important; }
+        .muted { color:#9ca3af; }
+        .link { text-decoration: underline; }
+
         .user-card { display:flex; gap:16px; align-items:flex-start; }
         .user-avatar {
             width:120px; height:120px; border-radius:12px; object-fit:cover;
@@ -15,8 +24,13 @@
         .kv .k { color:#9ca3af; }
         .row-inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .badge.success { background:#065f46; border-color:#065f46; }
-        .link { text-decoration: underline; }
-        .muted { color:#9ca3af; }
+        .list { display:flex; flex-direction:column; gap:8px; }
+        .rowline { display:flex; gap:12px; align-items:center; padding:10px; border:1px solid #1f2937; border-radius:10px; }
+        .rowline:hover { background: rgba(255,255,255,0.03); }
+        .grow { flex:1 1 auto; min-width:0; }
+        .nowrap { white-space:nowrap; }
+        .toolbar-inline { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+        .help { color:#9ca3af; font-size:12px; }
     </style>
 </head>
 <body>
@@ -27,6 +41,7 @@
             <a th:href="@{/admin/dashboard}">Dashboard</a>
             <a th:href="@{/admin/runs}">Run Sessions</a>
             <a th:href="@{/admin/gyms}">Gyms</a>
+            <a th:href="@{/admin/users}">Users</a>
             <a href="#" id="logoutBtn">Logout</a>
         </nav>
     </div>
@@ -37,45 +52,80 @@
         <h2 id="title">User</h2>
     </div>
 
+    <div class="tabs">
+        <div class="tab active" data-tab="details">Details</div>
+        <div class="tab" data-tab="sessions">Run Sessions</div>
+    </div>
+
     <div id="status" class="alert hidden"></div>
 
-    <div class="card user-card" id="userCard">
-        <img id="avatar" class="user-avatar" alt="User" />
-        <div style="flex:1 1 auto; min-width:0;">
-            <div class="row-inline">
-                <h3 id="fullName" style="margin:0;">—</h3>
-                <span id="levelBadge" class="badge hidden"></span>
-                <span id="enabledBadge" class="badge hidden"></span>
-            </div>
-
-            <div class="kv" style="margin-top:12px;">
-                <div class="k">User ID</div><div id="uid">—</div>
-                <div class="k">Email</div><div id="email">—</div>
-
-                <div class="k">Phone</div>
+    <!-- DETAILS TAB -->
+    <div class="tabpanel active" data-panel="details">
+        <div class="card user-card" id="userCard">
+            <img id="avatar" class="user-avatar" alt="User" />
+            <div style="flex:1 1 auto; min-width:0;">
                 <div class="row-inline">
-                    <span id="phone">—</span>
-                    <span id="phoneVerified" class="badge success hidden">Verified</span>
+                    <h3 id="fullName" style="margin:0;">—</h3>
+                    <span id="levelBadge" class="badge hidden"></span>
+                    <span id="enabledBadge" class="badge hidden"></span>
                 </div>
 
-                <div class="k">Date of Birth</div><div id="dob">—</div>
-                <div class="k">Skill</div><div id="skill">—</div>
-                <div class="k">Joined</div><div id="joined">—</div>
+                <div class="kv" style="margin-top:12px;">
+                    <div class="k">User ID</div><div id="uid">—</div>
+                    <div class="k">Email</div><div id="email">—</div>
 
-                <!-- Waiver block -->
-                <div class="k">Waiver</div>
-                <div id="waiverBlock">
-                    <div id="waiverLinkRow" class="row-inline hidden">
-                        <a id="waiverLink" class="link" href="#" target="_blank" rel="noopener">View waiver</a>
+                    <div class="k">Phone</div>
+                    <div class="row-inline">
+                        <span id="phone">—</span>
+                        <span id="phoneVerified" class="badge success hidden">Verified</span>
                     </div>
-                    <div id="waiverSignedRow" class="hidden">
-                        <span class="muted">Signed:</span> <span id="waiverSignedAt">—</span>
+
+                    <div class="k">Date of Birth</div><div id="dob">—</div>
+                    <div class="k">Skill</div><div id="skill">—</div>
+                    <div class="k">Credit</div><div id="credit">—</div>
+                    <div class="k">Joined</div><div id="joined">—</div>
+
+                    <!-- Waiver block -->
+                    <div class="k">Waiver</div>
+                    <div id="waiverBlock">
+                        <div id="waiverLinkRow" class="row-inline hidden">
+                            <a id="waiverLink" class="link" href="#" target="_blank" rel="noopener">View waiver</a>
+                        </div>
+                        <div id="waiverSignedRow" class="hidden">
+                            <span class="muted">Signed:</span> <span id="waiverSignedAt">—</span>
+                        </div>
+                        <div id="waiverNotesRow" class="hidden">
+                            <span class="muted">Notes:</span> <span id="waiverNotes">—</span>
+                        </div>
+                        <div id="waiverEmpty" class="muted">No waiver on file.</div>
                     </div>
-                    <div id="waiverNotesRow" class="hidden">
-                        <span class="muted">Notes:</span> <span id="waiverNotes">—</span>
-                    </div>
-                    <div id="waiverEmpty" class="muted">No waiver on file.</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SESSIONS TAB -->
+    <div class="tabpanel" data-panel="sessions">
+        <div class="card">
+            <div class="toolbar-inline">
+                <div>
+                    <label for="startDate">Start date *</label>
+                    <input id="startDate" type="date" required />
+                </div>
+                <div>
+                    <label for="endDate">End date (optional)</label>
+                    <input id="endDate" type="date" />
+                </div>
+                <div>
+                    <button id="searchBtn" class="primary">Search</button>
+                </div>
+                <div class="grow"></div>
+                <div id="countBadge" class="badge">0 sessions</div>
+            </div>
+            <div class="help">Shows only sessions this user participated in.</div>
+
+            <div id="sessionsList" class="list" style="margin-top:10px;">
+                <div class="muted" style="text-align:center;">Pick a date range and click Search.</div>
             </div>
         </div>
     </div>
@@ -83,134 +133,9 @@
 
 <footer><div>© RunItUp Admin</div></footer>
 
+<!-- Global helpers -->
 <script th:src="@{/app.js}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        requireAuth();
-        document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
-
-        const statusEl = document.getElementById('status');
-        const params = new URLSearchParams(location.search);
-        const userId = params.get('id');
-
-        if (!userId) {
-            setStatus(statusEl, 'error', 'Missing user id.');
-            return;
-        }
-
-        try {
-            setStatus(statusEl, 'success', 'Loading user…');
-            const u = await api(`/admin/api/v1/user/retrieve/${encodeURIComponent(userId)}`, { method:'GET' });
-
-            // DOM refs
-            const avatar = document.getElementById('avatar');
-            const fullName = document.getElementById('fullName');
-            const title = document.getElementById('title');
-            const uid = document.getElementById('uid');
-            const email = document.getElementById('email');
-            const phone = document.getElementById('phone');
-            const phoneVerified = document.getElementById('phoneVerified');
-            const dob = document.getElementById('dob');
-            const skill = document.getElementById('skill');
-            const joined = document.getElementById('joined');
-            const levelBadge = document.getElementById('levelBadge');
-            const enabledBadge = document.getElementById('enabledBadge');
-
-            const waiverEmpty = document.getElementById('waiverEmpty');
-            const waiverLinkRow = document.getElementById('waiverLinkRow');
-            const waiverLink = document.getElementById('waiverLink');
-            const waiverSignedRow = document.getElementById('waiverSignedRow');
-            const waiverSignedAt = document.getElementById('waiverSignedAt');
-            const waiverNotesRow = document.getElementById('waiverNotesRow');
-            const waiverNotes = document.getElementById('waiverNotes');
-
-            // Render core fields
-            avatar.src = u.imageUrl || u.photoUrl || '';
-            avatar.onerror = () => { avatar.style.display = 'none'; };
-
-            const name = [u.first, u.last].filter(Boolean).join(' ') || u.name || '—';
-            fullName.textContent = name;
-            title.textContent = `User • ${name}`;
-
-            uid.textContent = u.id || u.userId || userId;
-            email.textContent = u.email || '—';
-
-            // Phone + verified indicator
-            const phoneVal =u.phoneNumber  || '—';
-            phone.textContent = phoneVal;
-            const isVerified = u.verifiedPhone;
-            phoneVerified.classList.toggle('hidden', !isVerified);
-
-            // DOB (accepts ISO date or YYYY-MM-DD)
-            dob.textContent = prettyDate(u.dob);
-
-            // Skill
-            skill.textContent = u.skillLevel || '—';
-
-            // Joined
-            joined.textContent = prettyDateTime(u.createdAt);
-
-            // Level / Enabled badges
-            if (u.skillLevel) {
-                levelBadge.textContent = String(u.skillLevel);
-                levelBadge.classList.remove('hidden');
-            }
-            if (typeof u.enabled === 'boolean') {
-                enabledBadge.textContent = u.enabled ? 'Enabled' : 'Disabled';
-                enabledBadge.classList.remove('hidden');
-            }
-
-            // Waiver (flexible keys)
-            const waiverUrl = u.waiverUrl
-            const signedAt   = u.waiverSignedAt || u.waiver?.signedAt;
-            const notesVal   = u.internalNotes;
-
-            if (waiverUrl) {
-                waiverEmpty.classList.add('hidden');
-                waiverLinkRow.classList.remove('hidden');
-                waiverLink.href = waiverUrl;
-
-                if (signedAt) {
-                    waiverSignedRow.classList.remove('hidden');
-                    waiverSignedAt.textContent = prettyDateTime(signedAt);
-                }
-                if (notesVal) {
-                    waiverNotesRow.classList.remove('hidden');
-                    waiverNotes.textContent = notesVal;
-                }
-            } else {
-                // keep "No waiver on file."
-                waiverLinkRow.classList.add('hidden');
-                waiverSignedRow.classList.add('hidden');
-                waiverNotesRow.classList.add('hidden');
-            }
-
-            setStatus(statusEl, 'success', 'User loaded.');
-        } catch (e) {
-            console.error(e);
-            setStatus(statusEl, 'error', 'Failed to load user.');
-        }
-    });
-
-    // Helpers
-    function prettyDate(val) {
-        if (!val) return '—';
-        // Accepts 'YYYY-MM-DD' or ISO timestamps
-        const d = new Date(val);
-        if (isNaN(d.getTime())) {
-            // Try YYYY-MM-DD manually
-            if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val);
-            return String(val);
-        }
-        return d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
-    }
-
-    function prettyDateTime(val) {
-        if (!val) return '—';
-        const d = new Date(val);
-        if (isNaN(d.getTime())) return String(val);
-        return d.toLocaleString([], { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    }
-</script>
+<!-- Page logic -->
+<script th:src="@{/user-view.js}"></script>
 </body>
 </html>

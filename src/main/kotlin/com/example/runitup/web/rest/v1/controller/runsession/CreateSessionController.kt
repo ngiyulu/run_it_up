@@ -37,6 +37,9 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
         if(!gymDb.isPresent){
             throw ApiRequestException("invalid_gym")
         }
+        if(request.startTime.isAfter(request.endTime)){
+            throw ApiRequestException("time_invalid")
+        }
         val auth =  SecurityContextHolder.getContext().authentication
         val savedAdmin = auth.principal as AdminPrincipal
         val runGym = gymDb.get()
@@ -58,7 +61,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             description = request.description,
             duration = 0
             ).apply {
-            val timestamp = getTimeStamp()
+            getTimeStamp()
             createdAt = LocalDate.now()
             status = RunStatus.PENDING
             gym = runGym
