@@ -18,7 +18,7 @@ class GetUserRunSessionController: BaseController<String, List<RunSession>>() {
 
 
     override fun execute(request: String): List<RunSession> {
-        val booking = bookingRepository.findBySessionId(request)
+        val booking = bookingRepository.findByUserId(request)
         val list: MutableList<RunSession> = mutableListOf()
         booking.forEach {
             val session = runSessionRepository.findById(it.runSessionId)
@@ -26,6 +26,6 @@ class GetUserRunSessionController: BaseController<String, List<RunSession>>() {
                 list.add(session.get())
             }
         }
-        return listOf()
+        return list
     }
 }
