@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 @Document(collection = CollectionConstants.SUPPORT_COLLECTION)
-interface SupportRepository : MongoRepository<Support, String>
+interface SupportRepository : MongoRepository<Support, String>{
+    fun findByStatus(status:String): List<Support>
+}

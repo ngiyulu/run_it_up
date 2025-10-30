@@ -100,6 +100,7 @@ class SecurityConfig{
             // require init and toke generrate to by passs authentication
             it.requestMatchers(
                 "/api/v1/user/init",
+                "api/v1/support/create",
                 "/api/v1/user/token/generate/**",
                 "/api/v1/user/verify",
                 "/api/v1/user/create",
