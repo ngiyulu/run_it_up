@@ -7,10 +7,10 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.web.rest.v1.controller.runsession.CreateSessionController
-import com.example.runitup.web.rest.v1.controller.runsession.GetUserRunSessionController
-import com.example.runitup.web.rest.v1.controller.runsession.LeaveSessionAdminController
+import com.example.runitup.web.rest.v1.controller.runsession.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -38,6 +38,9 @@ class AdminRunSessionRestController {
     lateinit var runSessionController: GetUserRunSessionController
 
     @Autowired
+    lateinit var getUserRunSessionControllerByRange: GetUserRunSessionControllerByRange
+
+    @Autowired
     lateinit var runSessionService: RunSessionService
     @PostMapping("/create")
     fun create(@RequestBody model: CreateRunSessionRequest): RunSession {
@@ -46,11 +49,17 @@ class AdminRunSessionRestController {
 
     @GetMapping("/by-date/{date}")
     fun byDate(
-        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "25") size: Int,
+        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
     ): List<RunSession> {
+        val pageable = PageRequest.of(
+            page,
+            size.coerceAtMost(100),
+            Sort.by("created_at"))
         val startUtc = date.atStartOfDay(ZoneOffset.UTC).toInstant()
         val endUtc = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc)).map {
+        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc), pageable).content.map {
             it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
             it
         }
@@ -59,15 +68,17 @@ class AdminRunSessionRestController {
 
     @GetMapping("/by-range")
     fun byRange(
+        @RequestParam  userId: String?,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) start: LocalDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) end: LocalDate
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) end: LocalDate?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "25") size: Int
     ): List<RunSession> {
-        val startUtc = start.atStartOfDay(ZoneOffset.UTC).toInstant()
-        val endUtc = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
-        return repo.findAllByDateBetween(Date.from(startUtc), Date.from(endUtc)).map {
-            it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
-            it
-        }
+        val pageable = PageRequest.of(
+            page,
+            size.coerceAtMost(100),
+            Sort.by("created_at"))
+        return getUserRunSessionControllerByRange.execute(GetUserRunSessionControllerByRangeModel(userId, start, end, pageable))
     }
 
     @GetMapping("/{id}")
