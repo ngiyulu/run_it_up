@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RunItUp — Support</title>
+    <style>
+        :root {
+            --bg: #0b0c10;
+            --panel: #12131a;
+            --muted: #a8b0bd;
+            --text: #e8ecf1;
+            --accent: #ff6a00;
+            --accent-2: #ff9a3c;
+            --border: #212432;
+            --link: #7ab6ff;
+        }
+        html, body { height: 100%; }
+        body {
+            margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            background: linear-gradient(180deg, #0b0c10 0%, #0f1016 100%);
+            color: var(--text); line-height: 1.6;
+        }
+        .container { max-width: 960px; margin: auto; padding: 48px 20px; }
+        header { margin-bottom: 24px; text-align:center; }
+        h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 8px; letter-spacing: 0.2px; }
+        .subtitle { color: var(--muted); font-size: 15px; }
+        .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-top:24px; }
+        h2 { margin-top: 32px; font-size: 20px; }
+        a { color: var(--link); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .contact-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .contact-card { background: #141624; border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+        .contact-card h3 { margin-top: 0; }
+        .faq { margin-top:32px; }
+        details { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+        summary { cursor: pointer; font-weight: 700; }
+        form { display: grid; gap: 12px; margin-top: 24px; }
+        input, textarea { width: 100%; border-radius: 8px; border: 1px solid var(--border); padding: 10px; background: #0f1016; color: var(--text); }
+        button { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color: #111; border: none; border-radius: 8px; padding: 12px 18px; font-weight:700; cursor:pointer; }
+        button:hover { opacity: .9; }
+        footer { margin-top: 48px; color: var(--muted); font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Support Center</h1>
+        <div class="subtitle">Need help? We’re here to assist with your RunItUp experience.</div>
+    </header>
+
+    <section class="panel">
+        <h2>Contact Us</h2>
+        <div class="contact-grid">
+            <div class="contact-card">
+                <h3>📧 Email Support</h3>
+                <p>Reach our team via email and we’ll respond within 24–48 hours.</p>
+                <p><a href="mailto:support@runit-up.com">support@runit-up.com</a></p>
+            </div>
+            <div class="contact-card">
+                <h3>💬 Chat</h3>
+                <p>Use the in‑app chat to message our support team during business hours (Mon–Fri, 9AM–6PM CST).</p>
+            </div>
+            <div class="contact-card">
+                <h3>📍 Mailing Address</h3>
+                <p>RunItUp, Inc.<br>123 Example Ave<br>Chicago, IL 60601, USA</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel faq">
+        <h2>Frequently Asked Questions</h2>
+        <details>
+            <summary>How do I reset my password?</summary>
+            <p>Open the RunItUp app, tap <strong>Login → Forgot Password</strong>, and follow the instructions. You’ll receive an email or SMS with a reset link.</p>
+        </details>
+        <details>
+            <summary>I can’t join a run. What should I do?</summary>
+            <p>Make sure the run isn’t full or past its start time. If you’re still having trouble, contact <a href="mailto:support@runit-up.com">support@runit-up.com</a>.</p>
+        </details>
+        <details>
+            <summary>How do I request a refund?</summary>
+            <p>Refund policies vary by host. Go to <strong>My Runs → Past or Upcoming Runs</strong>, select the session, and tap <strong>Request Refund</strong>. If your request window is open, it will process automatically.</p>
+        </details>
+        <details>
+            <summary>Can I change my booking or guest count?</summary>
+            <p>You can modify your party size or guest info while the run status is <strong>Pending</strong> or <strong>Confirmed</strong>. Once the run starts, changes are locked.</p>
+        </details>
+    </section>
+
+    <section class="panel">
+        <h2>Submit a Request</h2>
+        <p>Have an issue or feedback? Send us a message below.</p>
+        <form onsubmit="handleSubmit(event)">
+            <input type="text" name="name" placeholder="Your name" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <textarea name="message" rows="5" placeholder="Describe your issue or question" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+        <p id="msg" style="color: var(--muted); margin-top:10px; display:none;">Thank you! Your message has been sent.</p>
+    </section>
+
+    <footer>
+        <p>© <span id="year"></span> RunItUp, Inc. All rights reserved.</p>
+        <p><a href="/terms-and-conditions">Terms & Conditions</a> · <a href="/privacy">Privacy Policy</a> · <a href="/">Home</a></p>
+    </footer>
+</div>
+<script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    function handleSubmit(e){
+        e.preventDefault();
+        e.target.reset();
+        document.getElementById('msg').style.display='block';
+        setTimeout(()=>{document.getElementById('msg').style.display='none';},4000);
+    }
+</script>
+</body>
+</html>
