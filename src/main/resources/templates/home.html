@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0c10" />
+    <title>RunItUp — Find & Join Local Sports Runs</title>
+    <meta name="description" content="RunItUp helps you discover, book, and manage local basketball and sports runs. Waitlists, payments, and messaging built in." />
+    <style>
+        :root{
+            --bg:#0b0c10; --bg2:#0f1118; --panel:#12131a; --text:#e8ecf1; --muted:#a8b0bd; --border:#1d2130;
+            --accent:#ff6a00; --accent2:#ff9a3c; --ok:#39d98a; --warn:#ffd166; --err:#ff4d4f; --link:#7ab6ff;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.55;color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2));}
+        a{color:var(--link);text-decoration:none}
+        a:hover{text-decoration:underline}
+        .wrap{max-width:980px;margin:0 auto;padding:20px}
+        .nav{position:sticky;top:0;z-index:40;background:rgba(11,12,16,.8);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border)}
+        .nav .inner{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:800}
+        .logo-badge{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#111}
+        .nav a.btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;color:var(--text)}
+        .nav a.btn.cta{border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#111;font-weight:700}
+
+        .hero{display:grid;gap:20px;grid-template-columns:1fr; padding:28px 16px 8px}
+        .hero .title{font-size:clamp(28px,7vw,44px);font-weight:900;letter-spacing:.2px;margin:8px 0}
+        .hero .subtitle{color:var(--muted)}
+        .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+        .cta{display:inline-flex;align-items:center;gap:8px;border-radius:14px;padding:12px 14px;background:var(--panel);border:1px solid var(--border)}
+        .cta.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#111;border:none;font-weight:800}
+        .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:#141824;border:1px solid var(--border);color:var(--muted);font-size:12px}
+        .phone{margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+        .screen{border-radius:16px;border:1px solid var(--border);background:linear-gradient(160deg,#151826,#0e1322);height:420px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+        .screen .top{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--border)}
+        .pill{height:6px;width:80px;background:#22273a;border-radius:999px;margin:auto}
+        .list{padding:10px;display:grid;gap:10px;overflow:auto}
+        .card{background:#141829;border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+        .tag{font-size:11px;color:#d6dde9;background:#1c2338;border:1px solid #27304a;border-radius:999px;padding:2px 8px}
+        .badge{display:inline-block;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#111;font-weight:800;border-radius:999px;padding:2px 10px;font-size:12px}
+
+        .section{padding:28px 16px}
+        .section h2{font-size:20px;margin:0 0 10px}
+        .grid{display:grid;gap:12px}
+        @media(min-width:820px){
+            .hero{grid-template-columns:1.2fr .8fr;align-items:center}
+            .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+            .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+        }
+        .feature{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+        .feature h3{margin:0 0 4px;font-size:16px}
+        .muted{color:var(--muted)}
+        .how-step{display:flex;gap:12px;align-items:flex-start;background:#141829;border:1px solid var(--border);border-radius:12px;padding:12px}
+        .num{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#1a2140;border:1px solid #293256;color:#a6b2c8;font-weight:800}
+
+        .faq details{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px}
+        .faq summary{cursor:pointer;font-weight:700}
+
+        .footer{padding:36px 16px;border-top:1px solid var(--border);color:var(--muted);text-align:center}
+        .storebtn{display:inline-flex;gap:10px;align-items:center;border-radius:12px;padding:10px 12px;border:1px solid var(--border);background:var(--panel)}
+
+        .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#141829;border:1px solid var(--border);padding:10px 14px;border-radius:999px;display:none}
+    </style>
+</head>
+<body>
+<nav class="nav">
+    <div class="inner wrap">
+        <div class="logo"><span class="logo-badge">🏀</span> RunItUp</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <a href="#features" class="btn">Features</a>
+            <a href="#how" class="btn">How it works</a>
+            <a href="#faq" class="btn">FAQ</a>
+            <a href="#download" class="btn cta">Get the App</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero wrap">
+    <div>
+        <span class="chip">New • Waitlists + Guest checkout</span>
+        <h1 class="title">Find, join, and manage local sports runs — in seconds.</h1>
+        <p class="subtitle">RunItUp helps you discover nearby basketball and other pick‑up runs, reserve a spot, handle payments, and chat with players — all in one app.</p>
+        <div class="cta-row">
+            <a href="#download" class="cta primary">Download RunItUp</a>
+            <a href="#features" class="cta">See features</a>
+        </div>
+    </div>
+    <div class="phone">
+        <div class="screen" role="img" aria-label="App preview">
+            <div class="top"><span class="tag">Today</span><span class="badge">3 spots left</span></div>
+            <div class="list" id="runsList">
+                <!-- Cards injected by JS -->
+            </div>
+            <div class="top"><div class="pill"></div></div>
+        </div>
+    </div>
+</header>
+
+<section class="section wrap" id="features">
+    <h2>Why players love RunItUp</h2>
+    <div class="grid cols-3">
+        <div class="feature">
+            <h3>Instant discovery</h3>
+            <p class="muted">Browse nearby runs by date, skill level, and capacity. Filter fast and snag your spot.</p>
+        </div>
+        <div class="feature">
+            <h3>Built‑in payments</h3>
+            <p class="muted">Apple/Google Pay and cards with receipts. Holds, refunds, and no‑show rules handled.</p>
+        </div>
+        <div class="feature">
+            <h3>Waitlists & guests</h3>
+            <p class="muted">Join the waitlist or bring friends when the host enables guests and extra spots.</p>
+        </div>
+        <div class="feature">
+            <h3>Chat & notifications</h3>
+            <p class="muted">Coordinate in one place. Get reminders, lineup changes, and check‑in codes.</p>
+        </div>
+        <div class="feature">
+            <h3>Host tools</h3>
+            <p class="muted">Set price, max players, and rules. Manage refunds and attendance with a tap.</p>
+        </div>
+        <div class="feature">
+            <h3>Multi‑sport ready</h3>
+            <p class="muted">Basketball today, soccer tomorrow. RunItUp scales with your pickup life.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section wrap" id="how">
+    <h2>How it works</h2>
+    <div class="grid cols-3">
+        <div class="how-step"><div class="num">1</div><div><strong>Discover.</strong> Enable location or search your city to see upcoming runs.</div></div>
+        <div class="how-step"><div class="num">2</div><div><strong>Book.</strong> Choose your spot, add guests (if allowed), and pay securely.</div></div>
+        <div class="how-step"><div class="num">3</div><div><strong>Play.</strong> Get reminders, check in at the gym, and chat with your squad.</div></div>
+    </div>
+</section>
+
+<section class="section wrap" id="upcoming">
+    <h2>Sample upcoming runs</h2>
+    <div class="grid cols-2" id="upcomingGrid"></div>
+</section>
+
+<section class="section wrap" id="faq">
+    <h2>FAQ</h2>
+    <div class="faq grid cols-2">
+        <details><summary>Is there a fee to use RunItUp?</summary><p class="muted">Creating an account is free. Some runs include venue or host fees, shown before you book.</p></details>
+        <details><summary>Can I bring guests?</summary><p class="muted">Yes, when enabled by the host. Guest limits and pricing appear on the run page.</p></details>
+        <details><summary>What if a run is full?</summary><p class="muted">Join the waitlist. If a spot opens, you’ll be auto‑confirmed and notified.</p></details>
+        <details><summary>How do refunds work?</summary><p class="muted">Refund eligibility depends on the host’s cancellation window and no‑show policy.</p></details>
+    </div>
+</section>
+
+<section class="section wrap" id="download">
+    <h2>Get the app</h2>
+    <p class="muted">Available for iOS and Android.</p>
+    <div class="cta-row">
+        <a class="storebtn" href="#">
+            <span aria-hidden></span>
+            <span>
+          <small class="muted" style="display:block; line-height:1;">Download on the</small>
+          <strong>App Store</strong>
+        </span>
+        </a>
+        <a class="storebtn" href="#">
+            <span aria-hidden>▶</span>
+            <span>
+          <small class="muted" style="display:block; line-height:1;">Get it on</small>
+          <strong>Google Play</strong>
+        </span>
+        </a>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="wrap">
+        <div style="margin-bottom:10px;">© <span id="year"></span> RunItUp, Inc.</div>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:14px;">
+            <a href="/terms-and-conditions">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="#">Support</a>
+        </div>
+    </div>
+</footer>
+
+<div class="toast" id="toast">Added to your runs</div>
+
+<script>
+    // Populate fake run cards in the phone preview & upcoming section
+    const sampleRuns = [
+        { title:"Open Gym — 5v5", gym:"Lakeview Rec Center", time:"Today 6:30 PM", price:"$12", spots:3, tag:"Intermediate" },
+        { title:"Morning Run — 4v4", gym:"South Loop Courts", time:"Tomorrow 7:00 AM", price:"$8", spots:6, tag:"All Levels" },
+        { title:"Pickup League Night", gym:"West End Gym", time:"Fri 8:00 PM", price:"$15", spots:0, tag:"Advanced" },
+        { title:"Lunch Hoops", gym:"Downtown Y", time:"Mon 12:15 PM", price:"Free", spots:2, tag:"All Levels" }
+    ];
+
+    const list = document.getElementById('runsList');
+    sampleRuns.forEach(r => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+        <div style="width:44px;height:44px;border-radius:10px;background:#1b2342;border:1px solid #2a345a;display:grid;place-items:center">🏀</div>
+        <div style="flex:1">
+          <div style="font-weight:700">${r.title}</div>
+          <div class="muted" style="font-size:13px">${r.gym} • ${r.time}</div>
+          <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+            <span class="tag">${r.tag}</span>
+            <span class="muted" style="font-size:12px">${r.price}</span>
+          </div>
+        </div>
+        <button class="cta" onclick="toast()">Join</button>
+      `;
+        list.appendChild(el);
+    });
+
+    const upcomingGrid = document.getElementById('upcomingGrid');
+    sampleRuns.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'feature';
+        card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <strong>${r.title}</strong>
+          <span class="tag">${r.tag}</span>
+        </div>
+        <div class="muted">${r.gym} • ${r.time}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <span class="badge">${r.spots>0 ? r.spots+" spots left" : "Waitlist"}</span>
+          <span class="muted" style="font-weight:700">${r.price}</span>
+          <button class="cta" onclick="toast()">Book</button>
+        </div>`;
+        upcomingGrid.appendChild(card);
+    });
+
+    function toast(){
+        const t=document.getElementById('toast');
+        t.style.display='block';
+        t.style.opacity='1';
+        setTimeout(()=>{t.style.transition='opacity .5s';t.style.opacity='0';},1200);
+        setTimeout(()=>{t.style.display='none';t.style.transition='none'},1800);
+    }
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
