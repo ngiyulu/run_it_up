@@ -7,6 +7,7 @@ object CollectionConstants {
     const val PAYMENT_COLLECTION = "payment"
     const val PHONE_COLLECTION = "phone"
     const val GYM_COLLECTION = "gym"
+    const val SUPPORT_COLLECTION = "support"
     const val REVIEW = "review"
     const val SESSION_COLLECTION = "session"
     const val OTP_COLLECTION = "otp"
