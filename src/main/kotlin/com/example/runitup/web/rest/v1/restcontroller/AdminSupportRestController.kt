@@ -6,7 +6,9 @@ import com.example.runitup.mobile.rest.v1.dto.CreateSupportRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 
 @RequestMapping("/admin/api/v1/support")
 @RestController
@@ -38,12 +40,13 @@ class AdminSupportRestController {
     fun getUser(
         @RequestParam(required = false) status: String?,
         @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?,
         @RequestParam(defaultValue = "25") size: Int): List<Support> {
         val pageable = PageRequest.of(
             page,
             size.coerceAtMost(100),
             Sort.by("created_at"))
-        return getAllSupportController.execute(GetAllSupportModel(pageable, status))
+        return getAllSupportController.execute(GetAllSupportModel(pageable, status, date))
     }
 
     @GetMapping("/{id}")

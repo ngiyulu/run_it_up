@@ -16,6 +16,7 @@ class GetAllSupportController: BaseController<GetAllSupportModel, List<Support>>
     lateinit var supportRepository: SupportRepository
     override fun execute(request: GetAllSupportModel): List<Support> {
         var support= if(request.status == null) supportRepository.findAll()
+        else if(request.date != null) supportRepository.findByStatusAndCreatedAt(request.status, request.date)
         else supportRepository.findByStatus(request.status)
         support = support.map {
             if(it.resolvedBy != null){
@@ -28,4 +29,4 @@ class GetAllSupportController: BaseController<GetAllSupportModel, List<Support>>
     }
 
 }
-class GetAllSupportModel(val pageRequest: PageRequest, val status:String?)
+class GetAllSupportModel(val pageRequest: PageRequest, val status:String?, val date:LocalDate?)

@@ -44,13 +44,8 @@
             </div>
 
             <div class="field">
-                <label for="startDate">Start date</label>
-                <input id="startDate" type="date" />
-            </div>
-
-            <div class="field">
-                <label for="endDate">End date</label>
-                <input id="endDate" type="date" />
+                <label for="onDate">Date (optional)</label>
+                <input id="onDate" type="date" />
             </div>
 
             <div class="field" style="gap:8px;">
@@ -58,7 +53,7 @@
                 <button class="secondary" id="resetBtn" type="button">Reset</button>
             </div>
         </div>
-        <small class="help">By default we show pending items. If you select <em>Resolved</em>, the “Resolved At” column will populate.</small>
+        <small class="help">Defaults to Pending across all dates. Add a date to filter to a specific day.</small>
     </div>
 
     <div class="card">
@@ -68,11 +63,12 @@
                 <th>Email</th>
                 <th>Name</th>
                 <th>Status</th>
+                <th>Created At</th>
                 <th>Resolved At</th>
             </tr>
             </thead>
             <tbody id="supportTbody">
-            <tr><td colspan="4" class="muted" style="text-align:center;">Loading…</td></tr>
+            <tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr>
             </tbody>
         </table>
     </div>
@@ -88,43 +84,23 @@
 
         const statusEl   = document.getElementById('status');
         const statusSel  = document.getElementById('statusSel');
-        const startDateEl= document.getElementById('startDate');
-        const endDateEl  = document.getElementById('endDate');
+        const onDateEl   = document.getElementById('onDate');
         const searchBtn  = document.getElementById('searchBtn');
         const resetBtn   = document.getElementById('resetBtn');
         const tbody      = document.getElementById('supportTbody');
 
-        // Open native date pickers on click/focus (with fallback)
-        [startDateEl, endDateEl].forEach(el => {
-            const open = () => (typeof el.showPicker === 'function') ? el.showPicker() : (el.focus(), el.click());
-            el.addEventListener('click', open);
-            el.addEventListener('focus', open);
-        });
+        // Open native date picker on click/focus
+        const openPicker = el => (typeof el.showPicker === 'function') ? el.showPicker() : (el.focus(), el.click());
+        onDateEl.addEventListener('click', () => openPicker(onDateEl));
+        onDateEl.addEventListener('focus', () => openPicker(onDateEl));
 
-        // Initial load: Pending only
+        // Initial load (Pending only, no date filter)
         await loadSupport();
 
-        // Search click with validation
-        searchBtn.addEventListener('click', async () => {
-            const start = startDateEl.value;
-            const end   = endDateEl.value;
-
-            // Validate: end cannot be before start
-            if (start && end) {
-                const sd = new Date(start), ed = new Date(end);
-                if (ed < sd) {
-                    setStatus(statusEl, 'error', 'End date cannot be earlier than start date.');
-                    return;
-                }
-            }
-            await loadSupport();
-        });
-
-        // Reset clears dates and returns to pending
+        searchBtn.addEventListener('click', loadSupport);
         resetBtn.addEventListener('click', async () => {
             statusSel.value = 'PENDING';
-            startDateEl.value = '';
-            endDateEl.value = '';
+            onDateEl.value = '';
             await loadSupport();
         });
 
@@ -132,15 +108,12 @@
             try {
                 setStatus(statusEl, 'success', 'Loading support requests…');
 
-                // Build query
-                let statusVal = statusSel.value;
-                // Defensive mapping if backend still accepts "PROCESSED"
-                if (statusVal === 'PROCESSED') statusVal = 'RESOLVED';
+                let statusVal = statusSel.value || 'PENDING';
+                if (statusVal === 'PROCESSED') statusVal = 'RESOLVED'; // defensive mapping
 
                 const params = new URLSearchParams();
-                params.set('status', statusVal || 'PENDING');
-                if (startDateEl.value) params.set('start', startDateEl.value);
-                if (endDateEl.value)   params.set('end',   endDateEl.value);
+                params.set('status', statusVal);
+                if (onDateEl.value) params.set('date', onDateEl.value); // expects backend to accept &date=YYYY-MM-DD
 
                 const url = `/admin/api/v1/support/list?${params.toString()}`;
                 const data = await api(url, { method: 'GET' });
@@ -150,26 +123,27 @@
             } catch (e) {
                 console.error(e);
                 setStatus(statusEl, 'error', 'Failed to load support requests.');
-                tbody.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;">No data.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">No data.</td></tr>`;
             }
         }
 
         function renderTable(items) {
             if (!items.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;">No support requests found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">No support requests found.</td></tr>`;
                 return;
             }
-
             const rows = items.map(s => {
                 const email = s.email || '—';
                 const name  = s.name  || '—';
                 const status = s.status || 'PENDING';
+                const createdAt  = prettyDate(s.createdAt);          // BaseModel.createdAt (LocalDate) or ISO string
                 const resolvedAt = (status !== 'PENDING') ? prettyDate(s.resolvedAt) : '—';
                 return `
           <tr>
             <td>${escapeHtml(email)}</td>
             <td>${escapeHtml(name)}</td>
             <td>${escapeHtml(status)}</td>
+            <td>${createdAt}</td>
             <td>${resolvedAt}</td>
           </tr>
         `;
@@ -179,7 +153,7 @@
 
         function prettyDate(val) {
             if (!val) return '—';
-            if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val);
+            if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val); // LocalDate
             const d = new Date(val);
             if (isNaN(d.getTime())) return String(val);
             return d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
