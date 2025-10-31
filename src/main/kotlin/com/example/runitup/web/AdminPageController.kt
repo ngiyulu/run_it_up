@@ -45,4 +45,10 @@ class AdminPageController {
 
     @GetMapping("/waiver")
     fun waiver() = "waiver" // creation form
+
+    @GetMapping("/support")
+    fun supportList() = "support-list" // creation form
+
+    @GetMapping("/support/detail")
+    fun supportDetail(@RequestParam id: String) = "support-detail" // same template, prefilled
 }

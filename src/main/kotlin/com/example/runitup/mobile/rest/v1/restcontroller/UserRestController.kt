@@ -50,8 +50,13 @@ class UserRestController {
     }
 
     @GetMapping("/token/generate/{id}")
-    fun generateToken(@PathVariable id:String): GenerateTokenController.Token {
+    fun generateToken(@PathVariable id:String): Token {
         return userControllersProvider.generateTokenController.execute(id)
+    }
+
+    @GetMapping("/token/generate/expired/{id}")
+    fun generateExpiredToken(@PathVariable id:String): Token {
+        return userControllersProvider.generateExpiredTokenController.execute(id)
     }
 
 

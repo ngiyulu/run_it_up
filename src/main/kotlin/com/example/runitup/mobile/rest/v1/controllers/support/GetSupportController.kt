@@ -20,8 +20,11 @@ class GetSupportController: BaseController<String, Support>() {
         if(!dbSupport.isPresent){
             throw  ApiRequestException("support not there")
         }
-
-        return dbSupport.get()
+        val support = dbSupport.get()
+        if(support.resolvedBy != null){
+            support.admin = cacheManager.getAdmin(support.resolvedBy.orEmpty())
+        }
+        return  support
     }
 
 }

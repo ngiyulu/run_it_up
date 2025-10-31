@@ -46,6 +46,9 @@ class UserControllersProvider {
     lateinit var generateTokenController: GenerateTokenController
 
     @Autowired
+    lateinit var generateExpiredTokenController: GenerateExpiredTokenController
+
+    @Autowired
     lateinit var requestOtpController: RequestOtpController
 
     @Autowired

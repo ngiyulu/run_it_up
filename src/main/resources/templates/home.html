@@ -13,15 +13,19 @@
         }
         *{box-sizing:border-box}
         html,body{height:100%}
-        body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.55;color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2));}
+        body{
+            margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.55;
+            color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2));
+            padding-bottom: env(safe-area-inset-bottom);
+        }
         a{color:var(--link);text-decoration:none}
         a:hover{text-decoration:underline}
         .wrap{max-width:980px;margin:0 auto;padding:20px}
-        .nav{position:sticky;top:0;z-index:40;background:rgba(11,12,16,.8);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border)}
-        .nav .inner{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
+        .nav{position:sticky;top:0;z-index:40;background:rgba(11,12,16,.8);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);padding-top: env(safe-area-inset-top)}
+        .nav .inner{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;gap:8px}
         .logo{display:flex;align-items:center;gap:10px;font-weight:800}
         .logo-badge{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#111}
-        .nav a.btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;color:var(--text)}
+        .nav a.btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;color:var(--text);white-space:nowrap}
         .nav a.btn.cta{border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#111;font-weight:700}
 
         .hero{display:grid;gap:20px;grid-template-columns:1fr; padding:28px 16px 8px}
@@ -61,6 +65,32 @@
         .storebtn{display:inline-flex;gap:10px;align-items:center;border-radius:12px;padding:10px 12px;border:1px solid var(--border);background:var(--panel)}
 
         .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#141829;border:1px solid var(--border);padding:10px 14px;border-radius:999px;display:none}
+
+        /* ===== Mobile tweaks ===== */
+        @media (max-width: 640px){
+            .wrap{padding:16px}
+            .nav .inner{flex-wrap:wrap;gap:10px}
+            .nav .inner > div:last-child{width:100%;display:flex;gap:8px;overflow:auto;padding-bottom:6px}
+            .nav a.btn{flex:1;text-align:center}
+            .hero{padding:20px 12px 0}
+            .cta-row .cta{flex:1;justify-content:center}
+            .phone{margin-top:2px}
+            .screen{height:360px}
+            .grid.cols-3,.grid.cols-2{grid-template-columns:1fr}
+            .feature{padding:12px}
+            .footer{padding:24px 12px}
+            .storebtn{flex:1;justify-content:center}
+        }
+        @media (max-width: 400px){
+            .screen{height:320px}
+            .logo-badge{width:26px;height:26px}
+            .chip{font-size:11px}
+        }
+        /* Reduce motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce){
+            *{scroll-behavior:auto}
+            .toast{transition:none}
+        }
     </style>
 </head>
 <body>
@@ -80,7 +110,7 @@
     <div>
         <span class="chip">New • Waitlists + Guest checkout</span>
         <h1 class="title">Find, join, and manage local sports runs — in seconds.</h1>
-        <p class="subtitle">RunItUp helps you discover nearby basketball and other pick‑up runs, reserve a spot, handle payments, and chat with players — all in one app.</p>
+        <p class="subtitle">RunItUp helps you discover nearby basketball and other pick-up runs, reserve a spot, handle payments, and chat with players — all in one app.</p>
         <div class="cta-row">
             <a href="#download" class="cta primary">Download RunItUp</a>
             <a href="#features" class="cta">See features</a>
@@ -89,9 +119,7 @@
     <div class="phone">
         <div class="screen" role="img" aria-label="App preview">
             <div class="top"><span class="tag">Today</span><span class="badge">3 spots left</span></div>
-            <div class="list" id="runsList">
-                <!-- Cards injected by JS -->
-            </div>
+            <div class="list" id="runsList"></div>
             <div class="top"><div class="pill"></div></div>
         </div>
     </div>
@@ -105,8 +133,8 @@
             <p class="muted">Browse nearby runs by date, skill level, and capacity. Filter fast and snag your spot.</p>
         </div>
         <div class="feature">
-            <h3>Built‑in payments</h3>
-            <p class="muted">Apple/Google Pay and cards with receipts. Holds, refunds, and no‑show rules handled.</p>
+            <h3>Built-in payments</h3>
+            <p class="muted">Apple/Google Pay and cards with receipts. Holds, refunds, and no-show rules handled.</p>
         </div>
         <div class="feature">
             <h3>Waitlists & guests</h3>
@@ -114,14 +142,14 @@
         </div>
         <div class="feature">
             <h3>Chat & notifications</h3>
-            <p class="muted">Coordinate in one place. Get reminders, lineup changes, and check‑in codes.</p>
+            <p class="muted">Coordinate in one place. Get reminders, lineup changes, and check-in codes.</p>
         </div>
         <div class="feature">
             <h3>Host tools</h3>
             <p class="muted">Set price, max players, and rules. Manage refunds and attendance with a tap.</p>
         </div>
         <div class="feature">
-            <h3>Multi‑sport ready</h3>
+            <h3>Multi-sport ready</h3>
             <p class="muted">Basketball today, soccer tomorrow. RunItUp scales with your pickup life.</p>
         </div>
     </div>
@@ -146,8 +174,8 @@
     <div class="faq grid cols-2">
         <details><summary>Is there a fee to use RunItUp?</summary><p class="muted">Creating an account is free. Some runs include venue or host fees, shown before you book.</p></details>
         <details><summary>Can I bring guests?</summary><p class="muted">Yes, when enabled by the host. Guest limits and pricing appear on the run page.</p></details>
-        <details><summary>What if a run is full?</summary><p class="muted">Join the waitlist. If a spot opens, you’ll be auto‑confirmed and notified.</p></details>
-        <details><summary>How do refunds work?</summary><p class="muted">Refund eligibility depends on the host’s cancellation window and no‑show policy.</p></details>
+        <details><summary>What if a run is full?</summary><p class="muted">Join the waitlist. If a spot opens, you’ll be auto-confirmed and notified.</p></details>
+        <details><summary>How do refunds work?</summary><p class="muted">Refund eligibility depends on the host’s cancellation window and no-show policy.</p></details>
     </div>
 </section>
 
@@ -158,16 +186,16 @@
         <a class="storebtn" href="#">
             <span aria-hidden></span>
             <span>
-          <small class="muted" style="display:block; line-height:1;">Download on the</small>
-          <strong>App Store</strong>
-        </span>
+        <small class="muted" style="display:block; line-height:1;">Download on the</small>
+        <strong>App Store</strong>
+      </span>
         </a>
         <a class="storebtn" href="#">
             <span aria-hidden>▶</span>
             <span>
-          <small class="muted" style="display:block; line-height:1;">Get it on</small>
-          <strong>Google Play</strong>
-        </span>
+        <small class="muted" style="display:block; line-height:1;">Get it on</small>
+        <strong>Google Play</strong>
+      </span>
         </a>
     </div>
 </section>
@@ -178,7 +206,7 @@
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:14px;">
             <a href="/terms-and-conditions">Terms</a>
             <a href="/privacy">Privacy</a>
-            <a href="#">Support</a>
+            <a href="/support">Support</a>
         </div>
     </div>
 </footer>
@@ -199,17 +227,17 @@
         const el = document.createElement('div');
         el.className = 'card';
         el.innerHTML = `
-        <div style="width:44px;height:44px;border-radius:10px;background:#1b2342;border:1px solid #2a345a;display:grid;place-items:center">🏀</div>
-        <div style="flex:1">
-          <div style="font-weight:700">${r.title}</div>
-          <div class="muted" style="font-size:13px">${r.gym} • ${r.time}</div>
-          <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
-            <span class="tag">${r.tag}</span>
-            <span class="muted" style="font-size:12px">${r.price}</span>
-          </div>
+      <div style="width:44px;height:44px;border-radius:10px;background:#1b2342;border:1px solid #2a345a;display:grid;place-items:center">🏀</div>
+      <div style="flex:1">
+        <div style="font-weight:700">${r.title}</div>
+        <div class="muted" style="font-size:13px">${r.gym} • ${r.time}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+          <span class="tag">${r.tag}</span>
+          <span class="muted" style="font-size:12px">${r.price}</span>
         </div>
-        <button class="cta" onclick="toast()">Join</button>
-      `;
+      </div>
+      <button class="cta" onclick="toast()">Join</button>
+    `;
         list.appendChild(el);
     });
 
@@ -218,16 +246,16 @@
         const card = document.createElement('div');
         card.className = 'feature';
         card.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <strong>${r.title}</strong>
-          <span class="tag">${r.tag}</span>
-        </div>
-        <div class="muted">${r.gym} • ${r.time}</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-          <span class="badge">${r.spots>0 ? r.spots+" spots left" : "Waitlist"}</span>
-          <span class="muted" style="font-weight:700">${r.price}</span>
-          <button class="cta" onclick="toast()">Book</button>
-        </div>`;
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <strong>${r.title}</strong>
+        <span class="tag">${r.tag}</span>
+      </div>
+      <div class="muted">${r.gym} • ${r.time}</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <span class="badge">${r.spots>0 ? r.spots+" spots left" : "Waitlist"}</span>
+        <span class="muted" style="font-weight:700">${r.price}</span>
+        <button class="cta" onclick="toast()">Book</button>
+      </div>`;
         upcomingGrid.appendChild(card);
     });
 

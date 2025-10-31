@@ -37,6 +37,23 @@ class JwtTokenService {
             .compact()
     }
 
+    // inside JwtTokenService
+    fun generateTokenWithExpiry(userDetails: UserDetails, expiry: ZonedDateTime): String {
+        val now = ZonedDateTime.now(ZoneOffset.UTC)
+        return Jwts.builder()
+            .setSubject((userDetails as UserPrincipal).id)
+            .setIssuedAt(Date.from(now.toInstant()))
+            .setExpiration(Date.from(expiry.toInstant()))
+            .signWith(key)
+            .compact()
+    }
+
+    // convenience: expired token
+    fun generateExpiredToken(userDetails: UserDetails, secondsInPast: Long = 60): String {
+        val expiry = ZonedDateTime.now(ZoneOffset.UTC).minusSeconds(secondsInPast)
+        return generateTokenWithExpiry(userDetails, expiry)
+    }
+
     fun getUserIdFromJWT(token: String): String {
         return Jwts.parserBuilder().setSigningKey(key).build()
             .parseClaimsJws(token).body.subject
