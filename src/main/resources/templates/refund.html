@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0c10" />
+    <title>RunItUp — Refund Rules</title>
+    <meta name="description" content="Public, user-facing refund and credit rules for RunItUp paid Run Sessions." />
+    <style>
+        :root{
+            --bg:#0b0c10; --bg2:#0f1118; --panel:#12131a; --text:#e8ecf1; --muted:#a8b0bd; --border:#1d2130;
+            --accent:#ff6a00; --accent2:#ff9a3c; --ok:#39d98a; --warn:#ffd166; --err:#ff4d4f; --link:#7ab6ff;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.55;
+            color:var(--text);background:linear-gradient(180deg,var(--bg),var(--bg2));
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        a{color:var(--link);text-decoration:none}
+        a:hover{text-decoration:underline}
+        .wrap{max-width:980px;margin:0 auto;padding:20px}
+
+        /* Shared components from your style (nav removed) */
+        .section{padding:28px 16px}
+        .section h1{font-size:clamp(26px,6vw,36px);margin:0 0 8px;letter-spacing:.2px}
+        .section h2{font-size:20px;margin:0 0 10px}
+        .muted{color:var(--muted)}
+        .grid{display:grid;gap:12px}
+        @media(min-width:820px){ .grid.cols-2{grid-template-columns:repeat(2,1fr)} }
+
+        .feature{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+        .feature h3{margin:0 0 6px;font-size:16px}
+        .how-step{display:flex;gap:12px;align-items:flex-start;background:#141829;border:1px solid var(--border);border-radius:12px;padding:12px}
+        .num{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#1a2140;border:1px solid #293256;color:#a6b2c8;font-weight:800}
+        .badge{display:inline-block;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#111;font-weight:800;border-radius:999px;padding:2px 10px;font-size:12px}
+        .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:#141824;border:1px solid var(--border);color:var(--muted);font-size:12px}
+
+        /* Table (styled to match) */
+        .table{width:100%;border-collapse:separate;border-spacing:0}
+        .table th,.table td{border-bottom:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top}
+        .table thead th{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+        .callout{background:#141829;border:1px solid var(--border);border-radius:12px;padding:12px}
+
+        /* Footer */
+        .footer{padding:36px 16px;border-top:1px solid var(--border);color:var(--muted);text-align:center}
+
+        /* Mobile tweaks */
+        @media (max-width: 640px){
+            .wrap{padding:16px}
+            .section{padding:22px 12px}
+        }
+    </style>
+</head>
+<body>
+
+<header class="section wrap" style="padding-bottom:8px">
+    <span class="chip">Policy</span>
+    <h1>Refund Rules</h1>
+    <p class="muted">Last updated: October 31, 2025 • These rules apply to paid <em>Run Sessions</em> unless otherwise noted. Local laws/venue rules may also apply.</p>
+</header>
+
+<section class="section wrap" id="quick">
+    <div class="feature">
+        <h2>Quick Reference</h2>
+        <div class="callout" style="margin:10px 0 14px">
+            <strong>TL;DR:</strong> Cancel &gt; 24h → <span class="badge">100% refund</span> (or 100% credit). 6–24h → 50% refund / 75% credit. &lt; 6h → no cash, 50% credit. No-show → no refund/credit. Host/venue/weather cancel → 100% refund or credit.
+        </div>
+        <div style="overflow:auto">
+            <table class="table" aria-label="Refund and credit windows">
+                <thead>
+                <tr>
+                    <th>Situation</th>
+                    <th>Refund</th>
+                    <th>Credit</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr><td>Cancel &gt; 24h before start</td><td>100% (original method)</td><td>100% (if chosen)</td><td></td></tr>
+                <tr><td>Cancel 6–24h before start</td><td>50%</td><td>75%</td><td></td></tr>
+                <tr><td>Cancel &lt; 6h before start</td><td>None</td><td>50%</td><td></td></tr>
+                <tr><td>No-show (no check-in within 15 min)</td><td>None</td><td>None</td><td></td></tr>
+                <tr><td>Host/venue/weather cancel (before start)</td><td>100%</td><td>100%</td><td>User’s choice</td></tr>
+                <tr><td>Waitlist promotion &gt; 12h</td><td colspan="3">Normal windows apply starting at promotion time</td></tr>
+                <tr><td>Waitlist promotion ≤ 12h</td><td>100%</td><td>100%</td><td>2-hour grace; must still be pre-start</td></tr>
+                <tr><td>Promotion after start</td><td colspan="3">Auto-promotion disabled (no charge)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="section wrap" id="policy">
+    <div class="grid cols-2">
+        <div class="feature" id="section-a">
+            <h3>A. Customer-Initiated Cancellations</h3>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px">
+                <li><strong>&gt; 24 hours</strong> before start: <strong>100% refund</strong> to original payment method (or <strong>100% credit</strong> if the user selects credit).</li>
+                <li><strong>6–24 hours</strong> before start: <strong>50% refund</strong> or <strong>75% credit</strong>.</li>
+                <li><strong>&lt; 6 hours</strong> before start: <strong>No cash refund</strong>; <strong>50% credit</strong>.</li>
+                <li><strong>No-show</strong> (didn’t check in within 15 minutes of start): <strong>No refund</strong>, <strong>No credit</strong>.</li>
+            </ul>
+        </div>
+
+        <div class="feature" id="section-b">
+            <h3>B. Host Cancels / Venue Closes / Weather</h3>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px">
+                <li><strong>Before session starts:</strong> <strong>100% refund</strong> or <strong>100% credit</strong> (user’s choice).</li>
+                <li><strong>After session starts:</strong> <strong>Pro-rated credit</strong> based on time remaining (e.g., 50% time left → 50% credit).</li>
+            </ul>
+        </div>
+
+        <div class="feature" id="section-c">
+            <h3>C. Waitlist Auto-Promotions</h3>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px">
+                <li>Promoted <strong>&gt; 12h</strong> before start → normal cancellation windows apply <em>from time of promotion</em>.</li>
+                <li>Promoted <strong>≤ 12h</strong> before start → <strong>2-hour grace</strong> to cancel for <strong>100% refund/credit</strong> (must still be before start time).</li>
+                <li>Promotion <strong>after start</strong> due to late openings → auto-promotion is <strong>disabled</strong> (no charge).</li>
+            </ul>
+        </div>
+
+        <div class="feature" id="section-d">
+            <h3>D. Fees &amp; Adjustments</h3>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px">
+                <li><strong>Processing fees:</strong> Refunded if RunItUp receives a full refund from the processor (Stripe often returns fees on full refunds in some regions; partial refunds typically forfeit fees). If not returned, receipts will show <em>“Processing fee not refundable.”</em></li>
+                <li><strong>Service/convenience fee:</strong> <strong>Non-refundable</strong> on partial refunds; <strong>refundable</strong> on host-canceled sessions.</li>
+                <li><strong>Promo codes:</strong> Cash refunds are limited to the amount paid. Promo value isn’t paid out as cash; credits preserve the promo effect.</li>
+            </ul>
+        </div>
+
+        <div class="feature" id="section-e" style="grid-column:1/-1">
+            <h3>E. Credits</h3>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px">
+                <li><strong>Expiration:</strong> Credits expire after <strong>6 months</strong>.</li>
+                <li><strong>Usage:</strong> Credits can be applied to the session price; not valid for tips or third-party costs.</li>
+                <li><strong>Cash-out:</strong> Credits are <strong>non-withdrawable</strong> cash.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="section wrap faq" id="faqish">
+    <h2>Common Questions</h2>
+    <div class="grid cols-2">
+        <details>
+            <summary>How long do refunds take to show up?</summary>
+            <p class="muted">Bank processing times vary by institution. Most refunds appear within 5–10 business days after issuance.</p>
+        </details>
+        <details>
+            <summary>Can I choose credit instead of refund?</summary>
+            <p class="muted">Yes — where eligible, you can opt for credit at the same or better value as listed above.</p>
+        </details>
+        <details>
+            <summary>Do credits work on tips or third-party costs?</summary>
+            <p class="muted">No. Credits apply to session price only.</p>
+        </details>
+        <details>
+            <summary>What if I think there’s an error?</summary>
+            <p class="muted">Contact support with your receipt and run details. We’ll review session logs and check-in data.</p>
+        </details>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="wrap">
+        <div style="margin-bottom:10px;">© <span id="year"></span> RunItUp, Inc.</div>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:14px;">
+            <a href="/terms-and-conditions">Terms</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/support">Support</a>
+            <a href="/refund">Refunds</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

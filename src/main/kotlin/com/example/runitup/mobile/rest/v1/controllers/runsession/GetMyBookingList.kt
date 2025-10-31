@@ -16,9 +16,9 @@ class GetMyBookingList: BaseController<String, List<RunSession>>() {
 
     @Autowired
     private lateinit var bookingRepository: BookingRepository
-    override fun execute(request: String): List<com.example.runitup.mobile.model.RunSession> {
+    override fun execute(request: String): List<RunSession> {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
-        val session = mutableListOf<com.example.runitup.mobile.model.RunSession>()
+        val session = mutableListOf<RunSession>()
         val bookings = bookingRepository.findByUserId(request)
         bookings.forEach {
             val dbRes = runSessionRepository.findById(it.runSessionId)

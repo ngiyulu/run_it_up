@@ -28,9 +28,6 @@ class AdminUserRestController {
     @Autowired
     lateinit var userRepository: UserRepository
 
-
-
-
     @Autowired
     lateinit var textService: TextService
 

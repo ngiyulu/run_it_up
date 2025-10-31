@@ -18,4 +18,8 @@ class Gym (
     var description: String,
     var country:String = "USA",
     var zipCode:String
-): BaseModel()
+): BaseModel(){
+    fun getAddress():String{
+        return "$line1, $line2, $city, $state $zipCode"
+    }
+}

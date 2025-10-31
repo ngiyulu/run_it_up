@@ -5,8 +5,10 @@ import com.example.runitup.mobile.model.Gym
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.rest.v1.dto.CreateGymRequest
 import com.example.runitup.mobile.service.GcsImageService
+import com.example.runitup.mobile.service.GeocodingService
 import com.example.runitup.mobile.service.ImageService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,6 +22,9 @@ class UpdateGymController:BaseGymController() {
 
     @Autowired
     lateinit var imageService: ImageService
+
+    @Autowired
+    lateinit var  geocodingService: GeocodingService
 
     override fun execute(request: CreateGymRequest): Gym {
         val data = parseCreate(request.payloadRaw)
@@ -40,6 +45,7 @@ class UpdateGymController:BaseGymController() {
         gym.notes = data.notes
         gym.description = data.description
         gym.updatedAt = getTimeStamp()
+
         ad?.let {
             gym.line1 = it.line1
             gym.line2 = it.line2
@@ -47,6 +53,8 @@ class UpdateGymController:BaseGymController() {
             gym.city = it.city
             gym.state = it.state
         }
+        val location = geocodingService.geocode(gym.getAddress())
+        gym.location = GeoJsonPoint(location.latitude, location.longitude)
         return gymRepository.save(gym)
     }
 
