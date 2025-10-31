@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile
 
 @RequestMapping("/admin/api/v1/gym")
 @RestController
-class GymRestController {
+class AdminGymRestController {
 
     @Autowired
     lateinit var createGymController: CreateGymController

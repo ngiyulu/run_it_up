@@ -1,5 +1,6 @@
 package com.example.runitup.web.rest.v1.controller.runsession
 
+import com.example.runitup.mobile.config.PaymentConfig
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
@@ -30,6 +31,10 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
 
     @Autowired
     lateinit var messagingService: MessagingService
+
+
+    @Autowired
+    lateinit var paymentConfig: PaymentConfig
 
 
     override fun execute(request: CreateRunSessionRequest): com.example.runitup.mobile.model.RunSession {
@@ -74,6 +79,11 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
         if(run.maxGuest >10){
             throw ApiRequestException(text("max_guest_error", arrayOf("10")))
         }
+        // if the payment feature is disabled, the run session has to be free or block it
+        if(!run.isFree() && !paymentConfig.payment){
+            throw ApiRequestException(text("payment_disabled"))
+        }
+
         val runSession = runSessionRepository.save(run)
         val conversation =   Conversation(UUID.randomUUID().toString(),
             ConversationType.GROUP,

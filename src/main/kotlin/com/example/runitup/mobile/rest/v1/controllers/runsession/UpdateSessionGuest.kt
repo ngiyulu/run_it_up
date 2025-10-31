@@ -76,7 +76,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
         if(adding){
             // we are creating a new hold charge
             logger.logInfo("update session guest", "adding")
-            val paymentId = runSessionService.createHoldCharge(user.stripeId.orEmpty(), booking.user, request.paymentMethodId, diffAmount)
+            val paymentId = runSessionService.createHoldCharge(user.stripeId.orEmpty(), booking.user, request.paymentMethodId.orEmpty(), diffAmount)
                 ?: throw ApiRequestException(text("stripe_error"))
             val list = booking.stripePayment.toMutableList().apply {
                 add(com.example.runitup.mobile.model.BookingPayment(newRequestAmount, paymentId))

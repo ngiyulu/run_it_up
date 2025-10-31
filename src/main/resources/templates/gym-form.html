@@ -281,6 +281,11 @@
                     return;
                 }
             } catch (err) {
+                if (err.status === 403) {
+                    setStatus(statusEl, 'error', 'Access Denied — You are not authorized to view this page.');
+                    logout(); // optional: redirect to login
+                    return;
+                }
                 console.error(err);
                 setStatus(statusEl, 'error', err.message || 'Failed to save gym.');
             } finally {
@@ -313,6 +318,11 @@
 
             } catch (e) {
                 // Keep the form locked and only show Cancel so the user can exit
+                if (err.status === 403) {
+                    setStatus(statusEl, 'error', 'Access Denied — You are not authorized to view this page.');
+                    logout(); // optional: redirect to login
+                    return;
+                }
                 setFormEnabled(false);
                 setButtonsVisible(false);
                 const cancelBtn = document.getElementById('cancelBtn');

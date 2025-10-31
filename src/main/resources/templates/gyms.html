@@ -95,6 +95,11 @@
                 render(allGyms);
                 setStatus(statusEl, 'success', `Loaded ${allGyms.length} gyms`);
             } catch (e) {
+                if (err.status === 403) {
+                    setStatus(statusEl, 'error', 'Access Denied — You are not authorized to view this page.');
+                    logout(); // optional: redirect to login
+                    return;
+                }
                 console.error(e);
                 setStatus(statusEl, 'error', 'Failed to load gyms.');
                 bodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center;color:gray;">Unable to load gyms.</td></tr>`;

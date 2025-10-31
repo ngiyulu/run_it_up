@@ -78,7 +78,18 @@ data class RunSession(
         val findUser = bookingList
             .find { it.userId == userId }
 
+        val waitList = waitList
+            .find { it.userId == userId }
+
         return  findUser != null
+    }
+
+    fun isWaitlisted(userId: String): Boolean{
+
+        val waitListed = waitList
+            .find { it.userId == userId }
+
+        return  waitListed != null
     }
 
     fun isDeletable(): Boolean{
