@@ -61,6 +61,7 @@ class SecurityConfig{
                     "/admin/auth/v1/validate",
                     "/admin/login",
                     "admin/dashboard",
+                    "admin/api/v1/geocode/retrieve",
                     "admin/users/view/**",
                     "/admin/gyms",
                     "admin/support",
