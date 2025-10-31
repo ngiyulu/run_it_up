@@ -18,6 +18,7 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
@@ -91,7 +92,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
                 bookingPayment,
                 PaymentStatus.PENDING,
                 run.amount,
-                amount
+                amount,
+                0,
+                joinedAtFromWaitList = null
             )
         )
         run.bookingList.add(

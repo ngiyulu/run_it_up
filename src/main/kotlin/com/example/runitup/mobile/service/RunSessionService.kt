@@ -6,6 +6,8 @@ import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.stripe.model.PaymentIntent
+import com.stripe.model.SetupIntent
+import com.stripe.param.SetupIntentCreateParams
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -39,6 +41,7 @@ class RunSessionService(): BaseService(){
         //get charged when the job was confirmed
         return  createHoldCharge(stripeId, runUser, paymentId, amount)
     }
+
 
     fun createHoldCharge(stripeId: String, runUser: RunUser, paymentMethodId:String, amount:Double): String?{
         val paymentIntent: PaymentIntent = paymentService.createCharge(true, amount.convertToCents(), "usd", paymentMethodId, stripeId) ?: return null

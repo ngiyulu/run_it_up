@@ -7,13 +7,11 @@ import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.stripe.Stripe
 import com.stripe.exception.StripeException
-import com.stripe.model.Customer
-import com.stripe.model.PaymentIntent
-import com.stripe.model.PaymentMethod
-import com.stripe.model.PaymentMethodCollection
+import com.stripe.model.*
 import com.stripe.net.RequestOptions
 import com.stripe.param.*
 import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
@@ -24,6 +22,9 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
 
     @Value("\${stripe.api.key}")
     private val stripeApiKey: String? = null
+
+    @Autowired
+    lateinit var waitListPaymentService: WaitListPaymentService
 
     @PostConstruct
     fun init() {
@@ -122,6 +123,24 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
            logger.logError("captureHold", exception)
            null
        }
+    }
+
+   // create
+    fun createSetupIntentForWaitList(sessionId:String, customerId: String, userId: String, savedPaymentMethodId: String): SetupIntent? {
+        return try{
+            val params = SetupIntentCreateParams.builder()
+                .setCustomer(customerId)
+                .setPaymentMethod(savedPaymentMethodId)
+                .putMetadata("sessionId", sessionId)
+                .putMetadata("userId", userId)
+                .setConfirm(true)      // confirm server-side
+                .setUsage(SetupIntentCreateParams.Usage.OFF_SESSION)
+                .build()
+            SetupIntent.create(params)
+        }catch (exception: Exception){
+            logger.logError("captureHold", exception)
+            null
+        }
     }
 
 
@@ -252,6 +271,12 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
             null
         }
 
+    }
+
+    fun createWaitListPayment( customerId: String,
+                               paymentMethodId: String,
+                               idempotencyKey: String?){
+        waitListPaymentService.ensureOffSessionReadyServerSide(customerId, paymentMethodId, idempotencyKey)
     }
 
     private fun getDefaultPayment(customerId: String): String?{
