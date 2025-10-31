@@ -2,6 +2,7 @@
 package com.example.runitup.mobile.service
 
 import com.stripe.exception.CardException
+import com.stripe.exception.StripeException
 import com.stripe.model.PaymentIntent
 import com.stripe.model.SetupIntent
 import com.stripe.net.RequestOptions
@@ -85,7 +86,51 @@ class WaitListPaymentService {
         require(!secret.isNullOrBlank()) { "PaymentIntent has no client_secret." }
         return secret
     }
+
+    /**
+     * Cancels a SetupIntent by its ID.
+     *
+     * - Works only if the SetupIntent is still in a cancellable state (e.g. requires_action, requires_payment_method, or requires_confirmation)
+     * - If already succeeded or canceled, Stripe returns the current state (no double error)
+     * - This does NOT refund anything (SetupIntents never charge funds)
+     */
+    fun cancelSetupIntent(intentId: String): CancelIntentResult {
+        return try {
+            val si = SetupIntent.retrieve(intentId)
+            val canceled = si.cancel()
+            CancelIntentResult(
+                ok = true,
+                intentId = canceled.id,
+                status = canceled.status,
+                message = "SetupIntent successfully canceled."
+            )
+        } catch (e: StripeException) {
+            CancelIntentResult(
+                ok = false,
+                intentId = intentId,
+                status = "error",
+                message = e.message
+            )
+        } catch (e: Exception) {
+            CancelIntentResult(
+                ok = false,
+                intentId = intentId,
+                status = "error",
+                message = "Unexpected error: ${e.message}"
+            )
+        }
+    }
+
 }
+
+
+data class CancelIntentResult(
+    val ok: Boolean,
+    val intentId: String? = null,
+    val status: String? = null,
+    val message: String? = null
+)
+
 
 data class SmartSetupResult(
     val ok: Boolean,

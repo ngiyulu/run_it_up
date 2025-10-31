@@ -4,6 +4,8 @@ import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.RunSessionRepository
@@ -23,6 +25,9 @@ class LeaveSessionService {
 
     @Autowired
     lateinit var paymentService: PaymentService
+
+    @Autowired
+    lateinit var waitListPaymentService: WaitListPaymentService
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
@@ -48,18 +53,40 @@ class LeaveSessionService {
                  throw ApiRequestException(textService.getText("unauthorized_user", locale))
              }
          }
-        val booking: com.example.runitup.mobile.model.Booking = bookingDbService.getBooking(user.id.orEmpty(), run.id.orEmpty())
+        val booking: Booking = bookingDbService.getBooking(user.id.orEmpty(), run.id.orEmpty())
             ?: throw  ApiRequestException(textService.getText("invalid_params", locale))
         // this means a hold payment was created so we have to cancel it
-        if(run.status != RunStatus.PENDING){
-            booking.stripePayment.forEach {
-                paymentService.cancelHold(it.stripePaymentId)
-            }
-        }
-        run.bookingList.removeAll {
+         if(!run.isFree()){
+             if(run.status != RunStatus.PENDING){
+                 cancelPayment(booking)
+                 cancelWaitListPayment(booking, run)
+             }
+         }
+
+         run.bookingList.removeAll {
             it.userId == user.id.orEmpty()
+         }
+         run.bookings.removeAll {
+             it.userId == user.id.orEmpty()
+         }
+         run.waitList.removeAll {
+             it.userId == user.id.orEmpty()
+         }
+
+         booking.status =  BookingStatus.CANCELLED
+         bookingDbService.bookingRepository.save(booking)
+         return runSessionRepository.save(run)
+    }
+
+    private fun cancelWaitListPayment(booking: Booking, run: RunSession){
+        booking.intentState?.let {
+            waitListPaymentService.cancelSetupIntent(it.intentId)
         }
-        bookingDbService.cancelUserBooking(user.id.orEmpty())
-        return runSessionRepository.save(run)
+    }
+
+    private fun cancelPayment(booking: Booking){
+        booking.stripePayment.forEach {
+            paymentService.cancelHold(it.stripePaymentId)
+        }
     }
 }

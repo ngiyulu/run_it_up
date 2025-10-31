@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
@@ -19,7 +20,7 @@ class GetMyBookingList: BaseController<String, List<RunSession>>() {
     override fun execute(request: String): List<RunSession> {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
         val session = mutableListOf<RunSession>()
-        val bookings = bookingRepository.findByUserId(request)
+        val bookings = bookingRepository.findByUserIdAndStatusIn(request,  mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
         bookings.forEach {
             val dbRes = runSessionRepository.findById(it.runSessionId)
             if(dbRes.isPresent){

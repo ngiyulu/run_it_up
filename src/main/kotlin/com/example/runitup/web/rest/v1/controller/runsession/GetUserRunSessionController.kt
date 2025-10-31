@@ -1,5 +1,6 @@
 package com.example.runitup.web.rest.v1.controller.runsession
 
+import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
@@ -18,7 +19,7 @@ class GetUserRunSessionController: BaseController<String, List<RunSession>>() {
 
 
     override fun execute(request: String): List<RunSession> {
-        val booking = bookingRepository.findByUserId(request)
+        val booking = bookingRepository.findByUserIdAndStatusIn(request,  mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
         val list: MutableList<RunSession> = mutableListOf()
         booking.forEach {
             val session = runSessionRepository.findById(it.runSessionId)

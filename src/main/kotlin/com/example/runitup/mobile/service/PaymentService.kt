@@ -210,7 +210,6 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
         }
     }
 
-
     fun createPaymentIntent(req: CreatePIRequest): CreatePIResponse? {
         return try {
             require(req.amount > 0) { "amount must be > 0 (in minor units)" }

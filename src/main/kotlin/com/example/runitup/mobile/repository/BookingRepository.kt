@@ -2,6 +2,7 @@ package com.example.runitup.mobile.repository
 
 import com.example.runitup.mobile.constants.CollectionConstants
 import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -18,8 +19,15 @@ interface BookingRepository : MongoRepository<Booking, String> {
 
     @Query("{runSessionId:'?0'}")
     fun findBySessionId(runSessionId: String): List<Booking>
-    @Query("{userId:'?0'}")
-    fun findByUserId(userId: String): List<Booking>
+    fun findByUserIdAndStatusIn(
+        userId: String, status: MutableCollection<BookingStatus>
+    ): List<Booking>
+
+    fun findByUserIdAndRunSessionIdAndStatusIn(
+        userId: String,
+        runSessionId: String,
+        status: MutableCollection<BookingStatus>
+    ): Booking?
 
     @Query("{'createdAt': { \$gte: ?0, \$lte: ?1 } }")
     fun findAllByDateBetweenByUser( startInclusive: Date, endInclusive: Date,  pageable: Pageable): Page<Booking>

@@ -27,5 +27,5 @@ class Booking (
 ): BaseModel()
 class  BookingPayment(var amount: Double, var stripePaymentId:String,  var paymentStatus: PaymentStatus = PaymentStatus.PENDING)
 enum class BookingStatus{
-    JOINED, WAITLISTED
+    JOINED, WAITLISTED, CANCELLED
 }
