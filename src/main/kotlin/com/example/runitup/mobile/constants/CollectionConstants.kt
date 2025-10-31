@@ -12,6 +12,7 @@ object CollectionConstants {
     const val SESSION_COLLECTION = "session"
     const val OTP_COLLECTION = "otp"
     const val REFUND_COLLECTION = "otp"
+    const val PAYMENT_STATE_COLLECTION = "payment_state"
     const val BOOKING_COLLECTION = "booking"
     const val WAIVER_COLLECTION = "waiver"
 
