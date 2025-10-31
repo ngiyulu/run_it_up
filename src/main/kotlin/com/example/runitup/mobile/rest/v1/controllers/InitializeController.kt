@@ -1,5 +1,9 @@
 package com.example.runitup.mobile.rest.v1.controllers
 
+import com.example.runitup.mobile.config.PaymentConfig
+import com.example.runitup.mobile.constants.AppConstant
+import com.example.runitup.mobile.enum.PhoneType
+import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.repository.UserRepository
@@ -33,6 +37,9 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
 
     @Autowired
     lateinit var emailService: SendGridService
+
+    @Autowired
+    lateinit var paymentConfig: PaymentConfig
     override fun execute(request: InitializeRequest): InitializeResponse {
         val gyms = gymRepository.findAll()
         var user: User? = null
@@ -50,6 +57,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 phoneService.createPhone(request.tokenModel, request.os, request.userId)
             }
 
+
         }
 //        emailService.sendEmailHtml(
 //            to = "cngiyulu@hotmail.com",
@@ -65,6 +73,14 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
 //    """.trimIndent(),
 //            plainTextFallback = "Welcome!\n\nThanks for joining RunItUp.\nSign in: https://app.runitup.com/login"
 //        )
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3)
+
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3).apply {
+            if(request.os.convertToPhoneType() == PhoneType.ANDROID){
+                this.allowedPayment = paymentConfig.paymentAndroid
+            }
+            else{
+                this.allowedPayment = paymentConfig.paymentIos
+            }
+        }
     }
 }

@@ -11,5 +11,6 @@ class InitializeResponse(
     var maxGuest: Int,
     var waiverUrl: String = "https://google.com",
     @Value("\${email}")
-    var supportEmail: String = ""
+    var supportEmail: String = "",
+    var allowedPayment: Boolean = false
 )

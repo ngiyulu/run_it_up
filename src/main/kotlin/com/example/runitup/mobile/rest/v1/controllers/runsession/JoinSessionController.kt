@@ -76,7 +76,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         )
         val bookingPayment = mutableListOf<com.example.runitup.mobile.model.BookingPayment>()
         if(!run.isFree()){
-            val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId, amount)
+            val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId.orEmpty(), amount)
                 ?: throw ApiRequestException(text("stripe_error"))
             bookingPayment.add(com.example.runitup.mobile.model.BookingPayment(amount, paymentId))
         }

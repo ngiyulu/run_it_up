@@ -38,6 +38,10 @@ class AdminUserRestController {
     fun getUser(@PathVariable id: String): User {
         return cacheManager.getUser(id) ?: throw ApiRequestException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
     }
+    @GetMapping("/retrieve/email/{email}")
+    fun getUserByEmail(@PathVariable email: String): User {
+        return userRepository.findByEmail(email) ?: throw ApiRequestException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+    }
 
     @PostMapping("/create")
     @Profile(value = ["dev", "local"]) // ✅ active for both dev and local profiles

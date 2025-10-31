@@ -44,4 +44,6 @@ abstract class BaseController<R, P> {
     fun  text(code:String, placerHolders:Array<String>): String{
         return textService.getTextWithPlaceHolder(code, placerHolders, LocaleContextHolder.getLocale().toString())
     }
+
+
 }
