@@ -7,9 +7,10 @@
     <link th:href="@{/styles.css}" rel="stylesheet" />
     <style>
         .filters { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
-        .filters .field { display:flex; flex-direction:column; gap:6px; }
-        .table td, .table th { white-space:nowrap; }
+        .table-click tbody tr { cursor:pointer; }
+        .nowrap { white-space: nowrap; }
         .muted { color:#9ca3af; }
+        .badge.success { background:#065f46; border-color:#065f46; }
     </style>
 </head>
 <body>
@@ -18,7 +19,7 @@
         <div class="brand">RunItUp • Admin</div>
         <nav class="nav">
             <a th:href="@{/admin/dashboard}">Dashboard</a>
-            <a th:href="@{/admin/runs}">Run Sessions</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
             <a th:href="@{/admin/gyms}">Gyms</a>
             <a th:href="@{/admin/support}">Support</a>
             <a href="#" id="logoutBtn">Logout</a>
@@ -29,45 +30,37 @@
 <div class="container">
     <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
         <h2 style="margin:0;">Support Requests</h2>
+        <div class="filters">
+            <div>
+                <label for="statusSel">Status</label>
+                <select id="statusSel">
+                    <option value="PENDING" selected>PENDING</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                </select>
+            </div>
+            <div>
+                <label for="dateSel">Date (optional)</label>
+                <input id="dateSel" type="date" />
+            </div>
+            <button id="searchBtn" class="primary">Search</button>
+            <button id="clearBtn" class="secondary">Clear</button>
+        </div>
     </div>
 
     <div id="status" class="alert hidden"></div>
 
-    <div class="card" style="margin-bottom:12px;">
-        <div class="filters">
-            <div class="field">
-                <label for="statusSel">Status</label>
-                <select id="statusSel">
-                    <option value="PENDING" selected>Pending</option>
-                    <option value="RESOLVED">Resolved</option>
-                </select>
-            </div>
-
-            <div class="field">
-                <label for="onDate">Date (optional)</label>
-                <input id="onDate" type="date" />
-            </div>
-
-            <div class="field" style="gap:8px;">
-                <button class="primary" id="searchBtn" type="button">Search</button>
-                <button class="secondary" id="resetBtn" type="button">Reset</button>
-            </div>
-        </div>
-        <small class="help">Defaults to Pending across all dates. Add a date to filter to a specific day.</small>
-    </div>
-
     <div class="card">
-        <table class="table" id="supportTable">
+        <table id="supportTable" class="table-click">
             <thead>
             <tr>
-                <th>Email</th>
                 <th>Name</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Resolved At</th>
+                <th>Email</th>
+                <th class="nowrap">Status</th>
+                <th class="nowrap">Created</th>
+                <th class="nowrap">Processed</th>
             </tr>
             </thead>
-            <tbody id="supportTbody">
+            <tbody id="tbody">
             <tr><td colspan="5" class="muted" style="text-align:center;">Loading…</td></tr>
             </tbody>
         </table>
@@ -82,44 +75,50 @@
         requireAuth();
         document.getElementById('logoutBtn').addEventListener('click', e => { e.preventDefault(); logout(); });
 
-        const statusEl   = document.getElementById('status');
-        const statusSel  = document.getElementById('statusSel');
-        const onDateEl   = document.getElementById('onDate');
-        const searchBtn  = document.getElementById('searchBtn');
-        const resetBtn   = document.getElementById('resetBtn');
-        const tbody      = document.getElementById('supportTbody');
+        const statusEl = document.getElementById('status');
+        const statusSel = document.getElementById('statusSel');
+        const dateSel = document.getElementById('dateSel');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const tbody = document.getElementById('tbody');
 
-        // Open native date picker on click/focus
-        const openPicker = el => (typeof el.showPicker === 'function') ? el.showPicker() : (el.focus(), el.click());
-        onDateEl.addEventListener('click', () => openPicker(onDateEl));
-        onDateEl.addEventListener('focus', () => openPicker(onDateEl));
+        // open date picker on click/focus
+        const openPicker = (el)=> typeof el.showPicker==='function' ? el.showPicker() : (el.focus(), el.click());
+        dateSel.addEventListener('focus', ()=>openPicker(dateSel));
+        dateSel.addEventListener('click', ()=>openPicker(dateSel));
 
-        // Initial load (Pending only, no date filter)
-        await loadSupport();
+        // Initial load
+        await loadTable();
 
-        searchBtn.addEventListener('click', loadSupport);
-        resetBtn.addEventListener('click', async () => {
+        // Filters
+        searchBtn.addEventListener('click', async () => { await loadTable(); });
+        clearBtn.addEventListener('click', async () => {
             statusSel.value = 'PENDING';
-            onDateEl.value = '';
-            await loadSupport();
+            dateSel.value = '';
+            await loadTable();
         });
 
-        async function loadSupport() {
+        // Click row → navigate in same window
+        tbody.addEventListener('click', (e) => {
+            const tr = e.target.closest('tr');
+            if (!tr || !tr.dataset.id) return;
+            const id = tr.dataset.id;
+            window.location.href = `/admin/support/detail?id=${encodeURIComponent(id)}`;
+        });
+
+        async function loadTable() {
             try {
-                setStatus(statusEl, 'success', 'Loading support requests…');
-
-                let statusVal = statusSel.value || 'PENDING';
-                if (statusVal === 'PROCESSED') statusVal = 'RESOLVED'; // defensive mapping
-
+                setStatus(statusEl, 'success', 'Loading…');
                 const params = new URLSearchParams();
-                params.set('status', statusVal);
-                if (onDateEl.value) params.set('date', onDateEl.value); // expects backend to accept &date=YYYY-MM-DD
+                const st = statusSel.value || 'PENDING';
+                params.set('status', st);
+                const date = (dateSel.value || '').trim();
+                if (date) params.set('date', date);
 
                 const url = `/admin/api/v1/support/list?${params.toString()}`;
-                const data = await api(url, { method: 'GET' });
-
-                renderTable(Array.isArray(data) ? data : []);
-                setStatus(statusEl, 'success', 'Loaded.');
+                const list = await api(url, { method: 'GET' });
+                renderRows(Array.isArray(list) ? list : []);
+                setStatus(statusEl, 'success', `Loaded ${Array.isArray(list) ? list.length : 0} ticket(s).`);
             } catch (e) {
                 console.error(e);
                 setStatus(statusEl, 'error', 'Failed to load support requests.');
@@ -127,42 +126,60 @@
             }
         }
 
-        function renderTable(items) {
+        function renderRows(items) {
             if (!items.length) {
-                tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">No support requests found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">No support requests.</td></tr>`;
                 return;
             }
-            const rows = items.map(s => {
-                const email = s.email || '—';
-                const name  = s.name  || '—';
-                const status = s.status || 'PENDING';
-                const createdAt  = prettyDate(s.createdAt);          // BaseModel.createdAt (LocalDate) or ISO string
-                const resolvedAt = (status !== 'PENDING') ? prettyDate(s.resolvedAt) : '—';
-                return `
-          <tr>
-            <td>${escapeHtml(email)}</td>
-            <td>${escapeHtml(name)}</td>
-            <td>${escapeHtml(status)}</td>
-            <td>${createdAt}</td>
-            <td>${resolvedAt}</td>
-          </tr>
-        `;
-            }).join('');
-            tbody.innerHTML = rows;
+            tbody.innerHTML = '';
+
+            items.forEach(s => {
+                // ✅ ensure we get the correct id regardless of backend field name
+                const supportId = s.id;
+
+                const tr = document.createElement('tr');
+                tr.dataset.id = supportId; // use dataset instead of setAttribute
+
+                tr.innerHTML = `
+      <td>${escapeHtml(s.name || s.requesterName || '—')}</td>
+      <td>${escapeHtml(s.email || s.requesterEmail || '—')}</td>
+      <td class="nowrap">${escapeHtml(normalizeStatus(s.status))}</td>
+      <td class="nowrap">${prettyDateTimeUtc(s.createdAt)}</td>
+      <td class="nowrap">${renderProcessed(normalizeStatus(s.status), s.resolvedAt, s.processedAt)}</td>
+    `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+
+        function renderProcessed(status, resolvedAt, processedAt){
+            if (status === 'PENDING') return '—';
+            return prettyDateTimeUtc(resolvedAt) || prettyDate(processedAt) || '—';
+        }
+
+        function normalizeStatus(v){
+            const x = String(v || '').toUpperCase();
+            return x === 'PROCESSED' ? 'RESOLVED' : (x || 'PENDING');
         }
 
         function prettyDate(val) {
-            if (!val) return '—';
-            if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val); // LocalDate
+            if (!val) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(String(val))) return String(val);
             const d = new Date(val);
             if (isNaN(d.getTime())) return String(val);
             return d.toLocaleDateString([], { year:'numeric', month:'short', day:'numeric' });
         }
 
-        function escapeHtml(str) {
-            return String(str).replace(/[&<>"']/g, s => (
-                { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[s]
-            ));
+        function prettyDateTime(val) {
+            if (!val) return '—';
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return String(val);
+            return d.toLocaleString([], { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        }
+
+        function escapeHtml(s){
+            return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
     });
 </script>

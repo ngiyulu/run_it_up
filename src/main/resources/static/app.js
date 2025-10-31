@@ -52,7 +52,7 @@ async function api(path, options = {}) {
 function requireAuth() {
     const token = localStorage.getItem('token');
     if (!token) {
-        console.warn("No JWT found → redirecting to login");
+        console.warn("No token found → redirecting to login");
         window.location.href = '/admin/login';
     }
 }
@@ -151,6 +151,12 @@ function isValidEmail(email) {
 
 function isValidPhone(phone) {
     return /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(phone);
+}
+function prettyDateTimeUtc(val) {
+    if (!val) return '—';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+    return d.toISOString().slice(0, 10);
 }
 
 /* -------------------------------

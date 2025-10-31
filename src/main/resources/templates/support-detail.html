@@ -20,7 +20,7 @@
         <div class="brand">RunItUp • Admin</div>
         <nav class="nav">
             <a th:href="@{/admin/dashboard}">Dashboard</a>
-            <a th:href="@{/admin/runs}">Run Sessions</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
             <a th:href="@{/admin/gyms}">Gyms</a>
             <a th:href="@{/admin/support}">Support</a>
             <a href="#" id="logoutBtn">Logout</a>
@@ -139,6 +139,7 @@
                 model = updated || await api(`/admin/api/v1/support/${encodeURIComponent(ticketId)}`, { method:'GET' });
                 render(model);
                 setStatus(statusEl, 'success', 'Ticket resolved.');
+                window.location.href = `/admin/support`;
             } catch (e) {
                 console.error(e);
                 setStatus(statusEl, 'error', e.message || 'Failed to resolve ticket.');
@@ -159,8 +160,8 @@
             emailEl.textContent    = s.email || s.requesterEmail || '—';
             statusVal.textContent  = st;
 
-            createdAt.textContent  = prettyDateTime(s.createdAt);
-            resolvedAt.textContent = st !== 'PENDING' ? prettyDate(s.resolvedAt) : '—';
+            createdAt.textContent  = prettyDateTimeUtc(s.createdAt);
+            resolvedAt.textContent = st !== 'PENDING' ? prettyDateTimeUtc(s.resolvedAt) : '—';
 
             const processed =
                 (s.admin && (s.admin.first ? `${s.admin.first} ${s.admin.last || ''}`.trim() : (s.admin.email || s.admin.id))) ||

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 @Service
 class GetAllSupportController: BaseController<GetAllSupportModel, List<Support>>() {
@@ -16,7 +17,10 @@ class GetAllSupportController: BaseController<GetAllSupportModel, List<Support>>
     lateinit var supportRepository: SupportRepository
     override fun execute(request: GetAllSupportModel): List<Support> {
         var support= if(request.status == null) supportRepository.findAll()
-        else if(request.date != null) supportRepository.findByStatusAndCreatedAt(request.status, request.date)
+        else if(request.date != null) {
+            val dateUtc = request.date.atStartOfDay(ZoneOffset.UTC).toInstant()
+            supportRepository.findByStatusAndCreatedAt(request.status, request.date)
+        }
         else supportRepository.findByStatus(request.status)
         support = support.map {
             if(it.resolvedBy != null){

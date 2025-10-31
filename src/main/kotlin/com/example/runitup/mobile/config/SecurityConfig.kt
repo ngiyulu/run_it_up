@@ -103,7 +103,7 @@ class SecurityConfig{
             it.requestMatchers(
                 "/api/v1/user/init",
                 "api/v1/support/create",
-                "/api/v1/user/token/generate/**",
+                "/api/v1/user/token/**",
                 "/api/v1/user/verify",
                 "/api/v1/user/create",
                 "/api/v1/user/hello",
