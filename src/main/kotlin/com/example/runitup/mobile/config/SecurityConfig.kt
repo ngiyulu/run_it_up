@@ -63,6 +63,7 @@ class SecurityConfig{
                     "admin/dashboard",
                     "admin/users/view/**",
                     "/admin/gyms",
+                    "admin/support/list",
                     "/admin/auth/login",
                     "admin/users",
                     "admin/waiver",

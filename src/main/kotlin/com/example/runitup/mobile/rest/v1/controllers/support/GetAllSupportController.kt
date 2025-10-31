@@ -15,10 +15,16 @@ class GetAllSupportController: BaseController<GetAllSupportModel, List<Support>>
     @Autowired
     lateinit var supportRepository: SupportRepository
     override fun execute(request: GetAllSupportModel): List<Support> {
-        if(request.status == null){
-            return  supportRepository.findAll()
+        var support= if(request.status == null) supportRepository.findAll()
+        else supportRepository.findByStatus(request.status)
+        support = support.map {
+            if(it.resolvedBy != null){
+                it.admin = cacheManager.getAdmin(it.resolvedBy.orEmpty())
+            }
+            it
         }
-        return  supportRepository.findByStatus(request.status)
+        return  support
+
     }
 
 }
