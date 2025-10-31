@@ -9,4 +9,5 @@ class PageController {
     @GetMapping("/privacy") fun privacy() = "privacy"
     @GetMapping("/support") fun support() = "support"
     @GetMapping("/") fun home() = "home"
+    @GetMapping("/refund") fun refund() = "refund"
 }
