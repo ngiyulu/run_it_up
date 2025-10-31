@@ -201,6 +201,10 @@
             form.reset();
             okMsg.style.display = 'block';
         } catch (err) {
+            if (err.status === 403) {
+                logout(); // optional: redirect to login
+                return;
+            }
             errMsg.style.display = 'block';
         }
     });

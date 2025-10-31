@@ -120,6 +120,11 @@
                 renderRows(Array.isArray(list) ? list : []);
                 setStatus(statusEl, 'success', `Loaded ${Array.isArray(list) ? list.length : 0} ticket(s).`);
             } catch (e) {
+                if (err.status === 403) {
+                    setStatus(statusEl, 'error', 'Access Denied — You are not authorized to view this page.');
+                    logout(); // optional: redirect to login
+                    return;
+                }
                 console.error(e);
                 setStatus(statusEl, 'error', 'Failed to load support requests.');
                 tbody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align:center;">No data.</td></tr>`;
