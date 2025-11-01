@@ -41,8 +41,10 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
             startInclusive = Date.from(startUtc),
             endExclusive = Date.from(endUtc)
         )
-        // TODO: store the coordinate of user
-        return  page.content
-
+        val content = page.content.map {
+            it.updateStatus(auth.id.orEmpty())
+            it
+        }
+        return  content
     }
 }
