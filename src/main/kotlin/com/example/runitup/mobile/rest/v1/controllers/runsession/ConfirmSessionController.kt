@@ -40,14 +40,17 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             return  run
         }
         run.status = RunStatus.CONFIRMED
-        // we captured the charge in stripe
-        // we updated the booking list payment status
-        // we created the payment list that needs stored in the payment db
-        val paymentList  = runSessionService.confirmSession(run)
+        if(!run.isFree()){
+            // we captured the charge in stripe
+            // we updated the booking list payment status
+            // we created the payment list that needs stored in the payment db
+            val paymentList  = runSessionService.confirmSession(run)
 
-        paymentList.forEach {
-            paymentRepository.save(it)
+            paymentList.forEach {
+                paymentRepository.save(it)
+            }
         }
+
         // we storing the bookings because we updated the payment status
         run.bookings.forEach {
             bookinRepository.save(it)
