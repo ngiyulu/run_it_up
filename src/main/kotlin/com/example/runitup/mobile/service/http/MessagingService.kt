@@ -3,6 +3,7 @@ package com.example.runitup.mobile.service.http
 import ServiceResult
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 import constant.ServiceConstant
 import model.messaging.Conversation
 import model.messaging.MessagingUser
@@ -126,6 +127,38 @@ class MessagingService {
             .exchangeToMono { resp ->
                 if (resp.statusCode().is2xxSuccessful) {
                     resp.bodyToMono(Participant::class.java).map { ServiceResult.ok(it) }
+                } else {
+                    resp.bodyToMono(String::class.java).defaultIfEmpty("")
+                        .map { body ->
+                            ServiceResult.err(
+                                status = resp.statusCode().value(),
+                                source = "service-a",
+                                message = "Downstream returned ${resp.statusCode()}",
+                                body = body
+                            )
+                        }
+                }
+            }
+            .onErrorResume { ex ->
+                Mono.just(
+                    ServiceResult.err(
+                        status = -1,
+                        source = "service-a",
+                        message = ex.message ?: ex.javaClass.simpleName
+                    )
+                )
+            }
+    }
+
+
+    fun removeParticipant(model: DeleteParticipantFromConversationModel):Mono<ServiceResult<Unit>>{
+        return client.post()
+            .uri("/api/v1/conversation/participant/remove")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(model)
+            .exchangeToMono { resp ->
+                if (resp.statusCode().is2xxSuccessful) {
+                    resp.bodyToMono(Unit::class.java).map { ServiceResult.ok(it) }
                 } else {
                     resp.bodyToMono(String::class.java).defaultIfEmpty("")
                         .map { body ->

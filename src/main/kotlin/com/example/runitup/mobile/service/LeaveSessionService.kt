@@ -11,7 +11,9 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
+import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.web.dto.Role
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
@@ -37,6 +39,9 @@ class LeaveSessionService {
 
     @Autowired
     lateinit var textService: TextService
+
+    @Autowired
+    lateinit var messagingService: MessagingService
 
      fun execute(request: CancelSessionModel, user:User, admin:AdminUser? = null): RunSession {
          val locale = LocaleContextHolder.getLocale().toString()
@@ -75,6 +80,7 @@ class LeaveSessionService {
 
          booking.status =  BookingStatus.CANCELLED
          bookingDbService.bookingRepository.save(booking)
+         messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
          return runSessionRepository.save(run)
     }
 
