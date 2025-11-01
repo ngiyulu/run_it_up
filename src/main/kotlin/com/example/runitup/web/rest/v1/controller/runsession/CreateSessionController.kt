@@ -62,6 +62,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             privateRun = request.privateRun,
             title = request.title,
             maxGuest = request.maxGuest,
+            courtFee = request.courtFee,
             maxPlayer = request.maxPlayer,
             description = request.description,
             duration = 0
