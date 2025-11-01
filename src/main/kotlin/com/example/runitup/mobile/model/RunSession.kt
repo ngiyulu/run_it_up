@@ -62,7 +62,9 @@ data class RunSession(
         buttonStatus = if(isParticiPant(userId)){
             JoinButtonStatus.UPDATE
         } else if(atFullCapacity()){
-            JoinButtonStatus.WAITLIST
+            if(isWaitlisted(userId) || isParticiPant(userId)) JoinButtonStatus.HIDE
+            else JoinButtonStatus.WAITLIST
+
         } else if(status == RunStatus.CANCELLED || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
         } else {
