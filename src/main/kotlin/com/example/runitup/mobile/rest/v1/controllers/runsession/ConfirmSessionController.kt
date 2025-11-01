@@ -36,8 +36,11 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             return  run
         }
         if(run.status != RunStatus.PENDING){
-            logger.logError("trying to confirm a run session that's not in pedning", run)
+            logger.logError("trying to confirm a run session that's not in pending", run)
             return  run
+        }
+        if(run.players.size < run.minimumPlayer){
+            throw ApiRequestException(text("min_player"))
         }
         run.status = RunStatus.CONFIRMED
         if(!run.isFree()){
