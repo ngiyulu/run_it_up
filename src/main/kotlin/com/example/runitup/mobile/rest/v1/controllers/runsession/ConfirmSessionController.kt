@@ -5,6 +5,7 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.service.PaymentService
@@ -21,6 +22,9 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     lateinit var runSessionService: RunSessionService
 
     @Autowired
+    lateinit var runSessionRepository: RunSessionRepository
+
+    @Autowired
     lateinit var paymentService: PaymentService
 
     @Autowired
@@ -33,13 +37,13 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     override fun execute(request: ConfirmSessionModel): com.example.runitup.mobile.model.RunSession {
         val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
-            return  run
+            return run
         }
         if(run.status != RunStatus.PENDING){
             logger.logError("trying to confirm a run session that's not in pending", run)
-            return  run
+            return run
         }
-        if(run.players.size < run.minimumPlayer){
+        if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
         run.status = RunStatus.CONFIRMED
@@ -58,7 +62,8 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         run.bookings.forEach {
             bookinRepository.save(it)
         }
-        return run
+
+        return runSessionRepository.save(run)
     }
 
 
