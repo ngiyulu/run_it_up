@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
+import java.time.ZoneId
 
 @RequestMapping("/api/v1/run-session")
 @RestController
@@ -60,14 +61,17 @@ class RunSessionRestController {
                         @RequestParam("date")
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
                         @RequestParam(defaultValue = "0") page: Int,
-                        @RequestParam(defaultValue = "25") size: Int
+                        @RequestParam(defaultValue = "25") size: Int,
+                        @RequestHeader("X-Timezone", required = true) tzHeader: String
     ):List<com.example.runitup.mobile.model.RunSession> {
         return sessionControllersProvider.getRunSessionListController.execute(
             SessionListModel(
                 longitude = long,
                 latitude = lat,
                 date = date,
-                PageRequest.of(page, size)
+                pageRequest = PageRequest.of(page, size),
+                zoneId = ZoneId.of(tzHeader)
+
             )
         )
     }
