@@ -42,6 +42,7 @@ data class RunSession(
     var players:  MutableList<User> = mutableListOf(),
     var courtFee: Double = 0.0,
     var maxGuest: Int,
+    var minimumPlayer: Int  = 10,
     //booking has more data than bookingList
     var bookingList:MutableList<SessionRunBooking> = mutableListOf(),
     var waitListBooking:MutableList<Booking> = mutableListOf(),

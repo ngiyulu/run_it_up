@@ -67,6 +67,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux") // WebClient
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.9")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel") // or brave bridge
+    runtimeOnly("io.opentelemetry:opentelemetry-exporter-otlp")     // if you export traces
 
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")

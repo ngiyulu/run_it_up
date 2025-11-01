@@ -63,6 +63,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             title = request.title,
             maxGuest = request.maxGuest,
             courtFee = request.courtFee,
+            minimumPlayer = request.minPlayer,
             maxPlayer = request.maxPlayer,
             description = request.description,
             duration = 0
@@ -73,6 +74,9 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             gym = runGym
             total = 0.0
             location = runGym.location
+        }
+        if(run.minimumPlayer < run.maxPlayer){
+            throw ApiRequestException(text("invalid_min_player"))
         }
         if(run.maxPlayer < 10){
             throw ApiRequestException(text("max_player_error", arrayOf("10")))
