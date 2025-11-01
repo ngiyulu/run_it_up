@@ -36,7 +36,8 @@ data class User(
     var imageUrl: String? = null,
     var runSessions:MutableList<RunSession>? = null,
     var skillLevel: SkillLevel? = null,
-    var creator: Creator = Creator.USER
+    var creator: Creator = Creator.USER,
+    var coordinate: Coordinate? = null
 ): BaseModel(){
 
     fun getFullName(): String{
@@ -57,3 +58,5 @@ data class User(
 enum class Creator{
     ADMIN, USER
 }
+
+class Coordinate(val longitude: Long, val latitude: Long)

@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.enum.RunStatus
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
@@ -23,16 +24,19 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     override fun execute(request: SessionListModel): List<RunSession> {
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val radius = 20.0
+
         val maxDistanceMeters = radius * 1609.344 // 32186.88
         val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING)
-        val page = runSessionRepository.findJoinableRunsExcludingUserNear(
+        val page = runSessionRepository.findJoinableRunsExcludingUserNearOnDate(
             userId = auth.id.orEmpty(),
             lat = request.latitude,
             lng = request.longitude,
             maxDistanceMeters = maxDistanceMeters,
             statuses = statuses,
-            pageable = request.pageRequest
+            pageable = request.pageRequest,
+            date = request.date
         )
+        // TODO: store the coordinate of user
         return  page.content
 
     }
