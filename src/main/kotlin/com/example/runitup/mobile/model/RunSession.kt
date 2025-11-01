@@ -42,6 +42,8 @@ data class RunSession(
     var players:  MutableList<User> = mutableListOf(),
     var courtFee: Double = 0.0,
     var maxGuest: Int,
+    var isFree: Boolean  = false,
+    var isFull: Boolean = false,
     var minimumPlayer: Int  = 10,
     //booking has more data than bookingList
     var bookingList:MutableList<SessionRunBooking> = mutableListOf(),
@@ -57,14 +59,16 @@ data class RunSession(
 ): BaseModel(){
 
 
-    fun isFree(): Boolean{
+    fun isSessionFree(): Boolean{
         return courtFee == 0.0
     }
     fun updateStatus(userId: String){
-        buttonStatus = if(isParticiPant(userId)){
-            JoinButtonStatus.UPDATE
-        }else if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
+        isFree = isSessionFree()
+        isFull = players.size == maxPlayer
+        buttonStatus = if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
+        } else if(isParticiPant(userId)){
+            JoinButtonStatus.UPDATE
         } else if(atFullCapacity()){
             if(isWaitlisted(userId) || isParticiPant(userId)) JoinButtonStatus.HIDE
             else {

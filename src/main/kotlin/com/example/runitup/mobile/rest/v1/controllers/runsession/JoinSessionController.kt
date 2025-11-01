@@ -18,7 +18,6 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import java.time.Instant
 
 @Service
 class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
@@ -76,7 +75,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             request.guest
         )
         val bookingPayment = mutableListOf<com.example.runitup.mobile.model.BookingPayment>()
-        if(!run.isFree()){
+        if(!run.isSessionFree()){
             val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId.orEmpty(), amount)
                 ?: throw ApiRequestException(text("stripe_error"))
             bookingPayment.add(com.example.runitup.mobile.model.BookingPayment(amount, paymentId))

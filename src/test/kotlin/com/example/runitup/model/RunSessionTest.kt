@@ -3,7 +3,6 @@ package com.example.runitup.model
 import com.example.runitup.BaseTest
 import com.example.runitup.mobile.enum.RunStatus
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.whenever
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.test.assertEquals
@@ -35,10 +34,10 @@ class RunSessionTest: BaseTest() {
     @Test
     fun testIsFree(){
         runSession.courtFee = 10.00
-        assertFalse(runSession.isFree())
+        assertFalse(runSession.isSessionFree())
 
         runSession.courtFee = 00.00
-        assertTrue(runSession.isFree())
+        assertTrue(runSession.isSessionFree())
     }
 
     @Test

@@ -63,7 +63,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
         var intentState: IntentState? = null
         //user can only join the waitlist if the run is at full capacity
         if( run.atFullCapacity()){
-            if(!run.isFree()){
+            if(!run.isSessionFree()){
                 val result = paymentService.ensureOffSessionReadyServerSide(user.stripeId.orEmpty(), request.sessionId, idempotencyKey)
                 intentState = result.toIntentState(user.id.orEmpty(), run.id.toString(), idempotencyKey)
                 intentState = intentStateRepository.save(intentState)
