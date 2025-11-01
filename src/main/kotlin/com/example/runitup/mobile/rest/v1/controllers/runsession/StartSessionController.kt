@@ -21,7 +21,7 @@ class StartSessionController: BaseController<ConfirmSessionModel, RunSession>() 
             throw ApiRequestException(text("invalid_session_id"))
         }
         var run = runDb.get()
-        if(run.status != RunStatus.PENDING){
+        if(run.status != RunStatus.CONFIRMED){
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
         run.status = RunStatus.ONGOING

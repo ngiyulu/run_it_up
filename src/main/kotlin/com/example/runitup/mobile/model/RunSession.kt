@@ -63,14 +63,14 @@ data class RunSession(
     fun updateStatus(userId: String){
         buttonStatus = if(isParticiPant(userId)){
             JoinButtonStatus.UPDATE
+        }else if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
+            JoinButtonStatus.HIDE
         } else if(atFullCapacity()){
             if(isWaitlisted(userId) || isParticiPant(userId)) JoinButtonStatus.HIDE
             else {
                 JoinButtonStatus.WAITLIST
             }
 
-        } else if(status == RunStatus.CANCELLED || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
-            JoinButtonStatus.HIDE
         } else {
             JoinButtonStatus.JOIN
         }
