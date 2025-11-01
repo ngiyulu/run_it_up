@@ -47,6 +47,7 @@ data class RunSession(
     var waitListBooking:MutableList<Booking> = mutableListOf(),
     var status: RunStatus = RunStatus.PENDING,
     var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
+    var userStatus: UserButtonStatus = UserButtonStatus.NONE,
     var showUpdatePaymentButton: Boolean = true,
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
@@ -63,7 +64,9 @@ data class RunSession(
             JoinButtonStatus.UPDATE
         } else if(atFullCapacity()){
             if(isWaitlisted(userId) || isParticiPant(userId)) JoinButtonStatus.HIDE
-            else JoinButtonStatus.WAITLIST
+            else {
+                JoinButtonStatus.WAITLIST
+            }
 
         } else if(status == RunStatus.CANCELLED || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
@@ -71,6 +74,15 @@ data class RunSession(
             JoinButtonStatus.JOIN
         }
         val isPendingOrConfirmed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
+        if(isParticiPant(userId)){
+            userStatus = UserButtonStatus.PARTICIPANT
+        }
+        else if(isWaitlisted(userId)){
+            userStatus = UserButtonStatus.WAITLISTED
+        }
+        else {
+            userStatus = UserButtonStatus.NONE
+        }
         showUpdatePaymentButton = status == RunStatus.PENDING
         guestUpdateAllowed = isPendingOrConfirmed
         leaveSessionUpdateAllowed = isPendingOrConfirmed
@@ -144,6 +156,11 @@ data class RunSession(
 
     enum class JoinButtonStatus{
         JOIN, WAITLIST, UPDATE, HIDE
+    }
+
+    enum class UserButtonStatus{
+        WAITLISTED, PARTICIPANT, NONE
+
     }
     class SessionRunBooking(var bookingId:String, var userId: String, var partySize:Int)
 }
