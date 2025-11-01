@@ -12,6 +12,7 @@ import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.example.runitup.mobile.rest.v1.dto.user.CheckIn
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -57,13 +58,16 @@ class RunSessionRestController {
     fun getSessionList( @RequestParam(required = true) long: Double,
                         @RequestParam(required = true) lat: Double,
                         @RequestParam("date")
-                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
+                        @RequestParam(defaultValue = "0") page: Int,
+                        @RequestParam(defaultValue = "25") size: Int
     ):List<com.example.runitup.mobile.model.RunSession> {
         return sessionControllersProvider.getRunSessionListController.execute(
             SessionListModel(
                 longitude = long,
                 latitude = lat,
-                date = date
+                date = date,
+                PageRequest.of(page, size)
             )
         )
     }
