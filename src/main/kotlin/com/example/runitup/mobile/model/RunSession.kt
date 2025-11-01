@@ -64,7 +64,7 @@ data class RunSession(
     }
     fun updateStatus(userId: String){
         isFree = isSessionFree()
-        isFull = players.size == maxPlayer
+        isFull = bookings.size == maxPlayer
         buttonStatus = if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
         } else if(isParticiPant(userId)){
