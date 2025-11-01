@@ -47,7 +47,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             throw ApiRequestException(text("min_player"))
         }
         run.status = RunStatus.CONFIRMED
-        if(!run.isFree()){
+        if(!run.isSessionFree()){
             // we captured the charge in stripe
             // we updated the booking list payment status
             // we created the payment list that needs stored in the payment db

@@ -85,7 +85,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             throw ApiRequestException(text("max_guest_error", arrayOf("10")))
         }
         // if the payment feature is disabled, the run session has to be free or block it
-        if(!run.isFree() && !paymentConfig.payment){
+        if(!run.isSessionFree() && !paymentConfig.payment){
             throw ApiRequestException(text("payment_disabled"))
         }
 
