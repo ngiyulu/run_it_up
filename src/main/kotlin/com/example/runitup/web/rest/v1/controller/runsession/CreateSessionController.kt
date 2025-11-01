@@ -75,7 +75,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             total = 0.0
             location = runGym.location
         }
-        if(run.minimumPlayer < run.maxPlayer){
+        if(run.minimumPlayer >= run.maxPlayer){
             throw ApiRequestException(text("invalid_min_player"))
         }
         if(run.maxPlayer < 10){

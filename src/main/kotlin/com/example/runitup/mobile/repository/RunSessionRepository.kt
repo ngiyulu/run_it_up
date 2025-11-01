@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.repository
 
 import com.example.runitup.mobile.constants.CollectionConstants
+import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.RunSession
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -13,6 +14,21 @@ import org.springframework.stereotype.Repository
 import java.time.LocalDate
 import java.util.*
 
+
+
+private const val QUERY_NEAR_EXCLUDE = """
+{
+  'location': {
+    '${'$'}near': {
+      '${'$'}geometry': { 'type': 'Point', 'coordinates': [ ?2, ?1 ] },
+      '${'$'}maxDistance': ?3
+    }
+  },
+  'status': { '${'$'}in': ?4 },
+  'bookingList': { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } },
+  'waitList':   { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } }
+}
+"""
 @Repository
 @Document(collection = CollectionConstants.SESSION_COLLECTION)
 interface RunSessionRepository : MongoRepository<RunSession, String> {
@@ -26,4 +42,18 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
 
     @Query("{ 'date': { \$eq: ?0} }")
     fun findAllByDatePageable(startInclusive: Date, pageable: Pageable): Page<RunSession>
+
+
+    @Query(
+        value = QUERY_NEAR_EXCLUDE,
+        sort = "{ 'date': 1, 'startTime': 1 }"
+    )
+    fun findJoinableRunsExcludingUserNear(
+        userId: String,
+        lat: Double,
+        lng: Double,
+        maxDistanceMeters: Double,
+        statuses: List<RunStatus>,
+        pageable: Pageable
+    ): Page<RunSession>
 }
