@@ -2,6 +2,7 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.extensions.convertToCents
+import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.dto.RunUser
@@ -29,7 +30,7 @@ class RunSessionService(): BaseService(){
         if(!db.isPresent){
             return  null
         }
-        val bookings = bookingRepository.findBySessionId(runSessionId)
+        val bookings = bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
         val session = db.get()
         session.bookings = bookings.toMutableList()
         return  session

@@ -17,8 +17,8 @@ import java.util.*
 @Document(collection = CollectionConstants.BOOKING_COLLECTION)
 interface BookingRepository : MongoRepository<Booking, String> {
 
-    @Query("{runSessionId:'?0'}")
-    fun findBySessionId(runSessionId: String): List<Booking>
+    fun findByRunSessionIdAndStatusIn(runSessionId: String,
+                                      status: MutableCollection<BookingStatus>): List<Booking>
     fun findByUserIdAndStatusIn(
         userId: String, status: MutableCollection<BookingStatus>
     ): List<Booking>
