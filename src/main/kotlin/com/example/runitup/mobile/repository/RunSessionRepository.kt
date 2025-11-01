@@ -20,8 +20,8 @@ import java.util.*
 interface RunSessionRepository : MongoRepository<RunSession, String> {
 
     companion object {
-        // $near + status + exact date + exclude user in bookings/waitlist
-        const val QUERY_NEAR_EXCLUDE_EXACT_DATE = """
+        // $near + status + local-day range + exclude user
+        const val QUERY_NEAR_EXCLUDE_DAY_RANGE = """
         {
           'location': {
             '${'$'}near': {
@@ -30,7 +30,7 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
             }
           },
           'status': { '${'$'}in': ?4 },
-          'date': ?5,
+          'date': { '${'$'}gte': ?5, '${'$'}lt': ?6 },
           'bookingList': { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } },
           'waitList':   { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } }
         }
@@ -47,14 +47,14 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
     @Query("{ 'date': { \$eq: ?0} }")
     fun findAllByDatePageable(startInclusive: Date, pageable: Pageable): Page<RunSession>
 
-    @Query(value = QUERY_NEAR_EXCLUDE_EXACT_DATE)
-    fun findJoinableRunsExcludingUserNearOnDate(
+    @Query(value = QUERY_NEAR_EXCLUDE_DAY_RANGE)
+    fun findJoinableRunsExcludingUserNearOnLocalDay(
         userId: String,
         lat: Double,
         lng: Double,
         maxDistanceMeters: Double,
         statuses: List<RunStatus>,
-        date: LocalDate,
-        pageable: Pageable
-    ): Page<RunSession>
+        startInclusive: Date, endExclusive: Date,
+        pageable: org.springframework.data.domain.Pageable
+    ): org.springframework.data.domain.Page<RunSession>
 }
