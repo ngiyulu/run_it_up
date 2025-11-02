@@ -112,7 +112,7 @@ class SecurityConfig{
                 "/api/v1/user/logout",
                 "/api/v1/user/otp/request",
                 "/api/sms/send",
-                "api/v1/file/waiver/upload",
+                "api/v1/waiver/upload",
                 "api/push/send",
                 "api/queues/**",
                 "api/test/cache/**",
