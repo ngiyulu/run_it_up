@@ -34,7 +34,7 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
             throw ApiRequestException("invalid_request")
         }
         val waiver = waiverRepository.findByUserId(request.userId)
-        // this means we are resumbitting
+        // this means we are resubmi
         if(waiver != null){
             if(waiver.status == WaiverStatus.APPROVED){
                 throw ApiRequestException("waiver_approved")
@@ -46,10 +46,14 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
             waiver.approvedBy = null
             waiver.status = WaiverStatus.PENDING
             waiver.note = ""
+            user.waiverUrl = waiverUrl.url
+            cacheManager.updateUser(user)
             return waiverRepository.save(waiver)
         }
         val waiverUrl = service.uploadUserWaiverPdf(user, request.fileUploadModel.file) ?: throw ApiRequestException("error")
-        // this means we are creating a new submittion
+        // this means we are creating a new submission
+        user.waiverUrl = waiverUrl.url
+        cacheManager.updateUser(user)
         return waiverRepository.save(Waiver(
             userId = request.userId,
             approvedAt = null,
