@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service
 /// confirm session is when we charge the card, this happens 3 hours before the run
 class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>() {
 
-
     @Autowired
     lateinit var runSessionService: RunSessionService
 
@@ -31,8 +30,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     lateinit var paymentRepository: PaymentRepository
 
     @Autowired
-    lateinit var bookinRepository: BookingRepository
-
+    lateinit var bookingRepository: BookingRepository
 
     override fun execute(request: ConfirmSessionModel): com.example.runitup.mobile.model.RunSession {
         val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
@@ -57,15 +55,11 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
                 paymentRepository.save(it)
             }
         }
-
         // we storing the bookings because we updated the payment status
         run.bookings.forEach {
-            bookinRepository.save(it)
+            bookingRepository.save(it)
         }
-
         return runSessionRepository.save(run)
     }
-
-
 
 }

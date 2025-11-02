@@ -5,6 +5,7 @@ import com.example.runitup.mobile.rest.v1.controllers.file.GymImageUploader
 import com.example.runitup.mobile.rest.v1.controllers.file.ProfileImageUploader
 import com.example.runitup.mobile.rest.v1.dto.FileUploadModel
 import com.example.runitup.mobile.service.GcsImageService
+import com.example.runitup.web.rest.v1.controller.waiver.UploadWaiverController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -24,12 +25,27 @@ class FileRestController{
     @Autowired
     lateinit var gymImageUploader: GymImageUploader
 
+    @Autowired
+    lateinit var uploadWaiverController: UploadWaiverController
+
     @PostMapping("/upload/profile-image", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadImage(
         @RequestPart("file") file: MultipartFile
     ): User {
         return profileImageUploader.execute(FileUploadModel(file, null))
     }
+
+    @PostMapping("/waiver/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadGymImage(
+        @RequestPart("file") file: MultipartFile,
+        @RequestPart("userId") userId: String,
+        @RequestHeader("X-Timezone", required = true) tzHeader: String,
+    ): User {
+        return uploadWaiverController.execute(
+            Pair(tzHeader, FileUploadModel(file, userId))
+        )
+    }
+
 
     @PostMapping("/upload/gym-image", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadGymImage(

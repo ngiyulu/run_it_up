@@ -1,6 +1,6 @@
 package com.example.runitup.web.rest.v1.controller.runsession
 
-import com.example.runitup.mobile.config.PaymentConfig
+import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
@@ -34,7 +34,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
 
 
     @Autowired
-    lateinit var paymentConfig: PaymentConfig
+    lateinit var paymentConfig: AppConfig
 
 
     override fun execute(request: CreateRunSessionRequest): com.example.runitup.mobile.model.RunSession {

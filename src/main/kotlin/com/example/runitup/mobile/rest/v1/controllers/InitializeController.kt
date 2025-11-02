@@ -1,7 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers
 
-import com.example.runitup.mobile.config.PaymentConfig
-import com.example.runitup.mobile.constants.AppConstant
+import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
@@ -40,7 +39,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var emailService: SendGridService
 
     @Autowired
-    lateinit var paymentConfig: PaymentConfig
+    lateinit var paymentConfig: AppConfig
     override fun execute(request: InitializeRequest): InitializeResponse {
         val gyms = gymRepository.findAll()
         var user: User? = null

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Upload Waiver • RunItUp</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+        .card { max-width: 700px; margin: 24px auto; }
+        .dropzone {
+            border: 2px dashed #374151; border-radius: 12px; padding: 24px;
+            background: #0b1220; text-align: center; color: #9ca3af;
+            transition: border-color .2s, background .2s;
+        }
+        .dropzone.dragover { border-color: #ff6a00; background: rgba(255,106,0,0.08); }
+        .file-info { margin-top: 10px; color: #e8ecf1; word-break: break-all; }
+        .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .muted { color:#9ca3af; }
+        .hidden { display:none !important; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp</div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="status" class="alert hidden"></div>
+
+    <div class="card">
+        <h2>Upload Waiver</h2>
+        <p class="muted">Please download, complete, and upload the signed waiver as a PDF.</p>
+
+        <p>
+            <a class="primary" href="https://firebasestorage.googleapis.com/v0/b/runitup-94575.firebasestorage.app/o/RunItUp_Youth_Waiver_Branded_v2.pdf?alt=media&token=ea2a93e4-6b86-4f58-9a27-15bcf496a7f1" target="_blank" rel="noopener">
+                Download Waiver (PDF)
+            </a>
+        </p>
+
+        <form id="waiverForm">
+            <input type="hidden" id="userId" name="userId" />
+
+            <label>Signed Waiver (PDF only)</label>
+            <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload PDF">
+                <div>Drag & drop your PDF here, or click to choose</div>
+                <div class="muted" style="margin-top:6px;">Max 10 MB • .pdf</div>
+                <input id="fileInput" type="file" accept="application/pdf" class="hidden" />
+                <div id="fileInfo" class="file-info hidden"></div>
+            </div>
+
+            <div class="actions" style="margin-top:16px;">
+                <button id="submitBtn" class="primary" type="submit">Submit</button>
+                <button id="clearBtn" type="button">Clear</button>
+            </div>
+        </form>
+
+        <p class="muted" style="margin-top:12px;">
+            Having trouble? Ensure your file is a PDF and under 10 MB.
+        </p>
+    </div>
+</div>
+
+<footer><div>© RunItUp</div></footer>
+
+<script>
+    (function () {
+        const statusEl  = document.getElementById('status');
+        const fileInput = document.getElementById('fileInput');
+        const dropzone  = document.getElementById('dropzone');
+        const fileInfo  = document.getElementById('fileInfo');
+        const userIdEl  = document.getElementById('userId');
+        const form      = document.getElementById('waiverForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const clearBtn  = document.getElementById('clearBtn');
+
+        // Pull userId from query (?id= or ?userId=)
+        const params = new URLSearchParams(location.search);
+        const userId = params.get('id') || params.get('userId');
+        if (!userId) {
+            setStatus('error', 'Missing user id. Please use the link provided in your invite.');
+            form.querySelectorAll('button, input').forEach(el => el.disabled = true);
+            return;
+        }
+        userIdEl.value = userId;
+
+        // Helpers
+        function setStatus(kind, text) {
+            statusEl.className = 'alert';
+            if (kind === 'success') statusEl.classList.add('success');
+            if (kind === 'error')   statusEl.classList.add('error');
+            statusEl.textContent = text;
+            statusEl.classList.remove('hidden');
+        }
+        function clearStatus() {
+            statusEl.className = 'alert hidden';
+            statusEl.textContent = '';
+        }
+        function prettySize(bytes) {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+            return `${(bytes/1024/1024).toFixed(1)} MB`;
+        }
+        function showFileInfo(file) {
+            if (!file) { fileInfo.classList.add('hidden'); fileInfo.textContent=''; return; }
+            fileInfo.textContent = `${file.name} • ${prettySize(file.size)}`;
+            fileInfo.classList.remove('hidden');
+        }
+        function pickFile() { fileInput.click(); }
+
+        // Dropzone behavior
+        dropzone.addEventListener('click', pickFile);
+        dropzone.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickFile(); }
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                const file = e.dataTransfer.files[0];
+                if (!validateFile(file)) return;
+                fileInput.files = e.dataTransfer.files;
+                showFileInfo(file);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) { showFileInfo(null); return; }
+            if (!validateFile(file)) { fileInput.value = ''; showFileInfo(null); return; }
+            showFileInfo(file);
+        });
+
+        function validateFile(file) {
+            clearStatus();
+            if (!file) { setStatus('error', 'Please choose a PDF.'); return false; }
+            const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+            if (!isPdf) { setStatus('error', 'Only PDF files are accepted.'); return false; }
+            const maxBytes = 10 * 1024 * 1024; // 10 MB
+            if (file.size > maxBytes) { setStatus('error', 'File is too large (max 10 MB).'); return false; }
+            return true;
+        }
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            clearStatus();
+            fileInput.value = '';
+            showFileInfo(null);
+        });
+
+        // Submit
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearStatus();
+
+            const file = fileInput.files[0];
+            if (!validateFile(file)) return;
+
+            const fd = new FormData();
+            fd.append('file', file);            // <-- key: file
+            fd.append('userId', userIdEl.value); // <-- key: userId
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading…';
+
+            try {
+                // Add Authorization header if you use tokens
+                const headers = {};
+                const token = localStorage.getItem('token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                const resp = await fetch('/api/v1/waiver/upload', {
+                    method: 'POST',
+                    headers,         // no Content-Type (browser sets it for multipart)
+                    body: fd
+                });
+
+                if (resp.status === 401 || resp.status === 403) {
+                    setStatus('error', 'You are not authorized. Please sign in again.');
+                    return;
+                }
+                if (!resp.ok) {
+                    const txt = await resp.text().catch(() => '');
+                    throw new Error(txt || `Upload failed (HTTP ${resp.status})`);
+                }
+
+                setStatus('success', 'Waiver uploaded successfully. Thank you!');
+                fileInput.value = '';
+                showFileInfo(null);
+            } catch (err) {
+                console.error(err);
+                setStatus('error', err.message || 'Upload failed. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            }
+        });
+    })();
+</script>
+</body>
+</html>

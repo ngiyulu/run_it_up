@@ -1,17 +1,12 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel
 import com.example.runitup.mobile.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.geo.Distance
-import org.springframework.data.geo.Metrics
-import org.springframework.data.geo.Point
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.ZoneOffset
@@ -28,7 +23,6 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         val radius = 20.0
         val startUtc = request.date.atStartOfDay(ZoneOffset.UTC).toInstant()
         val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
-
         val maxDistanceMeters = radius * 1609.344 // 32186.88
         val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING)
         val page = runSessionRepository.findJoinableRunsExcludingUserNearOnLocalDay(

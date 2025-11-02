@@ -22,14 +22,13 @@ class UploadWaiverController: BaseController<Pair<String, FileUploadModel>, User
     lateinit var service: GcsImageService
 
     @Autowired
-    protected lateinit var maanager: MyCacheManager
+    protected lateinit var manager: MyCacheManager
 
     @Autowired
     lateinit var waiverRepository: WaiverRepository
     override fun execute(request: Pair<String, FileUploadModel>): User {
         val(zoneId, file) = request
-
-        val user = maanager.getUser(file.data.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
+        val user = manager.getUser(file.data.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
         val auth =  SecurityContextHolder.getContext().authentication
         val savedAdmin = auth.principal as AdminPrincipal
