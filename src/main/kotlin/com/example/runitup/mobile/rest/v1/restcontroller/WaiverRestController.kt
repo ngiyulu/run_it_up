@@ -18,10 +18,11 @@ class WaiverRestController {
     @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadWaiver(
         @RequestPart("file") file: MultipartFile,
+        @RequestPart("userId") userId: String,
         @RequestHeader("X-Timezone", required = true) tzHeader: String,
     ): Waiver {
         return waiverController.execute(
-            CreateWaiverRequest(FileUploadModel(file, null), tzHeader)
+            CreateWaiverRequest(FileUploadModel(file, null), tzHeader, userId)
         )
     }
 
