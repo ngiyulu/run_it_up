@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.repository.service
 
+import com.example.runitup.mobile.model.Otp
 import com.example.runitup.mobile.repository.OtpRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -23,17 +24,18 @@ class OtpDbService {
     @Autowired
     lateinit var otpRepository: OtpRepository
 
-    fun getOtp(phoneNumber: String): com.example.runitup.mobile.model.Otp?{
-        val query = Query()
-            .addCriteria(Criteria.where("phoneNumber").`is`(phoneNumber))
-            .addCriteria(Criteria.where("isActive").`is`(true))
-        return mongoTemplate.findOne(query, com.example.runitup.mobile.model.Otp::class.java)
+    fun getOtp(phoneNumber: String): Otp?{
+//        val query = Query()
+//            .addCriteria(Criteria.where("phoneNumber").`is`(phoneNumber))
+//            .addCriteria(Criteria.where("isActive").`is`(true))
+//        return mongoTemplate.findOne(query, Otp::class.java)
+        return otpRepository.findByPhoneNumberAndIsActive(phoneNumber,true)
     }
 
-    fun generateOtp(userId: String?, phone: String): com.example.runitup.mobile.model.Otp {
+    fun generateOtp(userId: String?, phone: String): Otp {
         val q = Query(Criteria.where("phoneNumber").`is`(phone))
         val u = Update().set("isActive", false)
-        mongoTemplate.updateFirst(q, u, com.example.runitup.mobile.model.Otp::class.java)
+        mongoTemplate.updateFirst(q, u, Otp::class.java)
 
         val code: String = ThreadLocalRandom.current()
             .ints(4, 0, 10)
@@ -41,7 +43,7 @@ class OtpDbService {
             .collect(Collectors.joining())
 
         return  otpRepository.save(
-            com.example.runitup.mobile.model.Otp(
+            Otp(
                 code = code,
                 phoneNumber = phone,
                 userId = userId,
@@ -50,7 +52,7 @@ class OtpDbService {
         )
     }
 
-    fun disableOtp(otp: com.example.runitup.mobile.model.Otp): com.example.runitup.mobile.model.Otp {
+    fun disableOtp(otp: Otp): Otp {
         otp.isActive = false
         return otpRepository.save(otp)
     }

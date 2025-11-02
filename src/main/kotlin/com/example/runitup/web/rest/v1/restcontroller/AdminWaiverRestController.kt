@@ -32,19 +32,6 @@ class AdminWaiverRestController {
     @Autowired
     lateinit var textService: TextService
 
-
-    @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun uploadGymImage(
-        @RequestPart("file") file: MultipartFile,
-        @RequestPart("userId") userId: String,
-        @RequestHeader("X-Timezone", required = true) tzHeader: String,
-    ): User {
-        return uploadWaiverController.execute(
-            Pair(tzHeader, FileUploadModel(file, userId))
-        )
-    }
-
-
     @GetMapping("/list")
     fun getWaiverList(): List<Waiver> {
        return  waiverListController.execute(Unit)
