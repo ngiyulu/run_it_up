@@ -27,14 +27,14 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
     @Autowired
     lateinit var waiverRepository: WaiverRepository
     override fun execute(request: CreateWaiverRequest): Waiver {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = manager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
+        val user = manager.getUser(request.userId) ?: throw ApiRequestException(text("user_not_found"))
         val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId)
         print("age = $age")
         if(age >18){
             throw ApiRequestException("invalid_request")
         }
-        val waiver = waiverRepository.findByUserId(auth.id.orEmpty())
+        val waiver = waiverRepository.findByUserId(request.userId)
+        // this means we are resumbitting
         if(waiver != null){
             if(waiver.status == WaiverStatus.APPROVED){
                 throw ApiRequestException("waiver_approved")
@@ -49,13 +49,14 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
             return waiverRepository.save(waiver)
         }
         val waiverUrl = service.uploadUserWaiverPdf(user, request.fileUploadModel.file) ?: throw ApiRequestException("error")
+        // this means we are creating a new submittion
         return waiverRepository.save(Waiver(
-            userId = auth.id.orEmpty(),
-            approvedAt = LocalDate.now(),
+            userId = request.userId,
+            approvedAt = null,
             url = waiverUrl.url
         ))
     }
 
 }
 
-class CreateWaiverRequest(val fileUploadModel: FileUploadModel, val zoneId:String )
+class CreateWaiverRequest(val fileUploadModel: FileUploadModel, val zoneId:String, val userId:String)
