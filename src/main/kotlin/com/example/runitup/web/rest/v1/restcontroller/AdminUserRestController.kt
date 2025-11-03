@@ -4,9 +4,9 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.UserRepository
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.user.CreateUserAdminController
 import com.example.runitup.mobile.rest.v1.dto.CreateUserRequest
 import com.example.runitup.mobile.service.TextService
-import com.example.runitup.web.rest.v1.controller.user.CreateUserAdminController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
 import org.springframework.context.i18n.LocaleContextHolder

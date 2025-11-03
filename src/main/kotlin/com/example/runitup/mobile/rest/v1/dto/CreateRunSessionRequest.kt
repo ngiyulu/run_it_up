@@ -12,7 +12,7 @@ class CreateRunSessionRequest(
     var notes:String,
     var privateRun : Boolean,
     var description: String,
-    var courtFee: Double = 0.0,
+    var fee: Double = 0.0,
     var minPlayer: Int = 10,
     var maxPlayer: Int,
     var title: String,

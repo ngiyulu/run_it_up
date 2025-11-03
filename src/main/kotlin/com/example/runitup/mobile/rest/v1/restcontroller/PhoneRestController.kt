@@ -20,7 +20,6 @@ class PhoneRestController {
                @RequestHeader(HeaderConstants.TYPE)  type:String = ANDROID_TYPE,
                @RequestHeader("X-OS-Version", required = true) phoneOs: String): com.example.runitup.mobile.model.Phone {
         model.type = type
-
         return createOrUpdatePhone.execute(CreateOrUpdatePhone.CreateOrUpdatePhoneModel(model, phoneOs))
     }
 }

@@ -3,9 +3,9 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.rest.v1.controllers.file.GymImageUploader
 import com.example.runitup.mobile.rest.v1.controllers.file.ProfileImageUploader
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver.UploadWaiverController
 import com.example.runitup.mobile.rest.v1.dto.FileUploadModel
 import com.example.runitup.mobile.service.GcsImageService
-import com.example.runitup.web.rest.v1.controller.waiver.UploadWaiverController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity

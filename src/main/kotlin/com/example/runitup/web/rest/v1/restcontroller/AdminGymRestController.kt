@@ -1,11 +1,11 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
 import com.example.runitup.mobile.model.Gym
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.gym.CreateGymController
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.gym.GetGym
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.gym.GetGymList
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.gym.UpdateGymController
 import com.example.runitup.mobile.rest.v1.dto.CreateGymRequest
-import com.example.runitup.web.rest.v1.controller.gym.CreateGymController
-import com.example.runitup.web.rest.v1.controller.gym.GetGym
-import com.example.runitup.web.rest.v1.controller.gym.GetGymList
-import com.example.runitup.web.rest.v1.controller.gym.UpdateGymController
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus

@@ -1,3 +1,11 @@
 package com.example.runitup.mobile.rest.v1.dto
 
-class JoinWaitListResponse(val success: Boolean, val runSession: com.example.runitup.mobile.model.RunSession)
+import com.example.runitup.mobile.model.RunSession
+
+class JoinWaitListResponse(
+    val success: Boolean,
+    val clientKey:String?,
+    val runSession: RunSession,
+    val showSCA:Boolean?,
+    val refresh:Boolean = false
+)

@@ -7,6 +7,7 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
+import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -18,6 +19,9 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
+
+    @Autowired
+    lateinit var runSessionService: RunSessionService
 
     override fun execute(request: CancelSessionModel): com.example.runitup.mobile.model.RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
@@ -32,7 +36,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
         if(run.status == RunStatus.CONFIRMED){
             //TODO: add  to queue for refunding
         }
-        run = runSessionRepository.save(run)
+        run = runSessionService.updateRunSession(run)
         bookingDbService.cancelAllBooking(run.id.orEmpty())
         return run
     }

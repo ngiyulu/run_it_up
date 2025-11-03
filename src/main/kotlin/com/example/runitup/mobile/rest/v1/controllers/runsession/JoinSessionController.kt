@@ -2,6 +2,9 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.extensions.convertToCents
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
@@ -10,6 +13,7 @@ import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.BookingPricingAdjuster
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
@@ -32,6 +36,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
     private lateinit var sessionService: RunSessionService
 
     @Autowired
+    lateinit var bookingPricingAdjuster: BookingPricingAdjuster
+
+    @Autowired
     lateinit var messagingService: MessagingService
 
     override fun execute(request: JoinSessionModel): JoinRunSessionResponse {
@@ -43,7 +50,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val run = runDb.get()
         // this mean the event is full
-        if( user.stripeId == null){
+        if( user.stripeId == null || (run.isFree && request.paymentMethodId == null)){
             throw ApiRequestException(text("payment_error"))
         }
         if( !run.isJoinable()){
@@ -74,36 +81,48 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             0,
             request.guest
         )
-        val bookingPayment = mutableListOf<com.example.runitup.mobile.model.BookingPayment>()
+        val booking = Booking(
+            ObjectId().toString(),
+            request.getTotalParticipants(),
+            user.id.orEmpty(),
+            runUser,
+            request.sessionId,
+            PaymentStatus.PENDING,
+            run.amount,
+            amount,
+            null,
+            null,
+            null,
+            0,
+            joinedAtFromWaitList = null,
+            currentTotalCents = amount.convertToCents()
+        )
         if(!run.isSessionFree()){
-            val paymentId = sessionService.joinSession(user.stripeId.orEmpty(), runUser, request.paymentMethodId.orEmpty(), amount)
-                ?: throw ApiRequestException(text("stripe_error"))
-            bookingPayment.add(com.example.runitup.mobile.model.BookingPayment(amount, paymentId))
-        }
-
-        val booking = bookingRepository.save(
-            com.example.runitup.mobile.model.Booking(
-                ObjectId().toString(),
-                request.getTotalParticipants(),
+            val holdingCharge = bookingPricingAdjuster.createPrimaryHoldWithChange(
+                booking.id.orEmpty(),
                 user.id.orEmpty(),
-                runUser,
-                request.sessionId,
-                bookingPayment,
-                PaymentStatus.PENDING,
-                run.amount,
-                amount,
-                0,
-                joinedAtFromWaitList = null
+                user.stripeId.toString(),
+                "usd",
+                amount.convertToCents(),
+                request.paymentMethodId.orEmpty(),
+                user.id.orEmpty(),
+            )
+            if(!holdingCharge.ok){
+                throw  ApiRequestException(holdingCharge.message.toString())
+            }
+            booking.paymentId = holdingCharge.paymentIntentId
+            booking.paymentMethodId = request.paymentMethodId
+        }
+        bookingRepository.save(booking)
+        run.bookingList.add(
+            RunSession.SessionRunBooking(
+                booking.id.toString(),
+                user.id.orEmpty(),
+                booking.partySize
             )
         )
-        run.bookingList.add(
-            com.example.runitup.mobile.model.RunSession.SessionRunBooking(
-            booking.id.toString(),
-            user.id.orEmpty(),
-            booking.partySize
-            ))
         run.updateTotal()
-        val updated =  runSessionRepository.save(run)
+        val updated =  sessionService.updateRunSession(run)
         val participant = Participant(
             userId = user.id.orEmpty(),
             role = "MEMBER",

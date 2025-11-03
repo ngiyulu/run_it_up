@@ -6,14 +6,20 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.user.CheckIn
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
-class CheckInController: BaseController<CheckIn, RunSession>() {   @Autowired
+class CheckInController: BaseController<CheckIn, RunSession>() {
 
+    @Autowired
     lateinit var runSessionRepository: RunSessionRepository
+
+    @Autowired
+    lateinit var runSessionService: RunSessionService
+
     override fun execute(request: CheckIn): com.example.runitup.mobile.model.RunSession {
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val runDb = runSessionRepository.findById(request.sessionId)
@@ -29,7 +35,7 @@ class CheckInController: BaseController<CheckIn, RunSession>() {   @Autowired
 //        }
 //        signedUpPlayer?.checkIn = true
 //        signedUpPlayer?.status = RunUser.RunUserStatus.PLAYED
-        return runSessionRepository.save(run).apply {
+        return runSessionService.updateRunSession(run).apply {
             updateStatus(auth.id.orEmpty())
         }
     }
