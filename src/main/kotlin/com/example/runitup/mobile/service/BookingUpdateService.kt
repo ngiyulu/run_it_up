@@ -1,9 +1,6 @@
 package com.example.runitup.mobile.service
 
-import com.example.runitup.mobile.model.AuthRole
 import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingChangeEvent
-import com.example.runitup.mobile.model.ChangeType
 import com.example.runitup.mobile.repository.BookingChangeEventRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel

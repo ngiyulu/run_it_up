@@ -1,7 +1,10 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 import com.example.runitup.mobile.rest.v1.controllers.waitlist.RefreshWaitListController
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 
 @RestController

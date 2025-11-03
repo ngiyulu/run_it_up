@@ -3,8 +3,30 @@ package com.example.runitup.mobile.model
 import java.time.Instant
 
 
-// booking_authorization_hold (one row per PaymentIntent auth)
-// domain/payments/PaymentAuthorization.kt
+/*
+Tracks every individual Stripe PaymentIntent (authorization hold) created for a booking — whether it’s the initial hold (PRIMARY) or any incremental adjustment (DELTA).
+It’s a low-level ledger of all payment attempts and their outcomes.
+| Field                                                 | Type                                                        | Description                               |
+| ----------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------- |
+| `id`                                                  | String                                                      | MongoDB ObjectId                          |
+| `bookingId`                                           | String                                                      | The booking this authorization belongs to |
+| `userId`                                              | String                                                      | The user who owns the booking             |
+| `customerId`                                          | String                                                      | Stripe Customer ID (`cus_...`)            |
+| `paymentIntentId`                                     | String                                                      | Stripe PaymentIntent ID (`pi_...`)        |
+| `role`                                                | Enum (`PRIMARY`, `DELTA`)                                   | Role of the authorization                 |
+| `status`                                              | Enum (`AUTHORIZED`, `CAPTURED`, `CANCELED`, `FAILED`, etc.) | Current state of the PaymentIntent        |
+| `amountAuthorizedCents`                               | Long                                                        | The amount Stripe authorized (in cents)   |
+| `amountCapturedCents`                                 | Long                                                        | The amount successfully captured (if any) |
+| `currency`                                            | String                                                      | e.g., `"usd"`                             |
+| `failureKind`                                         | Enum (`NONE`, `TRANSIENT`, `HARD`)                          | Whether and how the authorization failed  |
+| `errorType` / `errorCode` / `declineCode` / `message` | String                                                      | Stripe error diagnostic info              |
+| `nextRetryAt`                                         | Instant?                                                    | If capture failed and retry is scheduled  |
+| `changeEventId`                                       | String                                                      | Links to `BookingChangeEvent` for audit   |
+| `createdAt` / `updatedAt`                             | Instant                                                     | Timestamps                                |
+
+*/
+
+
 enum class FailureKind { TRANSIENT, HARD, ACTION_REQUIRED, NONE }
 
 data class PaymentAuthorization(
@@ -41,6 +63,13 @@ data class PaymentAuthorization(
     var lastOperation: LastOperation = LastOperation.NONE
 )
 
+/*
+Stripe does not let you “increase” the amount of an existing authorization.
+The correct approach is to create an additional hold (a new PaymentIntent) for just the difference (the delta).
+That’s why your code creates a new AuthRole.DELTA record whenever total increases.
+PRIMARY is the main hold, delta is a new hold that has the difference of the price of the Primary hold and the new request that came in
+
+ */
 enum class AuthRole { PRIMARY, DELTA }
 enum class AuthStatus { AUTHORIZED, REQUIRES_ACTION, CAPTURED, CANCELED, FAILED, REQUIRES_CAPTURE }
 

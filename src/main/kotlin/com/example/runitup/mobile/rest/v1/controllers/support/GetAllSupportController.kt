@@ -3,7 +3,6 @@ package com.example.runitup.mobile.rest.v1.controllers.support
 import com.example.runitup.mobile.model.Support
 import com.example.runitup.mobile.repository.SupportRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.rest.v1.dto.CreateSupportRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service

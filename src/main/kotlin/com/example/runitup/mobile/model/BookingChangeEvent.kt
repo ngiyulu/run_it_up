@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.model
 
-import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 
 data class BookingChangeEvent(

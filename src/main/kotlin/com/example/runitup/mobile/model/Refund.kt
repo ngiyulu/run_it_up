@@ -1,9 +1,5 @@
 package com.example.runitup.mobile.model
 
-import org.bson.types.ObjectId
-import org.springframework.data.annotation.Id
-import java.time.LocalDate
-
 data class Refund(
     val id: String? = null,                 // DB id
     val refundId: String,                   // Stripe refund id: re_*

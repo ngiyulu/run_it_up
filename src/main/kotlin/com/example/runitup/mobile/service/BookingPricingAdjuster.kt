@@ -1,7 +1,6 @@
 // service/BookingPricingAdjuster.kt
 package com.example.runitup.mobile.service
 
-
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingChangeEventRepository
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
@@ -20,6 +19,20 @@ data class PrimaryHoldResult(
     val paymentIntentId: String? = null
 )
 
+data class CaptureBookingResult(
+    val ok: Boolean,
+    val capturedTotalCents: Long,
+    val remainingToCaptureCents: Long,
+    val messages: List<String> = emptyList()
+)
+
+data class CancelAuthorizationResult(
+    val ok: Boolean,
+    val message: String? = null,
+    val paymentIntentId: String? = null,
+    val stripeStatus: String? = null,
+    val cancellationReason: String? = null
+)
 
 @Service
 class BookingPricingAdjuster(
@@ -27,11 +40,9 @@ class BookingPricingAdjuster(
     private val changeRepo: BookingChangeEventRepository,
     private val authRepo: PaymentAuthorizationRepository,
     private val bookingStateRepo: BookingPaymentStateRepository,
-    private val  paymentAuthorizationService: PaymentAuthorizationService,
-    private val  changeBookingEventService: ChangeBookingEventService
+    private val paymentAuthorizationService: PaymentAuthorizationService,
+    private val changeBookingEventService: ChangeBookingEventService
 ) {
-
-
 
     fun createPrimaryHoldWithChange(
         bookingId: String,
@@ -43,10 +54,10 @@ class BookingPricingAdjuster(
         actorId: String,
     ): PrimaryHoldResult {
         return try {
-            // 1. Create change event for audit trail
+            // 1) Audit
             val change = changeRepo.insert(
                 BookingChangeEvent(
-                    id = ObjectId().toString(),
+                    id = ObjectId().toHexString(),
                     bookingId = bookingId,
                     userId = userId,
                     actorId = actorId,
@@ -60,7 +71,7 @@ class BookingPricingAdjuster(
                 )
             )
 
-            // 2. Create Stripe PaymentIntent (manual capture)
+            // 2) Stripe PI (manual capture)
             val create = paymentService.createCharge(
                 isHold = true,
                 amountCents = totalCents,
@@ -80,37 +91,28 @@ class BookingPricingAdjuster(
                     changeEventId = change.id,
                     result = create
                 )
-                // Update aggregate state (FAILED or REQUIRES_ACTION)
                 updateAggregateState(bookingId, customerId, currency)
                 return PrimaryHoldResult(ok = false, message = create.message ?: "Failed to create primary hold")
             }
 
-
-            // 3. Map it to PaymentAuthorization in DB
+            // 3) Persist PA
             paymentAuthorizationService.upsertPaymentAuthorizationFromCreate(
-                bookingId = bookingId,
-                userId = userId,
-                customerId = customerId,
-                currency = currency,
+                bookingId, userId, customerId, currency,
                 role = AuthRole.PRIMARY,
                 changeEventId = change.id,
                 create = create
             )
 
-            // 4. Update aggregate payment state
+            // 4) Aggregates
             updateAggregateState(bookingId, customerId, currency)
 
-            // 5. Return result
             PrimaryHoldResult(
-                ok = create.ok,
+                ok = true,
                 message = create.message ?: "Primary hold created",
                 paymentIntentId = create.paymentIntentId
             )
         } catch (e: Exception) {
-            PrimaryHoldResult(
-                ok = false,
-                message = "Error creating primary hold: ${e.message}"
-            )
+            PrimaryHoldResult(ok = false, message = "Error creating primary hold: ${e.message}")
         }
     }
 
@@ -138,10 +140,10 @@ class BookingPricingAdjuster(
         }
 
         return try {
-            // 1) Change event (audit)
+            // 1) Audit
             val change = changeRepo.insert(
                 BookingChangeEvent(
-                    id = org.bson.types.ObjectId().toHexString(),
+                    id = ObjectId().toHexString(),
                     bookingId = bookingId,
                     userId = userId,
                     actorId = actorId,
@@ -156,7 +158,7 @@ class BookingPricingAdjuster(
                 )
             )
 
-            // 2) Create DELTA hold (manual capture)
+            // 2) Delta hold
             val create = paymentService.createCharge(
                 isHold = true,
                 amountCents = delta,
@@ -167,7 +169,6 @@ class BookingPricingAdjuster(
             )
 
             if (!create.ok || create.paymentIntentId == null) {
-                // No retries for hold creation — surface error directly
                 return DeltaHoldIncreaseResult(
                     ok = false,
                     bookingId = bookingId,
@@ -181,18 +182,15 @@ class BookingPricingAdjuster(
                 )
             }
 
-            // 3) Persist PaymentAuthorization (DELTA)
+            // 3) Persist PA (DELTA)
             paymentAuthorizationService.upsertPaymentAuthorizationFromCreate(
-                bookingId = bookingId,
-                userId = userId,
-                customerId = customerId,
-                currency = currency,
+                bookingId, userId, customerId, currency,
                 role = AuthRole.DELTA,
                 changeEventId = change.id,
                 create = create
             )
 
-            // 4) Update aggregate state
+            // 4) Aggregates
             updateAggregateState(bookingId, customerId, currency)
 
             DeltaHoldIncreaseResult(
@@ -214,7 +212,6 @@ class BookingPricingAdjuster(
             )
         }
     }
-
 
     fun handleDecreaseBeforeCapture(
         bookingId: String,
@@ -241,11 +238,11 @@ class BookingPricingAdjuster(
             )
         }
 
-        // 1) Change event (audit)
+        // 1) Audit
         val bookingEvent = try {
             changeRepo.insert(
                 BookingChangeEvent(
-                    id = org.bson.types.ObjectId().toHexString(),
+                    id = ObjectId().toHexString(),
                     bookingId = bookingId,
                     userId = userId,
                     actorId = actorId,
@@ -272,7 +269,7 @@ class BookingPricingAdjuster(
 
         val largeDrop = -delta >= thresholdForReauthCents
 
-        // If not a large drop, keep existing auth; update state and return success
+        // 2) Small decrease: keep auth, capture lower later
         if (!largeDrop) {
             updateAggregateState(bookingId, customerId, currency)
             return DecreaseBeforeCaptureResult(
@@ -286,7 +283,7 @@ class BookingPricingAdjuster(
             )
         }
 
-        // Large drop path requires we replace the primary auth
+        // 3) Large drop requires replacing primary auth
         if (primaryPaymentIntentId == null || savedPaymentMethodId == null) {
             updateAggregateState(bookingId, customerId, currency)
             return DecreaseBeforeCaptureResult(
@@ -300,106 +297,77 @@ class BookingPricingAdjuster(
             )
         }
 
-        return try {
-            // 2) Cancel old primary hold on Stripe (structured result)
-            val cancel = paymentService.cancelHold(primaryPaymentIntentId)
-            if (!cancel.ok) {
-                // Reflect cancel failure in DB state as FAILED (your PaymentAuthorizationService already has helpers)
-                paymentAuthorizationService.markCanceled(
-                    paymentIntentId = primaryPaymentIntentId,
-                    errorType = cancel.errorType,
-                    errorCode = cancel.errorCode,
-                    declineCode = cancel.declineCode,
-                    message = cancel.message
-                )
-                updateAggregateState(bookingId, customerId, currency)
-                return DecreaseBeforeCaptureResult(
-                    ok = false,
-                    bookingId = bookingId,
-                    userId = userId,
-                    oldTotalCents = oldTotalCents,
-                    newTotalCents = newTotalCents,
-                    largeDrop = true,
-                    canceledPrimary = false,
-                    canceledPrimaryReason = cancel.message,
-                    message = "Failed to cancel previous authorization.",
-                    errorType = cancel.errorType,
-                    errorCode = cancel.errorCode,
-                    declineCode = cancel.declineCode
-                )
-            }
+        // 4) Cancel ALL active auths (PRIMARY + DELTAs) so we don't double-authorize totals
+        val cancels = cancelAllActiveAuthsForBooking(bookingId, userId, customerId, currency)
+        val anyHardFail = cancels.any { !it.ok && it.stripeStatus != "canceled" }
 
-            // Mark canceled locally
-            paymentAuthorizationService.markCanceled(primaryPaymentIntentId)
-
-            // 3) Re-authorize a fresh PRIMARY hold at the lower total
-            val create = paymentService.createCharge(
-                isHold = true,
-                amountCents = newTotalCents,
-                currency = currency,
-                paymentMethodId = savedPaymentMethodId,
-                customerId = customerId,
-                idempotencyKey = "primary-replace-$bookingId-$userId-$newTotalCents"
-            )
-
-            if (!create.ok || create.paymentIntentId == null) {
-                updateAggregateState(bookingId, customerId, currency)
-                return DecreaseBeforeCaptureResult(
-                    ok = false,
-                    bookingId = bookingId,
-                    userId = userId,
-                    oldTotalCents = oldTotalCents,
-                    newTotalCents = newTotalCents,
-                    largeDrop = true,
-                    canceledPrimary = true,
-                    canceledPrimaryReason = cancel.cancellationReason ?: "canceled",
-                    message = create.message ?: "Re-authorization failed",
-                    requiresAction = create.requiresAction,
-                    errorType = create.errorType ?: if (create.requiresAction) "action_required" else null,
-                    errorCode = create.errorCode ?: create.lastPaymentErrorCode,
-                    declineCode = create.declineCode ?: create.lastPaymentErrorDeclineCode
-                )
-            }
-
-            paymentAuthorizationService.upsertPaymentAuthorizationFromCreate(
-                bookingId = bookingId,
-                userId = userId,
-                customerId = customerId,
-                currency = currency,
-                role = AuthRole.PRIMARY,
-                changeEventId = bookingEvent.id,
-                create = create
-            )
-
-            updateAggregateState(bookingId, customerId, currency)
-
-            DecreaseBeforeCaptureResult(
-                ok = true,
-                bookingId = bookingId,
-                userId = userId,
-                oldTotalCents = oldTotalCents,
-                newTotalCents = newTotalCents,
-                largeDrop = true,
-                canceledPrimary = true,
-                canceledPrimaryReason = cancel.cancellationReason ?: "canceled",
-                replacedPrimaryPaymentIntentId = create.paymentIntentId,
-                requiresAction = create.requiresAction,
-                message = create.message ?: "Primary hold replaced at lower amount"
-            )
-        } catch (e: Exception) {
-            updateAggregateState(bookingId, customerId, currency)
-            DecreaseBeforeCaptureResult(
+        if (anyHardFail) {
+            // Aggregates already updated inside cancelAuthorizationAndUpdate
+            return DecreaseBeforeCaptureResult(
                 ok = false,
                 bookingId = bookingId,
                 userId = userId,
                 oldTotalCents = oldTotalCents,
                 newTotalCents = newTotalCents,
                 largeDrop = true,
-                message = "Unexpected error during re-authorization: ${e.message}"
+                canceledPrimary = false,
+                canceledPrimaryReason = cancels.firstOrNull { !it.ok }?.message,
+                message = "Could not cancel existing authorizations; aborting re-authorization."
             )
         }
-    }
 
+        // 5) Re-authorize a fresh PRIMARY hold at the lower total
+        val create = paymentService.createCharge(
+            isHold = true,
+            amountCents = newTotalCents,
+            currency = currency,
+            paymentMethodId = savedPaymentMethodId,
+            customerId = customerId,
+            idempotencyKey = "primary-replace-$bookingId-$userId-$newTotalCents"
+        )
+
+        if (!create.ok || create.paymentIntentId == null) {
+            updateAggregateState(bookingId, customerId, currency)
+            return DecreaseBeforeCaptureResult(
+                ok = false,
+                bookingId = bookingId,
+                userId = userId,
+                oldTotalCents = oldTotalCents,
+                newTotalCents = newTotalCents,
+                largeDrop = true,
+                canceledPrimary = true, // safe: previous PI was canceled
+                canceledPrimaryReason = cancels.firstOrNull { !it.ok }?.message,
+                message = create.message ?: "Re-authorization failed",
+                requiresAction = create.requiresAction,
+                errorType = create.errorType ?: if (create.requiresAction) "action_required" else null,
+                errorCode = create.errorCode ?: create.lastPaymentErrorCode,
+                declineCode = create.declineCode ?: create.lastPaymentErrorDeclineCode
+            )
+        }
+
+        paymentAuthorizationService.upsertPaymentAuthorizationFromCreate(
+            bookingId, userId, customerId, currency,
+            role = AuthRole.PRIMARY,
+            changeEventId = bookingEvent.id,
+            create = create
+        )
+
+        updateAggregateState(bookingId, customerId, currency)
+
+        return DecreaseBeforeCaptureResult(
+            ok = true,
+            bookingId = bookingId,
+            userId = userId,
+            oldTotalCents = oldTotalCents,
+            newTotalCents = newTotalCents,
+            largeDrop = true,
+            canceledPrimary = true,
+            canceledPrimaryReason = cancels.firstOrNull { !it.ok }?.message,
+            replacedPrimaryPaymentIntentId = create.paymentIntentId,
+            requiresAction = create.requiresAction,
+            message = create.message ?: "Primary hold replaced at lower amount"
+        )
+    }
 
     /**
      * Capture all holds for a booking up to finalTotalCents.
@@ -416,37 +384,33 @@ class BookingPricingAdjuster(
         var remaining = finalTotalCents
         var capturedTotal = 0L
 
-        // Get authorizations in desired order: DELTA first, then PRIMARY
+        // Order: DELTA first, then PRIMARY
         val auths = authRepo.findByBookingIdOrderByRoleAscCreatedAtAsc(bookingId)
             .filter { it.status == AuthStatus.AUTHORIZED || it.status == AuthStatus.REQUIRES_ACTION || it.status == AuthStatus.REQUIRES_CAPTURE }
 
         if (auths.isEmpty()) {
-            return CaptureBookingResult(ok = false, capturedTotalCents = 0, remainingToCaptureCents = finalTotalCents,
-                messages = listOf("No capturable authorizations found for booking $bookingId"))
+            return CaptureBookingResult(
+                ok = false,
+                capturedTotalCents = 0,
+                remainingToCaptureCents = finalTotalCents,
+                messages = listOf("No capturable authorizations found for booking $bookingId")
+            )
         }
 
         for (pa in auths) {
             if (remaining <= 0) break
-
-            // Determine how much we could capture from this PI
             val maxForThisPI = (pa.amountAuthorizedCents - pa.amountCapturedCents).coerceAtLeast(0)
             if (maxForThisPI <= 0) continue
 
             val amountToCapture = remaining.coerceAtMost(maxForThisPI)
             if (amountToCapture <= 0) continue
 
-            val idemp = "cap-${pa.paymentIntentId}-${UUID.randomUUID()}" // unique per attempt
-
-            val cap = paymentService.captureHold(
-                paymentIntentId = pa.paymentIntentId,
-                captureAmountCents = amountToCapture,
-                idempotencyKey = idemp
-            )
+            val idemp = "cap-${pa.paymentIntentId}-${UUID.randomUUID()}"
+            val cap = paymentService.captureHold(pa.paymentIntentId, amountToCapture, idemp)
 
             if (cap.ok) {
-                // Success – update PA row
                 pa.amountCapturedCents = (pa.amountCapturedCents + (cap.amountCapturedCents ?: amountToCapture))
-                pa.status = if (pa.amountCapturedCents >= pa.amountAuthorizedCents) AuthStatus.CAPTURED else AuthStatus.CAPTURED // captured (Stripe PI itself becomes 'succeeded')
+                pa.status = AuthStatus.CAPTURED
                 pa.failureKind = FailureKind.NONE
                 pa.lastErrorCode = null
                 pa.lastDeclineCode = null
@@ -459,22 +423,13 @@ class BookingPricingAdjuster(
                 remaining = (finalTotalCents - capturedTotal).coerceAtLeast(0)
                 msgs += "Captured ${cap.amountCapturedCents ?: amountToCapture} from PI ${pa.paymentIntentId}"
             } else {
-                // Failure – schedule retry (only for captures)
                 paymentAuthorizationService.recordCaptureFailureAndMaybeRetry(
-                    paymentIntentId = pa.paymentIntentId,
-                    bookingId = bookingId,
-                    userId = userId,
-                    customerId = customerId,
-                    currency = currency,
-                    result = cap
+                    pa.paymentIntentId, bookingId, userId, customerId, currency, cap
                 )
                 msgs += "Capture failed for PI ${pa.paymentIntentId}: ${cap.message ?: cap.errorCode}"
-                // Do not proceed to next PI if your business logic wants to stop on first failure.
-                // If you prefer "best effort", continue to next authorization to capture remaining.
             }
         }
 
-        // Update aggregate payment state
         updateAggregateState(bookingId, customerId, currency)
 
         val ok = remaining == 0L
@@ -486,10 +441,9 @@ class BookingPricingAdjuster(
         )
     }
 
-
     /**
      * Cancel a manual-capture PaymentIntent and update local DB state.
-     * Idempotent: if PA already canceled/succeeded, we won't error.
+     * Idempotent: if already canceled/succeeded, we won’t error.
      */
     fun cancelAuthorizationAndUpdate(
         bookingId: String,
@@ -499,11 +453,9 @@ class BookingPricingAdjuster(
         paymentIntentId: String,
         reason: PaymentIntentCancelParams.CancellationReason? = null
     ): CancelAuthorizationResult {
-
-        // 0) Find the PA row (if any). We keep this optional so we can still call Stripe even if DB missing.
         val pa = authRepo.findByPaymentIntentId(paymentIntentId)
 
-        // If already terminal, short-circuit
+        // If already terminal, short-circuit (saves a Stripe call)
         if (pa != null && (pa.status == AuthStatus.CANCELED || pa.status == AuthStatus.CAPTURED)) {
             updateAggregateState(bookingId, customerId, currency)
             return CancelAuthorizationResult(
@@ -514,10 +466,9 @@ class BookingPricingAdjuster(
             )
         }
 
-        // 1) Cancel on Stripe
+        // Stripe cancel (your PaymentService.cancelHold handles idempotent "already canceled")
         val cancel = paymentService.cancelHold(paymentIntentId, reason)
 
-        // 2) Update PA row based on Stripe result
         if (pa != null) {
             if (cancel.ok) {
                 pa.status = AuthStatus.CANCELED
@@ -529,8 +480,6 @@ class BookingPricingAdjuster(
                 pa.updatedAt = Instant.now()
                 authRepo.save(pa)
             } else {
-                // Non-OK: keep PA present but reflect failure (useful for audit)
-                // (Cancel usually shouldn’t be retried; treat as HARD unless it was api_error)
                 pa.status = AuthStatus.FAILED
                 pa.failureKind = if (cancel.errorType == "api_error" && cancel.canRetry) FailureKind.TRANSIENT else FailureKind.HARD
                 pa.lastErrorCode = cancel.errorCode
@@ -541,10 +490,8 @@ class BookingPricingAdjuster(
             }
         }
 
-        // 3) Update aggregate state for the booking (regardless of PA existence)
         updateAggregateState(bookingId, customerId, currency)
 
-        // 4) Return a small, clean DTO for controllers
         return if (cancel.ok) {
             CancelAuthorizationResult(
                 ok = true,
@@ -562,9 +509,6 @@ class BookingPricingAdjuster(
             )
         }
     }
-
-
-
 
     private fun nextVersionFor(bookingId: String): Int {
         val last = changeRepo.findTopByBookingIdOrderByCreatedAtDesc(bookingId)
@@ -594,7 +538,6 @@ class BookingPricingAdjuster(
 
         state.totalAuthorizedCents = totalAuthorized
         state.totalCapturedCents = totalCaptured
-        // Note: totalRefundedCents should be updated by your RefundService/webhooks
         state.refundableRemainingCents = (state.totalCapturedCents - state.totalRefundedCents).coerceAtLeast(0)
         state.status = when {
             totalCaptured > 0 -> "CAPTURED"
@@ -606,7 +549,7 @@ class BookingPricingAdjuster(
         bookingStateRepo.save(state)
     }
 
-    // this is for capture single payment intent, it will be used later
+    // Optional helper to capture a single PI
     fun captureSinglePI(
         paymentIntentId: String,
         captureAmountCents: Long,
@@ -638,21 +581,31 @@ class BookingPricingAdjuster(
             updateAggregateState(bookingId, customerId, currency)
             false
         }
+
+
     }
 
 
-}
-data class CaptureBookingResult(
-    val ok: Boolean,
-    val capturedTotalCents: Long,
-    val remainingToCaptureCents: Long,
-    val messages: List<String> = emptyList()
-)
 
-data class CancelAuthorizationResult(
-    val ok: Boolean,
-    val message: String? = null,
-    val paymentIntentId: String? = null,
-    val stripeStatus: String? = null,
-    val cancellationReason: String? = null
-)
+    private fun cancelAllActiveAuthsForBooking(
+        bookingId: String,
+        userId: String,
+        customerId: String,
+        currency: String
+    ): List<CancelAuthorizationResult> {
+        val active = authRepo.findByBookingId(bookingId)
+            .filter { it.status == AuthStatus.AUTHORIZED || it.status == AuthStatus.REQUIRES_ACTION || it.status == AuthStatus.REQUIRES_CAPTURE }
+
+        return active.map { pa ->
+            cancelAuthorizationAndUpdate(
+                bookingId = bookingId,
+                userId = userId,
+                customerId = customerId,
+                currency = currency,
+                paymentIntentId = pa.paymentIntentId,
+                reason = null
+            )
+        }
+    }
+
+}

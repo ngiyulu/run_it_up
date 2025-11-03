@@ -7,13 +7,10 @@ import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.WaiverRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.FileUploadModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import java.time.LocalDate
 
 @Service
 class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {

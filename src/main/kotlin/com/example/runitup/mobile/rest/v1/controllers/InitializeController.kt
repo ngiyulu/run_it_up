@@ -12,7 +12,6 @@ import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
 import com.example.runitup.mobile.security.JwtTokenService
 import com.example.runitup.mobile.security.UserPrincipal
-import com.example.runitup.mobile.service.ActionStatus
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.SendGridService

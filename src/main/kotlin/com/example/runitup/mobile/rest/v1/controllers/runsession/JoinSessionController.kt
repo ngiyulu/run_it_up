@@ -13,9 +13,9 @@ import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.BookingPricingAdjuster
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
-import com.example.runitup.mobile.service.BookingPricingAdjuster
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import model.messaging.Participant
 import org.bson.types.ObjectId

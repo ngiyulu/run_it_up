@@ -4,7 +4,6 @@ import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import org.bson.types.ObjectId
 import java.time.Instant
-import java.time.LocalDate
 
 class Booking (
     var id: String? = ObjectId().toString(),

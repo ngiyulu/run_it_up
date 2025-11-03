@@ -4,13 +4,11 @@ import com.stripe.exception.StripeException
 import com.stripe.model.Charge
 import com.stripe.model.PaymentIntent
 import com.stripe.model.Refund
-import com.stripe.param.PaymentIntentRetrieveParams
-import com.stripe.param.RefundCreateParams
-import com.stripe.param.RefundListParams
 import com.stripe.net.RequestOptions
 import com.stripe.param.ChargeListParams
+import com.stripe.param.RefundCreateParams
+import com.stripe.param.RefundListParams
 import org.springframework.stereotype.Service
-import java.util.*
 
 data class RefundResult(
     val ok: Boolean,

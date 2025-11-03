@@ -1,9 +1,7 @@
 package com.example.runitup.mobile.service
 
-import com.example.runitup.mobile.extensions.convertToCents
 import com.example.runitup.mobile.extensions.mapToUserPayment
 import com.example.runitup.mobile.model.User
-import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.payment.CardModel
 import com.example.runitup.mobile.rest.v1.dto.payment.CreateChargeResult
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
