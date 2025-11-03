@@ -11,6 +11,7 @@ import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
@@ -38,7 +39,7 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
             }
             val waiverUrl = service.uploadUserWaiverPdf(user, request.fileUploadModel.file) ?: throw ApiRequestException("error")
             waiver.url = waiverUrl.url
-            waiver.updatedAt = getTimeStamp()
+            waiver.updatedAt = Instant.now()
             waiver.approvedAt = null
             waiver.approvedBy = null
             waiver.status = WaiverStatus.PENDING

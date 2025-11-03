@@ -11,6 +11,7 @@ object CollectionConstants {
     const val REVIEW = "review"
     const val SESSION_COLLECTION = "session"
     const val OTP_COLLECTION = "otp"
+    const val JOB_EXECUTION_COLLECTION = "job_executions"
     const val PAYMENT_FAILURE_COLLECTION = "payment_failure"
     const val REFUND_COLLECTION = "otp"
     const val PAYMENT_STATE_COLLECTION = "payment_state"

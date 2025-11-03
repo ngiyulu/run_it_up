@@ -10,6 +10,7 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDate
 
 @Service
@@ -41,7 +42,7 @@ class CreateGymController: BaseGymController() {
             notes = data.notes,
             description = data.description,
             zipCode = ad?.zip.orEmpty())
-        gym.createdAt = LocalDate.now()
+        gym.createdAt = Instant.now()
 
         // i need to figure out how to get the long and lat of the gym
         val resized = imageService.resizeToAvatarJpeg(request.image!!, maxSize = 512, quality = 0.85)

@@ -13,6 +13,7 @@ import com.example.runitup.mobile.utility.AgeUtil
 import model.messaging.MessagingUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDate
 
 @Service
@@ -36,7 +37,7 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
 //        }
         val user = userRequest.user
         user.email = user.email.lowercase()
-        user.createdAt = LocalDate.now()
+        user.createdAt = Instant.now()
         user.verifiedPhone = false
         user.defaultPayment = AppConstant.WALLET
         val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
@@ -59,7 +60,7 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
             phoneNumber = newUser.phoneNumber,
             stripeId = newUser.stripeId,
             sex = newUser.sex,
-            createdAt = newUser.createdAt.toEpochDay(),
+            createdAt = newUser.createdAt.epochSecond,
             lastSeenAt = null,
             imageUrl = newUser.imageUrl
 

@@ -6,6 +6,7 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateSupportRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDate
 
 @Service
@@ -15,7 +16,7 @@ class CreateSupportController: BaseController<CreateSupportRequest, Support>() {
     lateinit var supportRepository: SupportRepository
     override fun execute(request: CreateSupportRequest): Support {
         val s = Support(request.name, request.email, request.description).apply {
-            createdAt = LocalDate.now()
+            createdAt = Instant.now()
         }
         return supportRepository.save(s)
     }

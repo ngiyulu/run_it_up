@@ -4,21 +4,26 @@ import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.web.dto.Role
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 import com.stripe.param.PaymentIntentCancelParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
+import java.time.Instant
+import java.util.*
 
 @Service
 // user decides not to participate anymore
@@ -26,6 +31,9 @@ class LeaveSessionService {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
+
+    @Autowired
+    lateinit var queueService: LightSqsService
 
     @Autowired
     lateinit var runSessionService: RunSessionService
@@ -50,6 +58,11 @@ class LeaveSessionService {
 
     @Autowired
     lateinit var bookingPricingAdjuster: BookingPricingAdjuster
+
+    private val om = jacksonObjectMapper()
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
 
 
      fun execute(request: CancelSessionModel, user:User, admin:AdminUser? = null): RunSession {
@@ -102,11 +115,27 @@ class LeaveSessionService {
          booking.status =  BookingStatus.CANCELLED
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
+         completeFlow(run)
          return runSessionService.updateRunSession(run)
     }
 
     private fun cancelWaitListPayment(booking: Booking){
         waitListPaymentService.cancelWaitlistSetupIntent(booking.setupIntentId.orEmpty())
+    }
+
+    private fun completeFlow(runSession: RunSession){
+        val job = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "RAW_STRING",
+            payload = runSession.id.orEmpty(),
+            traceId = UUID.randomUUID().toString(),
+            createdAtMs = Instant.now()
+        )
+
+        appScope.launch {
+            queueService.sendJob<String>(QueueNames.JOB_WAIT_LIST, job)
+        }
+
     }
 
 }

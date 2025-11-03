@@ -17,6 +17,7 @@ import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDate
 import java.util.*
 
@@ -69,7 +70,7 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             duration = 0
             ).apply {
                 getTimeStamp()
-            createdAt = LocalDate.now()
+            createdAt = Instant.now()
             status = RunStatus.PENDING
             gym = runGym
             total = 0.0

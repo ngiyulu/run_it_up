@@ -128,7 +128,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             role = "MEMBER",
             first = user.firstName,
             last = user.lastName,
-            joinedAt = user.createdAt.toEpochDay(),
+            joinedAt = user.createdAt.epochSecond,
             lastReadMessageAt = null,
             mutedUntil = null,
             unreadCount = 0
