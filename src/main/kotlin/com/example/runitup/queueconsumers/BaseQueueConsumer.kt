@@ -5,6 +5,7 @@ import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.*
@@ -17,9 +18,9 @@ abstract class BaseQueueConsumer(
     private val appScope: CoroutineScope,
     private val tracker: JobTrackerService,
     private val queueName: String,
+    protected val om: ObjectMapper
 ) {
     protected val log = LoggerFactory.getLogger(javaClass)
-    val om = jacksonObjectMapper()
     private val workerId: String = "${javaClass.simpleName}-${java.net.InetAddress.getLocalHost().hostName}"
 
     @PostConstruct

@@ -59,8 +59,6 @@ class LeaveSessionService {
     @Autowired
     lateinit var bookingPricingAdjuster: BookingPricingAdjuster
 
-    private val om = jacksonObjectMapper()
-
     @Autowired
     lateinit var appScope: CoroutineScope
 

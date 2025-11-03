@@ -5,7 +5,7 @@ import com.example.runitup.mobile.queue.RedisKeys
 import com.example.runitup.mobile.rest.v1.restcontroller.QueueOverview
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.ScanOptions
@@ -66,9 +66,10 @@ class LightSqsService(
     @Value("\${queue.poll.dueScanMs:1000}") private val scanMs: Long,
     @Value("\${queue.dlq.retry.enabled:true}") private val dlqRetryEnabled: Boolean = true,
     @Value("\${queue.dlq.retry.intervalMs:300000}") private val dlqRetryIntervalMs: Long = 300_000,
-    @Value("\${queue.dlq.retry.limitPerDlq:50}") private val dlqRetryLimit: Int = 50
+    @Value("\${queue.dlq.retry.limitPerDlq:50}") private val dlqRetryLimit: Int = 50,
+    protected val om: ObjectMapper
+
 ) {
-    private val om = jacksonObjectMapper()
     private val io = Dispatchers.IO
 
     init {
