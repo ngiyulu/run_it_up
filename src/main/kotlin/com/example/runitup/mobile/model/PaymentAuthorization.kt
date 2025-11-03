@@ -38,6 +38,7 @@ data class PaymentAuthorization(
     val role: AuthRole,                         // PRIMARY | DELTA
     val amountAuthorizedCents: Long,
     var amountCapturedCents: Long = 0,
+    var amountRefundedCents: Long = 0,
     val currency: String = "usd",
     var status: AuthStatus,                     // AUTHORIZED | REQUIRES_ACTION | CAPTURED | CANCELED | FAILED
 

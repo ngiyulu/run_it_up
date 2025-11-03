@@ -1,6 +1,5 @@
-package com.example.runitup.mobile.queue
+package com.example.runitup.queueconsumers
 
-// src/main/kotlin/com/example/queue/worker/QueueConsumer.kt
 
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
@@ -13,29 +12,24 @@ import javax.annotation.PostConstruct
 class PushNotificationQueueConsumer(
     private val queueService: LightSqsService,
     private val appScope: CoroutineScope
-) {
-    private val log = LoggerFactory.getLogger(javaClass)
+): BaseQueueConsumer(queueService, appScope) {
 
-    @PostConstruct
-    fun startPolling() {
-        // Launch a coroutine to poll every 30 seconds
-        appScope.launch(CoroutineName("queue-consumer")) {
-            while (isActive) {
-                try {
-                    pollAndProcess()
-                } catch (e: Exception) {
-                    log.error("Error during queue poll", e)
-                }
-                delay(30_000) // 30 seconds between polls
-            }
-        }
+
+
+
+    private suspend fun processJob(body: String) {
+        // Your custom processing logic here
+        log.info("Processing job: $body")
+
+        // Example: simulate work
     }
 
-    private suspend fun pollAndProcess() {
+    override suspend fun processData() {
         // Fetch up to 5 messages from the "jobs" queue
         val batch = queueService.receiveMessages(
             ReceiveRequest(queue = "jobs", maxNumberOfMessages = 5, waitSeconds = 10)
         )
+
 
         if (batch.messages.isEmpty()) {
             log.debug("No messages in 'jobs' queue.")
@@ -57,12 +51,5 @@ class PushNotificationQueueConsumer(
                 }
             }
         }
-    }
-
-    private suspend fun processJob(body: String) {
-        // Your custom processing logic here
-        log.info("Processing job: $body")
-
-        // Example: simulate work
     }
 }

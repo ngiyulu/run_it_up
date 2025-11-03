@@ -1,5 +1,5 @@
 // service/BookingPricingAdjuster.kt
-package com.example.runitup.mobile.service
+package com.example.runitup.mobile.service.payment
 
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingChangeEventRepository
@@ -7,6 +7,9 @@ import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.rest.v1.dto.DecreaseBeforeCaptureResult
 import com.example.runitup.mobile.rest.v1.dto.DeltaHoldIncreaseResult
+import com.example.runitup.mobile.service.ChangeBookingEventService
+import com.example.runitup.mobile.service.PaymentAuthorizationService
+import com.example.runitup.mobile.service.PaymentService
 import com.stripe.param.PaymentIntentCancelParams
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
@@ -42,7 +45,7 @@ class BookingPricingAdjuster(
     private val bookingStateRepo: BookingPaymentStateRepository,
     private val paymentAuthorizationService: PaymentAuthorizationService,
     private val changeBookingEventService: ChangeBookingEventService
-) {
+): BasePaymentService(authRepo, bookingStateRepo) {
 
     fun createPrimaryHoldWithChange(
         bookingId: String,
@@ -513,40 +516,6 @@ class BookingPricingAdjuster(
     private fun nextVersionFor(bookingId: String): Int {
         val last = changeRepo.findTopByBookingIdOrderByCreatedAtDesc(bookingId)
         return (last?.version ?: 0) + 1
-    }
-
-    private fun updateAggregateState(bookingId: String, customerId: String, currency: String) {
-        val auths = authRepo.findByBookingId(bookingId)
-
-        val totalAuthorized = auths
-            .filter { it.status == AuthStatus.AUTHORIZED || it.status == AuthStatus.REQUIRES_ACTION }
-            .sumOf { it.amountAuthorizedCents }
-
-        val totalCaptured = auths
-            .filter { it.status == AuthStatus.CAPTURED }
-            .sumOf { it.amountCapturedCents }
-
-        val anyRequiresAction = auths.any { it.status == AuthStatus.REQUIRES_ACTION }
-
-        val state = bookingStateRepo.findByBookingId(bookingId)
-            ?: BookingPaymentState(
-                bookingId = bookingId,
-                userId = auths.firstOrNull()?.userId ?: "",
-                customerId = customerId,
-                currency = currency
-            )
-
-        state.totalAuthorizedCents = totalAuthorized
-        state.totalCapturedCents = totalCaptured
-        state.refundableRemainingCents = (state.totalCapturedCents - state.totalRefundedCents).coerceAtLeast(0)
-        state.status = when {
-            totalCaptured > 0 -> "CAPTURED"
-            anyRequiresAction -> "REQUIRES_ACTION"
-            totalAuthorized > 0 -> "AUTHORIZED"
-            else -> "PENDING"
-        }
-        state.latestUpdatedAt = Instant.now()
-        bookingStateRepo.save(state)
     }
 
     // Optional helper to capture a single PI

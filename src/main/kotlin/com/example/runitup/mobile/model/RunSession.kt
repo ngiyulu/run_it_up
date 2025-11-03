@@ -56,7 +56,7 @@ data class RunSession(
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
     // show remove button on the web portal
-    var showRemoveButton: Boolean = true,
+    var showRemoveButton: Boolean = true
 ): BaseModel(){
 
 

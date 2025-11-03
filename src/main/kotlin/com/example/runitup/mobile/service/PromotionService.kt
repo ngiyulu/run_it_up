@@ -5,6 +5,7 @@ import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
+import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
 import org.springframework.stereotype.Service
 import java.time.Instant
