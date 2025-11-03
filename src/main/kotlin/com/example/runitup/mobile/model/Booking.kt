@@ -26,7 +26,8 @@ class Booking (
     var isLocked:Boolean = false,
     var currentTotalCents: Long = 0L,
     var isLockedAt: Instant? = null,
-    var promotedAt: Instant? = null
+    var promotedAt: Instant? = null,
+    var bookingPaymentState: BookingPaymentState? = null
 ): BaseModel(){
 
     fun getNumOfGuest(): Int{

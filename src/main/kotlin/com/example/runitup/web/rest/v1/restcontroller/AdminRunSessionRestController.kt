@@ -6,8 +6,11 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.*
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
+import com.example.runitup.mobile.rest.v1.dto.payment.RefundResult
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.RunSessionService
+import com.example.runitup.web.rest.v1.controller.CreateRefundController
+import com.example.runitup.web.rest.v1.controller.CreateRefundModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -36,6 +39,10 @@ class AdminRunSessionRestController {
 
     @Autowired
     lateinit var runSessionController: GetUserRunSessionController
+
+
+    @Autowired
+    lateinit var createRefundController: CreateRefundController
 
     @Autowired
     lateinit var getUserRunSessionControllerByRange: GetUserRunSessionControllerByRange
@@ -102,5 +109,10 @@ class AdminRunSessionRestController {
         runSession = runSessionService.getRunSession(runSession.id.orEmpty()) ?: throw ApiRequestException("invalid_gym")
         runSession.host = cacheManager.getAdmin(runSession.hostedBy.orEmpty())
         return runSession
+    }
+
+    @PostMapping("/refund")
+    fun createRefund(@RequestBody model: CreateRefundModel): RefundResult {
+        return  createRefundController.execute(model)
     }
 }

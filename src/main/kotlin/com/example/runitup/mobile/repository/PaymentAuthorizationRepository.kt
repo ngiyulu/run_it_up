@@ -30,4 +30,5 @@ interface PaymentAuthorizationRepository : MongoRepository<PaymentAuthorization,
 
     @Query(PaymentAuthorizationQueries.CAPTURE_RETRY_CANDIDATES)
     fun findCaptureRetryCandidates(nowMillis: Long): List<PaymentAuthorization>
+    fun findByBookingIdOrderByCreatedAtDesc(bookingId: String):List<PaymentAuthorization>
 }

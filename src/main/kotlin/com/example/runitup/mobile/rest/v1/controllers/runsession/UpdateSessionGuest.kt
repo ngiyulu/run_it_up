@@ -11,9 +11,9 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
-import com.example.runitup.mobile.service.BookingPricingAdjuster
-import com.example.runitup.mobile.service.BookingUpdateService
-import com.example.runitup.mobile.service.DeltaType
+import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
+import com.example.runitup.mobile.service.payment.BookingUpdateService
+import com.example.runitup.mobile.service.payment.DeltaType
 import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
