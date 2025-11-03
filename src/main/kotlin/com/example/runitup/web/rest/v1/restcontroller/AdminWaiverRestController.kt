@@ -5,10 +5,10 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.model.Waiver
 import com.example.runitup.mobile.rest.v1.dto.FileUploadModel
 import com.example.runitup.mobile.service.TextService
-import com.example.runitup.web.rest.v1.controller.waiver.ApproveWaiverController
-import com.example.runitup.web.rest.v1.controller.waiver.ApproveWaiverModel
-import com.example.runitup.web.rest.v1.controller.waiver.UploadWaiverController
-import com.example.runitup.web.rest.v1.controller.waiver.WaiverListController
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver.ApproveWaiverController
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver.ApproveWaiverModel
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver.UploadWaiverController
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver.WaiverListController
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*

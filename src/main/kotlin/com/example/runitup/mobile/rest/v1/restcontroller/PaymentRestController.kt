@@ -2,6 +2,7 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 
 
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.rest.v1.controllerprovider.PaymentControllersProvider
 import com.example.runitup.mobile.rest.v1.dto.payment.CardModel
 import com.example.runitup.mobile.rest.v1.dto.payment.CreatePaymentModel
 import com.example.runitup.mobile.rest.v1.dto.payment.DeleteCardModel
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 class PaymentRestController {
 
     @Autowired
-    lateinit var  paymentControllersProvider: com.example.runitup.mobile.rest.v1.controllerprovider.PaymentControllersProvider
+    lateinit var  paymentControllersProvider: PaymentControllersProvider
 
     @PostMapping("/create")
     fun createPayment(@RequestBody model: CreatePaymentModel): List<CardModel>? {

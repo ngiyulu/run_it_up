@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
-import com.example.runitup.common.repo.PaymentRepository
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
@@ -27,12 +26,10 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var paymentRepository: PaymentRepository
-
-    @Autowired
     lateinit var bookingRepository: BookingRepository
 
-    override fun execute(request: ConfirmSessionModel): com.example.runitup.mobile.model.RunSession {
+
+    override fun execute(request: ConfirmSessionModel): RunSession {
         val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
             return run
@@ -49,17 +46,17 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             // we captured the charge in stripe
             // we updated the booking list payment status
             // we created the payment list that needs stored in the payment db
-            val paymentList  = runSessionService.confirmSession(run)
-
-            paymentList.forEach {
-                paymentRepository.save(it)
-            }
+//            val paymentList  = runSessionService.confirmSession(run)
+//
+//            paymentList.forEach {
+//                paymentRepository.save(it)
+//            }
         }
         // we storing the bookings because we updated the payment status
         run.bookings.forEach {
             bookingRepository.save(it)
         }
-        return runSessionRepository.save(run)
+        return runSessionService.updateRunSession(run)
     }
 
 }

@@ -2,6 +2,7 @@ package com.example.runitup.mobile.model
 
 import com.example.runitup.mobile.enum.SkillLevel
 import com.example.runitup.mobile.rest.v1.dto.payment.CardModel
+import com.example.runitup.mobile.service.UserActionRequired
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.bson.types.ObjectId
@@ -37,7 +38,8 @@ data class User(
     var runSessions:MutableList<RunSession>? = null,
     var skillLevel: SkillLevel? = null,
     var creator: Creator = Creator.USER,
-    var coordinate: Coordinate? = null
+    var coordinate: Coordinate? = null,
+    var actions:List<UserActionRequired> = mutableListOf()
 ): BaseModel(){
 
     fun getFullName(): String{

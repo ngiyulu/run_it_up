@@ -5,12 +5,14 @@ import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.GymRepository
+import com.example.runitup.mobile.repository.UserActionRequiredRepository
 import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.dto.GuideLine
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
 import com.example.runitup.mobile.security.JwtTokenService
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.ActionStatus
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.SendGridService
@@ -39,6 +41,9 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var emailService: SendGridService
 
     @Autowired
+    lateinit var actionRequiredRepository: UserActionRequiredRepository
+
+    @Autowired
     lateinit var paymentConfig: AppConfig
     override fun execute(request: InitializeRequest): InitializeResponse {
         val gyms = gymRepository.findAll()
@@ -51,6 +56,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 user.stripeId?.let { it ->
                     user.payments = paymentService.listOfCustomerCards(it)
                 }
+                //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
             if(request.tokenModel != null){

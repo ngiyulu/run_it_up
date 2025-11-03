@@ -6,6 +6,7 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -14,6 +15,8 @@ class StartSessionController: BaseController<ConfirmSessionModel, RunSession>() 
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
+    @Autowired
+    lateinit var sessionService: RunSessionService
 
     override fun execute(request: ConfirmSessionModel): com.example.runitup.mobile.model.RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
@@ -25,7 +28,7 @@ class StartSessionController: BaseController<ConfirmSessionModel, RunSession>() 
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
         run.status = RunStatus.ONGOING
-        run = runSessionRepository.save(run)
+        run = sessionService.updateRunSession(run)
         return run
 
 

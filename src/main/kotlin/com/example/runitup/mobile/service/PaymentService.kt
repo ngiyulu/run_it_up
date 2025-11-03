@@ -1,11 +1,15 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.mobile.extensions.convertToCents
 import com.example.runitup.mobile.extensions.mapToUserPayment
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.payment.CardModel
+import com.example.runitup.mobile.rest.v1.dto.payment.CreateChargeResult
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.stripe.Stripe
+import com.stripe.exception.CardException
 import com.stripe.exception.StripeException
 import com.stripe.model.*
 import com.stripe.net.RequestOptions
@@ -18,7 +22,7 @@ import java.util.*
 
 
 @Service
-class PaymentService: com.example.runitup.mobile.service.BaseService() {
+class PaymentService: BaseService() {
 
     @Value("\${stripe.api.key}")
     private val stripeApiKey: String? = null
@@ -65,6 +69,7 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
         }
     }
 
+
     fun createCharge(
         isHold: Boolean,
         amountCents: Long,
@@ -72,36 +77,141 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
         paymentMethodId: String,
         customerId: String? = null,
         idempotencyKey: String = UUID.randomUUID().toString()
-    ): PaymentIntent? {
-        var captureMethod = PaymentIntentCreateParams.CaptureMethod.MANUAL
-        if(!isHold){
-            captureMethod = PaymentIntentCreateParams.CaptureMethod.AUTOMATIC
-        }
+    ): CreateChargeResult {
+        val captureMethod = if (isHold)
+            PaymentIntentCreateParams.CaptureMethod.MANUAL
+        else
+            PaymentIntentCreateParams.CaptureMethod.AUTOMATIC
+
         return try {
-            val createParams = PaymentIntentCreateParams.builder()
-                .setAmount(amountCents)
-                .setCurrency(currency)
-                .setCaptureMethod(captureMethod) // **key**
-                .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.AUTOMATIC)
-                .setConfirm(true) // confirm immediately (requires a PM id)
-                .setPaymentMethod(paymentMethodId)
-                // If you want to save the card for later:
-                //.setSetupFutureUsage(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION)
-                .apply {
-                    if (customerId != null) setCustomer(customerId)
-                }
+            val auto = PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                .setEnabled(true)
+                // if your stripe-java doesn't expose AllowRedirects, use putExtraParam below
+                .setAllowRedirects(
+                    PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.NEVER
+                )
                 .build()
 
-            // Recommended: pass an idempotency key for resilience
-            val requestOptions = com.stripe.net.RequestOptions.builder()
+            val builder = PaymentIntentCreateParams.builder()
+                .setAmount(amountCents)
+                .setCurrency(currency)
+                .setCaptureMethod(captureMethod)          // MANUAL for holds, AUTOMATIC for capture now
+                // .setConfirmationMethod(...)  <-- REMOVE THIS LINE
+                .setConfirm(true)                         // ok to keep: server-side confirm
+                .setPaymentMethod(paymentMethodId)
+                .setAutomaticPaymentMethods(auto)         // keep APM with redirects disabled
+
+            if (customerId != null) {
+                builder.setCustomer(customerId)
+                // If you plan to reuse this payment method off-session later:
+                // builder.setSetupFutureUsage(PaymentIntentCreateParams.SetupFutureUsage.OFF_SESSION)
+            }
+
+            val createParams = builder.build()
+
+            val requestOptions = RequestOptions.builder()
                 .setIdempotencyKey(idempotencyKey)
                 .build()
 
-            // May return requires_action if 3DS is needed — handle on the client if so.
-            PaymentIntent.create(createParams, requestOptions)
-        }catch (exception: Exception){
-            logger.logError("createHold", exception)
-            null
+            val pi = PaymentIntent.create(createParams, requestOptions)
+
+            val requiresAction = pi.status == "requires_action" || pi.status == "requires_source_action"
+            val nextActionType = pi.nextAction?.type
+            val redirectUrl = pi.nextAction?.redirectToUrl?.url
+
+            // If Stripe already attached a lastPaymentError on the PI (e.g., authentication_required),
+            // surface that too so you can decide whether to prompt for a new card or retry.
+            val lastErr = pi.lastPaymentError
+
+            // Treat requires_action as a non-error (UI should handle 3DS).
+            // Treat requires_payment_method as an error (card failed / needs replacement).
+            val isTerminalOk = pi.status in listOf("succeeded", "requires_capture", "processing")
+            val ok = isTerminalOk || requiresAction
+
+            CreateChargeResult(
+                ok = ok,
+                paymentIntentId = pi.id,
+                clientSecret = pi.clientSecret,           // send to client if you handle 3DS client-side
+                status = pi.status,
+                isHold = isHold,
+                amountCents = pi.amount,
+                currency = pi.currency,
+                customerId = pi.customer,
+                paymentMethodId = paymentMethodId,
+                idempotencyKey = idempotencyKey,
+                requiresAction = requiresAction,
+                nextActionType = nextActionType,
+                nextActionRedirectUrl = redirectUrl,
+                lastPaymentErrorCode = lastErr?.code,
+                lastPaymentErrorDeclineCode = lastErr?.declineCode,
+                lastPaymentErrorMessage = lastErr?.message,
+                // If it's a recoverable failure (e.g., network/temporary) Stripe won't set lastPaymentError;
+                // If the failure is due to the card (requires_payment_method), prompt for a new PM instead.
+                canRetry = when {
+                    pi.status == "processing" -> true
+                    pi.status == "requires_payment_method" -> false
+                    else -> true
+                },
+                paymentIntent = pi
+            )
+        } catch (e: CardException) {
+            // Card or SCA-specific issue thrown as exception (less common at PI.create time but possible)
+            val se = e.stripeError
+            logger.logError("createCharge(CardException)", e)
+            CreateChargeResult(
+                ok = false,
+                status = null,
+                isHold = isHold,
+                amountCents = amountCents,
+                currency = currency.lowercase(),
+                customerId = customerId,
+                paymentMethodId = paymentMethodId,
+                idempotencyKey = idempotencyKey,
+                errorType = se?.type ?: "card_error",
+                errorCode = e.code,
+                declineCode = se?.declineCode,
+                message = se?.message ?: e.message,
+                canRetry = when (se?.declineCode) {
+                    // Some declines may succeed with a retry or another attempt later,
+                    // but generally prompt user for another card on hard declines.
+                    "insufficient_funds", "do_not_honor", "transaction_not_allowed" -> true
+                    else -> false
+                }
+            )
+        } catch (e: StripeException) {
+            // API/connection/state errors
+            logger.logError("createCharge(StripeException)", e)
+            CreateChargeResult(
+                ok = false,
+                status = null,
+                isHold = isHold,
+                amountCents = amountCents,
+                currency = currency.lowercase(),
+                customerId = customerId,
+                paymentMethodId = paymentMethodId,
+                idempotencyKey = idempotencyKey,
+                errorType = e.stripeError?.type ?: "api_error",
+                errorCode = e.code,
+                declineCode = e.stripeError?.declineCode,
+                message = e.message,
+                canRetry = true // safe to retry with same idempotency key
+            )
+        } catch (e: Exception) {
+            // Unexpected bug in our code
+            logger.logError("createCharge(Exception)", e)
+            CreateChargeResult(
+                ok = false,
+                status = null,
+                isHold = isHold,
+                amountCents = amountCents,
+                currency = currency.lowercase(),
+                customerId = customerId,
+                paymentMethodId = paymentMethodId,
+                idempotencyKey = idempotencyKey,
+                errorType = "internal_error",
+                message = e.message,
+                canRetry = false
+            )
         }
     }
 
@@ -109,20 +219,90 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
 
     /**
      * Capture the previously authorized PaymentIntent (charges the customer).
-     * You can optionally capture a partial amount <= original authorization.
+     * - captureAmountCents must be <= authorized amount.
+     * - Returns a structured result with error details on failure.
      */
     fun captureHold(
         paymentIntentId: String,
-        captureAmountCents: Long
-    ): PaymentIntent? {
-       return try {
-           val paramsBuilder = PaymentIntentCaptureParams.builder()
-           paramsBuilder.setAmountToCapture(captureAmountCents)
-           PaymentIntent.retrieve(paymentIntentId).capture(paramsBuilder.build())
-       }catch (exception: Exception){
-           logger.logError("captureHold", exception)
-           null
-       }
+        captureAmountCents: Long,
+        idempotencyKey: String? = null
+    ): CaptureHoldResult {
+        return try {
+            val params = PaymentIntentCaptureParams.builder()
+                .setAmountToCapture(captureAmountCents)
+                .build()
+
+            val opts = idempotencyKey?.let {
+                RequestOptions.builder().setIdempotencyKey(it).build()
+            }
+
+            val pi = if (opts != null) {
+                PaymentIntent.retrieve(paymentIntentId).capture(params, opts)
+            } else {
+                PaymentIntent.retrieve(paymentIntentId).capture(params)
+            }
+
+            CaptureHoldResult(
+                ok = true,
+                paymentIntentId = pi.id,
+                status = pi.status,
+                amountAuthorizedCents = pi.amount,
+                amountCapturableCents = pi.amountCapturable,
+                amountCapturedCents = pi.amountReceived,
+                currency = pi.currency,
+                latestChargeId = pi.latestCharge
+            )
+        } catch (e: CardException) {
+            // Typical card/issuer errors
+            val se = e.stripeError
+            // Try to fetch current PI snapshot so you can display updated amounts/status
+            val current = runCatching { PaymentIntent.retrieve(paymentIntentId) }.getOrNull()
+            CaptureHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = current?.status,
+                amountAuthorizedCents = current?.amount,
+                amountCapturableCents = current?.amountCapturable,
+                amountCapturedCents = current?.amountReceived,
+                currency = current?.currency,
+                latestChargeId = current?.latestCharge,
+                errorType = se?.type,
+                errorCode = e.code,                 // e.g. "authentication_required", "capture_expired"
+                declineCode = se?.declineCode,      // e.g. "insufficient_funds"
+                message = se?.message ?: e.message,
+                canRetry = when (se?.declineCode) {
+                    "insufficient_funds", "transaction_not_allowed", "do_not_honor" -> true
+                    else -> false
+                }
+            )
+        } catch (e: StripeException) {
+            // API/connection errors, invalid state, etc.
+            val current = runCatching { PaymentIntent.retrieve(paymentIntentId) }.getOrNull()
+            CaptureHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = current?.status,
+                amountAuthorizedCents = current?.amount,
+                amountCapturableCents = current?.amountCapturable,
+                amountCapturedCents = current?.amountReceived,
+                currency = current?.currency,
+                latestChargeId = current?.latestCharge,
+                errorType = e.stripeError?.type ?: "api_error",
+                errorCode = e.code,
+                declineCode = e.stripeError?.declineCode,
+                message = e.message,
+                canRetry = true // transient errors often safe to retry with same idempotency key
+            )
+        } catch (e: Exception) {
+            // Unexpected bug in our code path
+            CaptureHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = null,
+                message = "Unexpected error: ${e.message}",
+                canRetry = false
+            )
+        }
     }
 
    // create
@@ -147,30 +327,98 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
     /**
      * Cancel the authorization (releases the hold).
      */
-    fun cancelHold(paymentIntentId: String, reason: PaymentIntentCancelParams.CancellationReason? = null): PaymentIntent? {
+    /**
+     * Cancel (void) a previously authorized PaymentIntent.
+     * This releases the hold and prevents future capture.
+     */
+    fun cancelHold(
+        paymentIntentId: String,
+        reason: PaymentIntentCancelParams.CancellationReason? = null
+    ): CancelHoldResult {
         return try {
             val cancelParams = PaymentIntentCancelParams.builder().apply {
                 if (reason != null) setCancellationReason(reason)
             }.build()
-            PaymentIntent.retrieve(paymentIntentId).cancel(cancelParams)
-        }catch (exception: Exception){
-            logger.logError("cancelHold", exception)
-            null
+
+            val canceledPI = PaymentIntent.retrieve(paymentIntentId).cancel(cancelParams)
+
+            CancelHoldResult(
+                ok = true,
+                paymentIntentId = canceledPI.id,
+                status = canceledPI.status,
+                cancellationReason = canceledPI.cancellationReason,
+                amountAuthorizedCents = canceledPI.amount,
+                currency = canceledPI.currency,
+                message = "PaymentIntent ${canceledPI.id} canceled successfully"
+            )
+        } catch (e: CardException) {
+            val se = e.stripeError
+            CancelHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = null,
+                errorType = se?.type ?: "card_error",
+                errorCode = e.code,
+                declineCode = se?.declineCode,
+                message = se?.message ?: e.message,
+                canRetry = false // cancels usually not retriable
+            )
+        } catch (e: StripeException) {
+            CancelHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = null,
+                errorType = e.stripeError?.type ?: "api_error",
+                errorCode = e.code,
+                declineCode = e.stripeError?.declineCode,
+                message = e.message,
+                canRetry = true // can retry if network issue
+            )
+        } catch (e: Exception) {
+            CancelHoldResult(
+                ok = false,
+                paymentIntentId = paymentIntentId,
+                status = null,
+                message = "Unexpected error: ${e.message}",
+                canRetry = false
+            )
         }
     }
 
-
-    fun createPaymentMethod(stripeCustomerId: String, paymentMethodId: String): PaymentMethod? {
+    fun createPaymentMethod(
+        stripeCustomerId: String,
+        paymentMethodId: String
+    ): PaymentMethodResult {
         return try {
+            // Retrieve the PaymentMethod
             val pm = PaymentMethod.retrieve(paymentMethodId)
-            pm.attach(
+
+            // Attach to customer
+            val attached = pm.attach(
                 PaymentMethodAttachParams.builder()
                     .setCustomer(stripeCustomerId)
                     .build()
             )
-        } catch (exception: Exception) {
-            logger.logError("createPaymentMethod", exception)
-            null
+
+            PaymentMethodResult(success = true, paymentMethod = attached)
+
+        } catch (e: StripeException) {
+           // logger.error("Stripe API error during attach: ${e.message}", e)
+            PaymentMethodResult(
+                success = false,
+                error = StripeError(
+                    code = e.code,
+                    message = e.userMessage ?: e.message,
+                    type = e.stripeError?.type
+                )
+            )
+
+        } catch (e: Exception) {
+            //logger.error("Unexpected error during attach: ${e.message}", e)
+            PaymentMethodResult(
+                success = false,
+                error = StripeError(message = e.localizedMessage ?: "Unexpected error")
+            )
         }
     }
 
@@ -291,3 +539,50 @@ class PaymentService: com.example.runitup.mobile.service.BaseService() {
 
 
 }
+
+data class CaptureHoldResult(
+    val ok: Boolean,
+    val paymentIntentId: String? = null,
+    val status: String? = null,                // e.g. "succeeded", "requires_capture", "canceled"
+    val amountAuthorizedCents: Long? = null,   // PI.amount
+    val amountCapturableCents: Long? = null,   // PI.amountCapturable
+    val amountCapturedCents: Long? = null,     // PI.amountReceived
+    val currency: String? = null,
+    val latestChargeId: String? = null,
+
+    // Error details (when ok=false)
+    val errorType: String? = null,             // stripeError.type (card_error, api_error, ...)
+    val errorCode: String? = null,             // e.code (authentication_required, capture_expired, ...)
+    val declineCode: String? = null,           // stripeError.declineCode (insufficient_funds, do_not_honor, ...)
+    val message: String? = null,               // human-readable message
+    val canRetry: Boolean = false              // hint for your flow
+)
+
+
+data class CancelHoldResult(
+    val ok: Boolean,
+    val paymentIntentId: String? = null,
+    val status: String? = null,                    // e.g. "canceled"
+    val cancellationReason: String? = null,        // e.g. "requested_by_customer"
+    val amountAuthorizedCents: Long? = null,
+    val currency: String? = null,
+
+    // Error details (when ok=false)
+    val errorType: String? = null,                 // stripeError.type (api_error, card_error)
+    val errorCode: String? = null,
+    val declineCode: String? = null,
+    val message: String? = null,
+    val canRetry: Boolean = false
+)
+
+data class PaymentMethodResult(
+    val success: Boolean,
+    val paymentMethod: PaymentMethod? = null,
+    val error: StripeError? = null
+)
+
+data class StripeError(
+    val code: String? = null,
+    val message: String? = null,
+    val type: String? = null
+)

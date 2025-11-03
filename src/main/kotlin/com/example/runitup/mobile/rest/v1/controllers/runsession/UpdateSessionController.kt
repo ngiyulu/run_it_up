@@ -4,6 +4,7 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -12,7 +13,10 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
-    override fun execute(request: com.example.runitup.mobile.model.RunSession): com.example.runitup.mobile.model.RunSession {
+
+    @Autowired
+    lateinit var runSessionService: RunSessionService
+    override fun execute(request: RunSession): RunSession {
         val runDb = runSessionRepository.findById(request.id.toString())
         if(!runDb.isPresent){
             throw ApiRequestException(text("invalid_session_id"))
@@ -29,9 +33,9 @@ class UpdateSessionController: BaseController<RunSession, RunSession>() {
         run.title = request.title
         run.notes = request.notes
         run.description = request.description
-        run.courtFee = request.courtFee
+        run.amount = request.amount
         run.increment()
-        run = runSessionRepository.save(run)
+        run = runSessionService.updateRunSession(run)
         return run
     }
 }

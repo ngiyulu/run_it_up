@@ -11,9 +11,15 @@ object CollectionConstants {
     const val REVIEW = "review"
     const val SESSION_COLLECTION = "session"
     const val OTP_COLLECTION = "otp"
+    const val PAYMENT_FAILURE_COLLECTION = "payment_failure"
     const val REFUND_COLLECTION = "otp"
     const val PAYMENT_STATE_COLLECTION = "payment_state"
     const val BOOKING_COLLECTION = "booking"
+    const val USER_ACTION_COLLECTION = "user_action_required"
+    const val BOOKING_STATE_COLLECTION = "booking_state"
+    const val BOOKING_CHANGE_COLLECTION = "booking_change"
+    const val PAYMENT_AUTHORIZATION = "payment_authorization"
     const val WAIVER_COLLECTION = "waiver"
+    const val WAILIST_STEUP_STATE_COLLECTION = "waitlist_setup_state"
 
 }

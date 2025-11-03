@@ -34,7 +34,7 @@ class CreateWaiverController: BaseController<CreateWaiverRequest, Waiver>() {
             throw ApiRequestException("invalid_request")
         }
         val waiver = waiverRepository.findByUserId(request.userId)
-        // this means we are resubmi
+        // this means we are resubmitted
         if(waiver != null){
             if(waiver.status == WaiverStatus.APPROVED){
                 throw ApiRequestException("waiver_approved")

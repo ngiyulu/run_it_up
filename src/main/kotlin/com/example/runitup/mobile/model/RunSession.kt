@@ -37,10 +37,11 @@ data class RunSession(
     var total: Double = 0.0,
     var maxPlayer: Int,
     var title: String,
+    var updateFreeze: Boolean = false,
+    // this gets populated when user fetches a runsession/ by default it's empty
     var bookings: MutableList<Booking> = mutableListOf(),
     var waitList: MutableList<RunUser> = mutableListOf(),
     var players:  MutableList<User> = mutableListOf(),
-    var courtFee: Double = 0.0,
     var maxGuest: Int,
     var isFree: Boolean  = false,
     var isFull: Boolean = false,
@@ -60,7 +61,7 @@ data class RunSession(
 
 
     fun isSessionFree(): Boolean{
-        return courtFee == 0.0
+        return amount == 0.0
     }
     fun updateStatus(userId: String){
         isFree = isSessionFree()

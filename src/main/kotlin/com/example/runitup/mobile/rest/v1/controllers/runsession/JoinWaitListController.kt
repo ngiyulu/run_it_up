@@ -3,17 +3,17 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.common.service.IdempotencyKeyGenerator
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.extensions.toIntentState
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.IntentState
+import com.example.runitup.mobile.model.SetupStatus
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.PaymentIntentStateRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.session.JoinWaitListModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.WaitListPaymentService
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,74 +37,79 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
 
 
     @Autowired
-    lateinit var intentStateRepository: PaymentIntentStateRepository
+    lateinit var runSessionService: RunSessionService
 
 
 
     override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
         val runDb = runSessionRepository.findById(request.sessionId)
-        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        if(!runDb.isPresent){
+        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
+        if (!runDb.isPresent) {
             throw ApiRequestException(text("invalid_session_id"))
         }
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val run = runDb.get()
         // this mean the event is full
-        if( user.stripeId == null){
+        if (user.stripeId == null) {
             throw ApiRequestException(text("payment_error"))
         }
-        if( !run.isJoinable()){
-            throw  ApiRequestException(text("join_error"))
+        if (!run.isJoinable()) {
+            throw ApiRequestException(text("join_error"))
         }
-        val idempotencyKey = idempotencyKeyGenerator.generateIdempotencyKey(
-            "waitList",
-            user.id.orEmpty(), run.id.orEmpty()
+        val runUser = RunUser(
+            user.firstName,
+            user.lastName,
+            user.skillLevel,
+            user.id.orEmpty(),
+            user.imageUrl,
+            0,
+            guest = 0
         )
-        var intentState: IntentState? = null
+        val booking = Booking(
+            ObjectId().toString(),
+            1,
+            user.id.orEmpty(),
+            runUser,
+            request.sessionId,
+            PaymentStatus.PENDING,
+            run.amount,
+            run.amount,
+            null,
+            null,
+            joinedAtFromWaitList = null,
+            status = BookingStatus.WAITLISTED
+        )
         //user can only join the waitlist if the run is at full capacity
-        if( run.atFullCapacity()){
-            if(!run.isSessionFree()){
-                val result = paymentService.ensureOffSessionReadyServerSide(user.stripeId.orEmpty(), request.sessionId, idempotencyKey)
-                intentState = result.toIntentState(user.id.orEmpty(), run.id.toString(), idempotencyKey)
-                intentState = intentStateRepository.save(intentState)
-            }
-            val runUser = RunUser(
-                user.firstName,
-                user.lastName,
-                user.skillLevel,
-                user.id.orEmpty(),
-                user.imageUrl,
-                0,
-                guest = 0
-            )
-            run.waitList.add(
-              runUser
-            )
-            run.updateTotal()
-            val updatedRun = runSessionRepository.save(run)
-            bookingRepository.save(
-                com.example.runitup.mobile.model.Booking(
-                    ObjectId().toString(),
-                    1,
-                    user.id.orEmpty(),
-                    runUser,
-                    request.sessionId,
-                    emptyList(),
-                    PaymentStatus.PENDING,
-                    run.amount,
-                    run.amount,
-                    0,
-                    joinedAtFromWaitList = null,
-                    intentState = intentState,
-                    status = BookingStatus.WAITLISTED
+        if (run.atFullCapacity()) {
+            if (!run.isSessionFree()) {
+                val pm = request.paymentMethodId
+                val setupState = paymentService.ensureWaitlistCardReady(
+                    bookingId = booking.id.orEmpty(),
+                    sessionId = run.id.orEmpty(),
+                    userId = booking.userId,
+                    customerId = user.stripeId.orEmpty(),
+                    paymentMethodId = pm,
+                    idempotencyKey = "si-${booking.id}-${pm}"
                 )
+                if (setupState.status == SetupStatus.REQUIRES_ACTION && setupState.clientSecret != null) {
+                    // Return a response to the app that instructs it to present SCA UI with setupState.clientSecret
+                    return JoinWaitListResponse(true, setupState.clientSecret, run, true)
+                }
+                else if(setupState.status  != SetupStatus.SUCCEEDED){
+                    throw  ApiRequestException("payment_error")
+                }
+                run.waitList.add(runUser)
+                run.updateTotal()
+                val updatedRun = runSessionService.updateRunSession(run)
+                booking.setupIntentId = setupState.setupIntentId
+                bookingRepository.save(booking)
+                return JoinWaitListResponse(true, null, updatedRun, false)
+            }
+            // this means the user tried to join the waitlist
+            return JoinWaitListResponse(false, null, run, false)
 
-            )
-            return JoinWaitListResponse(true, updatedRun)
         }
-
-        // this means the user tried to join the waitlist
-        return  JoinWaitListResponse(false, run)
-
+        // tried to join a wailist when the runsession is not ful
+        return JoinWaitListResponse(true, null, run, false, refresh = true)
     }
 }

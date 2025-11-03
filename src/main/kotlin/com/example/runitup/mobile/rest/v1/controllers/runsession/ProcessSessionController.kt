@@ -6,6 +6,7 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.UserDbRepositoryService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -14,6 +15,9 @@ class ProcessSessionController: BaseController<ConfirmSessionModel, RunSession>(
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
+
+    @Autowired
+    lateinit var runSessionService: RunSessionService
 
     lateinit var userDbRepositoryService: UserDbRepositoryService
 
@@ -32,7 +36,7 @@ class ProcessSessionController: BaseController<ConfirmSessionModel, RunSession>(
 //
 //            }
 //        }
-        run = runSessionRepository.save(run)
+        run = runSessionService.updateRunSession(run)
         return run
 
     }
