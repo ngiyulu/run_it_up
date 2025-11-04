@@ -2,6 +2,8 @@
 package com.example.runitup.queueconsumers
 
 import com.example.runitup.mobile.model.JobEnvelope
+import com.example.runitup.mobile.queue.QueueNames
+import com.example.runitup.mobile.service.ClickSendSmsService
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import java.util.*
 import javax.annotation.PostConstruct
 
 abstract class BaseQueueConsumer(
@@ -29,7 +32,8 @@ abstract class BaseQueueConsumer(
                 try {
                     pollOnce()
                 } catch (e: Exception) {
-                    log.error("Error during queue poll", e)
+                    //TODO:
+                    //smsService.sendSmsDetailed("", e.message.orEmpty())
                 }
                 delay(delay())
             }

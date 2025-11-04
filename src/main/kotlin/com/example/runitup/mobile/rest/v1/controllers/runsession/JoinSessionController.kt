@@ -107,7 +107,8 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             null,
             0,
             joinedAtFromWaitList = null,
-            currentTotalCents = amount.convertToCents()
+            currentTotalCents = amount.convertToCents(),
+            customerId = user.stripeId
         )
         if(!run.isSessionFree()){
             val holdingCharge = bookingPricingAdjuster.createPrimaryHoldWithChange(

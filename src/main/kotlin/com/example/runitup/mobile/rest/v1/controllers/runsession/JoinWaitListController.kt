@@ -77,7 +77,8 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             null,
             null,
             joinedAtFromWaitList = null,
-            status = BookingStatus.WAITLISTED
+            status = BookingStatus.WAITLISTED,
+            customerId = user.stripeId
         )
         //user can only join the waitlist if the run is at full capacity
         if (run.atFullCapacity()) {
