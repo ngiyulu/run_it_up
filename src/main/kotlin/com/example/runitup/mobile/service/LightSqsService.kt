@@ -49,8 +49,8 @@ data class ReceivedMessage(
 
 // ---------- Internal storage shape ----------
 data class QueueMessage(
-    val id: String,
-    val body: String,                       // JSON: JobEnvelope<*>
+    val id: String = "",
+    val body: String = "",                       // JSON: JobEnvelope<*>
     val attributes: Map<String, String> = emptyMap(),
     val delaySeconds: Int = 0,
     val receiveCount: Int = 0

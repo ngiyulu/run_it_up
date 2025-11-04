@@ -1,6 +1,10 @@
 queue job list
 
 1. waitlist: when a user leaves a run session, we want to check if there is a user in the waitlist
-2. joined(optional): when a user joins a session, we want to send him a welcome message
+2. joined(optional): when a user create new account, we want to send him a welcome message
 3. firstSession: when user finishes his first session, we want to send him notifcation to rate the app
 4. location: when a user looks for a session and send his coordinates, this job updates the user profile
+5. cancelled: when a run is cancelled, notify users
+6. confirmation: when a run is confirmed, notify users
+
+
