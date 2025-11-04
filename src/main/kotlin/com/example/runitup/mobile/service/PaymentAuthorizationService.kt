@@ -164,27 +164,4 @@ class PaymentAuthorizationService {
             )
         )
     }
-
-    fun markCanceled(
-        paymentIntentId: String,
-        errorType: String? = null,
-        errorCode: String? = null,
-        declineCode: String? = null,
-        message: String? = null
-    ) {
-        val query = Query.query(Criteria.where("paymentIntentId").`is`(paymentIntentId))
-        val update = Update()
-            .set("status", AuthStatus.CANCELED)
-            .set("updatedAt", Instant.now())
-            .apply {
-                // Optional Stripe / internal error info
-                if (!errorType.isNullOrBlank()) set("errorType", errorType)
-                if (!errorCode.isNullOrBlank()) set("errorCode", errorCode)
-                if (!declineCode.isNullOrBlank()) set("declineCode", declineCode)
-                if (!message.isNullOrBlank()) set("errorMessage", message)
-            }
-
-        mongoTemplate.updateFirst(query, update, PaymentAuthorization::class.java)
-    }
-
 }

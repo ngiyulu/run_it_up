@@ -33,7 +33,7 @@ class PaymentFailedConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        log.info("PaymentFailedConsumer is running")
+        logger.info("PaymentFailedConsumer is running")
         val data: JobEnvelope<PaymentFailedModel> = objectMapper.readValue(rawBody) as JobEnvelope<PaymentFailedModel>
         val payload = data.payload
         withContext(Dispatchers.IO) {

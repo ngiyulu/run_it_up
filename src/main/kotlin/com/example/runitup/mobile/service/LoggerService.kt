@@ -1,19 +1,8 @@
 package com.example.runitup.mobile.service
 
-import org.springframework.stereotype.Service
 
-@Service
-class LoggerService{
-//    private val log = LoggerFactory.getLogger(javaClass)
-    fun logInfo(tag: String, data: Any?){
-//        log.info(tag, data)
-    }
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-    fun logError(tag: String, data: Any?){
-//        log.error(tag, data)
-    }
-
-    fun logWarn(tag: String, data: Any?){
-//        log.warn(tag, data)
-    }
-}
+inline fun <reified T> T.myLogger(): Logger =
+    LoggerFactory.getLogger(T::class.java)

@@ -7,6 +7,7 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.payment.UpdateDefaultCardModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -16,11 +17,14 @@ class UpdateDefaultPaymentController: BaseController<UpdateDefaultCardModel, Use
 
     @Autowired
     lateinit var paymentService: PaymentService
+
+    private val logger = myLogger()
+
     override fun execute(request: UpdateDefaultCardModel): User {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         if (user.stripeId == null) {
-            logger.logError(CreateCardController::class.java.name, "user striped Id = null")
+            logger.error("user striped Id = null for user {}", user.id.orEmpty())
             throw ApiRequestException(text("payment_error"))
         }
         if(request.paymentId == AppConstant.WALLET){
@@ -28,8 +32,10 @@ class UpdateDefaultPaymentController: BaseController<UpdateDefaultCardModel, Use
         }
         else{
             user.defaultPayment = request.paymentId
-            paymentService.makeDefaultCard(user.stripeId.orEmpty(), request.paymentId)
-                ?: throw ApiRequestException(text("payment_error"))
+            val model = paymentService.makeDefaultCard(user.stripeId.orEmpty(), request.paymentId)
+            if(!model.ok){
+                throw ApiRequestException(model.error.orEmpty())
+            }
         }
 
         return cacheManager.updateUser(user)

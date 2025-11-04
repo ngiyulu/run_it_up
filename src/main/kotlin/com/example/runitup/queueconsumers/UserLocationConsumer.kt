@@ -26,7 +26,7 @@ class UserLocationConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        log.info("UserLocationConsumer is running")
+        logger.info("UserLocationConsumer is running")
         val data: JobEnvelope<CoordinateUpdateModel> = objectMapper.readValue(rawBody) as JobEnvelope<CoordinateUpdateModel>
         val payload = data.payload
         withContext(Dispatchers.IO) {

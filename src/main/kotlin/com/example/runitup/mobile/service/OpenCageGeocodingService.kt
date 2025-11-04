@@ -25,6 +25,8 @@ class OpenCageGeocodingService(
     @Value("\${geocoding.opencage.api-key}") private val apiKey: String
 ) : GeocodingService {
 
+    private val logger = myLogger()
+
     @Autowired
     @Qualifier("geocode")
     lateinit var webClient: WebClient
@@ -47,20 +49,29 @@ class OpenCageGeocodingService(
             .retrieve()
             .onStatus({ it.is4xxClientError }) {
                 it.bodyToMono<String>().map { body ->
+                    logger.error( "Geocoding request failed address = $address, body =$body")
                     ResponseStatusException(HttpStatus.BAD_REQUEST, "Geocoding request failed: $body")
+
                 }
             }
             .onStatus({ it.is5xxServerError }) {
                 it.bodyToMono<String>().map { body ->
+                    logger.error(  "Geocoding service unavailable address = $address body= $body")
                     ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Geocoding service unavailable: $body")
                 }
             }
             .bodyToMono<OpenCageResponse>()
             .block()
-            ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Empty geocoding response")
+            ?: run{
+                logger.error(  "Empty geocoding response address = $address")
+                throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Empty geocoding response")
+            }
 
         val first = response.results.firstOrNull()
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No results for the provided address")
+            ?: run{
+                logger.error(  "No results for the provided address")
+                throw ResponseStatusException(HttpStatus.NOT_FOUND, "No results for the provided address")
+            }
 
         return GeocodeResult(
             latitude = first.geometry.lat,

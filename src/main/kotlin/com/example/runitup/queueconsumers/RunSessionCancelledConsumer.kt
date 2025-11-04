@@ -38,7 +38,7 @@ class RunSessionCancelledConsumer(
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CANCELLED_JOB, objectMapper) {
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        log.info("RunSessionCancelledConsumer is running")
+        logger.info("RunSessionCancelledConsumer is running")
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val payload = data.payload
         withContext(Dispatchers.IO) {

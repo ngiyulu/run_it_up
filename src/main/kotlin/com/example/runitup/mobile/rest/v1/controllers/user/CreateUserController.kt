@@ -71,8 +71,11 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
         }
 
         userProvided(user)
-        val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
-        user.stripeId = stripeId
+        val createCardObject = paymentService.createCustomer(user)
+        if(!createCardObject.ok){
+            throw ApiRequestException(createCardObject.error.orEmpty())
+        }
+        user.stripeId = createCardObject.id
         val newUser = cacheManager.updateUser(user)
         messagingService.createUser(
             MessagingUser(

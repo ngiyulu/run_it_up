@@ -3,10 +3,7 @@ package com.example.runitup.queueconsumers
 
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.service.ClickSendSmsService
-import com.example.runitup.mobile.service.JobTrackerService
-import com.example.runitup.mobile.service.LightSqsService
-import com.example.runitup.mobile.service.ReceiveRequest
+import com.example.runitup.mobile.service.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.*
@@ -22,7 +19,7 @@ abstract class BaseQueueConsumer(
     private val queueName: String,
     protected val om: ObjectMapper
 ) {
-    protected val log = LoggerFactory.getLogger(javaClass)
+     val logger = myLogger()
     private val workerId: String = "${javaClass.simpleName}-${java.net.InetAddress.getLocalHost().hostName}"
 
     @PostConstruct
@@ -33,6 +30,7 @@ abstract class BaseQueueConsumer(
                     pollOnce()
                 } catch (e: Exception) {
                     //TODO:
+                    logger.error("processing queue failed ${e.message}")
                     //smsService.sendSmsDetailed("", e.message.orEmpty())
                 }
                 delay(delay())
@@ -45,10 +43,10 @@ abstract class BaseQueueConsumer(
             ReceiveRequest(queue = queueName, maxNumberOfMessages = maxNumberOfMessages(), waitSeconds = waitSeconds())
         )
         if (batch.messages.isEmpty()) {
-            log.debug("No messages in '$queueName'.")
+            logger.debug("No messages in '$queueName'.")
             return
         }
-        log.info("Fetched ${batch.messages.size} messages from '$queueName'")
+        logger.info("Fetched ${batch.messages.size} messages from '$queueName'")
 
         coroutineScope {
             for (msg in batch.messages) {
@@ -90,10 +88,10 @@ abstract class BaseQueueConsumer(
                         // Ack on success
                         queueService.deleteMessage(queueName, msg.receiptHandle)
                         tracker.success(exec.id!!)
-                        log.info("Processed and deleted message $jobId")
+                        logger.info("Processed and deleted message $jobId")
                     } catch (t: Throwable) {
                         tracker.failure(exec.id!!, t)
-                        log.error("Failed to process message $jobId", t)
+                        logger.error("Failed to process message $jobId", t)
                         // Do not delete → message will become visible after visibility timeout and retry until DLQ
                     } finally {
                         MDC.clear()

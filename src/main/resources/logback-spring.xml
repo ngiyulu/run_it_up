@@ -1,35 +1,70 @@
-<configuration scan="true" scanPeriod="60 seconds">
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" packagingData="false">
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
 
-    <!-- Grab app name from Spring, fallback if missing -->
-    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="app"/>
+    <!-- Spring properties -->
+    <springProperty scope="context" name="SPRING_APP" source="spring.application.name" defaultValue="app"/>
+    <springProperty scope="context" name="ENV"        source="spring.profiles.active"  defaultValue="local"/>
 
-    <!-- Pattern with colors, timestamp, level, request-id from MDC, logger and message -->
-    <property name="CONSOLE_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight(%-5level)] [%yellow(${APP_NAME})] %magenta(%X{traceId:-}) %cyan(%logger{36}) - %msg%n%ex{full}"/>
+    <springProperty scope="context" name="LOKI_URL"    source="logging.loki.url"/>
+    <springProperty scope="context" name="LOKI_USER"   source="logging.loki.user"      defaultValue=""/>
+    <springProperty scope="context" name="LOKI_PASS"   source="logging.loki.password"  defaultValue=""/>
+    <springProperty scope="context" name="LOKI_TENANT" source="logging.loki.tenant"    defaultValue=""/>
 
-    <!-- Plain console -->
+    <springProperty scope="context" name="BATCH_SIZE"  source="logging.loki.batch-size"        defaultValue="500"/>
+    <springProperty scope="context" name="SEND_Q"      source="logging.loki.send-queue-size"   defaultValue="50000"/>
+    <springProperty scope="context" name="ASYNC_Q"     source="logging.loki.async.queue-size"  defaultValue="8192"/>
+    <springProperty scope="context" name="RETRIES"     source="logging.loki.retries"           defaultValue="3"/>
+    <springProperty scope="context" name="CONNECT_MS"  source="logging.loki.connect-timeout-ms" defaultValue="2000"/>
+    <springProperty scope="context" name="READ_MS"     source="logging.loki.read-timeout-ms"    defaultValue="5000"/>
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${CONSOLE_PATTERN}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} %X{traceId} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Async wrapper so logging doesn’t block your threads -->
-    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
-        <queueSize>2048</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-        <neverBlock>true</neverBlock>
-        <appender-ref ref="CONSOLE"/>
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <!-- labels: one per line -->
+        <labels>
+            app=${SPRING_APP}
+            env=${ENV}
+            host=${HOSTNAME}
+            level=%level
+        </labels>
+
+        <!-- JSON message layout (replace your old <format> block with this) -->
+        <message class="com.github.loki4j.logback.JsonLayout"/>
+
+        <http>
+            <url>${LOKI_URL}</url>
+            <auth>
+                <username>${LOKI_USER}</username>
+                <password>${LOKI_PASS}</password>
+            </auth>
+            <tenantId>${LOKI_TENANT}</tenantId>
+            <connectionTimeoutMs>${CONNECT_MS}</connectionTimeoutMs>
+            <!-- Loki4j uses requestTimeoutMs for per-request timeout -->
+            <requestTimeoutMs>${READ_MS}</requestTimeoutMs>
+            <maxRetries>${RETRIES}</maxRetries>
+        </http>
+
+        <batch>
+            <maxItems>${BATCH_SIZE}</maxItems>
+            <sendQueueMaxBytes>${SEND_Q}</sendQueueMaxBytes>
+        </batch>
     </appender>
 
-    <!-- Fine-tune log levels -->
-    <logger name="org.springframework" level="INFO"/>
-    <logger name="com.yourapp" level="DEBUG" additivity="false">
-        <appender-ref ref="ASYNC_CONSOLE"/>
-    </logger>
+    <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>${ASYNC_Q}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="LOKI"/>
+    </appender>
 
-    <!-- Root logger -->
     <root level="INFO">
-        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_LOKI"/>
     </root>
 </configuration>
