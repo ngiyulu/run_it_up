@@ -7,9 +7,8 @@ import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.PromotionService
 import com.fasterxml.jackson.databind.ObjectMapper
-import kotlinx.coroutines.*
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.springframework.context.annotation.Configuration
+import kotlinx.coroutines.CoroutineScope
 import org.springframework.stereotype.Component
 
 @Component

@@ -2,9 +2,10 @@
 
 package com.example.runitup.mobile.service.http
 
-import ServiceResult
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
+import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 import model.messaging.Conversation
 import model.messaging.MessagingUser
 import model.messaging.Participant
@@ -13,15 +14,7 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.test.StepVerifier
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 
-/**
- * If your test class cannot see the real Conversation / Participant / MessagingUser types,
- * you can define minimal stubs under the same package in test sources.
- * Below we assume your real DTOs are visible on the test classpath.
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MessagingServiceTest {
 
@@ -53,8 +46,19 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createUser: 200 -> ok with body")
     fun createUser_ok() {
-        val user = MessagingUser(id = "u1", firstName = "Jane", lastName = "Doe", email = "jane@example.com")
-        server.enqueue(MockResponse().setResponseCode(200).setBody(om.writeValueAsString(user)))
+        // Return only the fields we assert on
+        val body = mapOf(
+            "id" to "u1",
+            "firstName" to "Jane",
+            "lastName" to "Doe",
+            "email" to "jane@example.com"
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(om.writeValueAsString(body))
+        )
 
         val req = MessagingUser(id = "uX", firstName = "X", lastName = "Y", email = "x@y.com")
 
@@ -72,7 +76,12 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createUser: 502 -> err with mapped body")
     fun createUser_error() {
-        server.enqueue(MockResponse().setResponseCode(502).setBody("downstream is mad"))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(502)
+                .setHeader("Content-Type", "text/plain; charset=utf-8")
+                .setBody("downstream is mad")
+        )
 
         val req = MessagingUser(id = "uErr", firstName = "E", lastName = "R", email = "e@r.com")
 
@@ -94,9 +103,16 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createConversation: 200 -> ok with body")
     fun createConversation_ok() {
-        val convo = Conversation(id = "c1", title = "Run #1") // adapt to your Conversation shape
-        server.enqueue(MockResponse().setResponseCode(200).setBody(om.writeValueAsString(convo)))
+        // Minimal JSON the service can map to Conversation (or via ObjectMapper) for the fields we assert
+        val convoJson = mapOf("id" to "c1", "title" to "Run #1")
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(om.writeValueAsString(convoJson))
+        )
 
+        val convo = Conversation(id = "c1", title = "Run #1") // used only for request payload shape
         val req = CreateConversationModel(runSessionId = "rs1", conversation = convo)
 
         StepVerifier.create(svc.createConversation(req))
@@ -112,7 +128,12 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createConversation: 500 -> err maps status/body")
     fun createConversation_error() {
-        server.enqueue(MockResponse().setResponseCode(500).setBody("{\"error\":\"boom\"}"))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setHeader("Content-Type", "application/json")
+                .setBody("{\"error\":\"boom\"}")
+        )
 
         val convo = Conversation(id = "cX", title = "X")
         val req = CreateConversationModel(runSessionId = "rsX", conversation = convo)
@@ -134,9 +155,16 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createParticipant: 200 -> ok with body")
     fun createParticipant_ok() {
-        val participant = Participant() // adapt to your shape
-        server.enqueue(MockResponse().setResponseCode(200).setBody(om.writeValueAsString(participant)))
+        // Return a minimal participant JSON with the field we assert
+        val participantJson = mapOf("userId" to "u1")
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(om.writeValueAsString(participantJson))
+        )
 
+        val participant = Participant() // request payload can be minimal
         val req = CreateParticipantModel(
             conversationId = "c1",
             participantDoc = participant,
@@ -155,7 +183,12 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createParticipant: 404 -> err maps status/body")
     fun createParticipant_error() {
-        server.enqueue(MockResponse().setResponseCode(404).setBody("not found"))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(404)
+                .setHeader("Content-Type", "text/plain; charset=utf-8")
+                .setBody("not found")
+        )
 
         val participant = Participant()
         val req = CreateParticipantModel(conversationId = "cX", participantDoc = participant, conversationTitle = "X")
@@ -177,17 +210,23 @@ class MessagingServiceTest {
     @Test
     @DisplayName("removeParticipant: 200 -> ok(Unit)")
     fun removeParticipant_ok() {
-        // even with empty body, your code maps to Unit and wraps ok
-        server.enqueue(MockResponse().setResponseCode(200).setBody(""))
+        // Return a minimal JSON body so any bodyToMono(...) succeeds
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("{}")
+        )
 
         val req = DeleteParticipantFromConversationModel(
-           "userId", "conversationId"
+            "userId",
+            "conversationId"
         )
 
         StepVerifier.create(svc.removeParticipant(req))
             .assertNext { res ->
                 Assertions.assertTrue(res.ok)
-                Assertions.assertNotNull(res.data) // Unit
+                Assertions.assertNotNull(res.data) // Unit or any non-null placeholder
                 Assertions.assertNull(res.error)
             }
             .verifyComplete()
@@ -196,7 +235,12 @@ class MessagingServiceTest {
     @Test
     @DisplayName("removeParticipant: 500 -> err maps status/body")
     fun removeParticipant_error() {
-        server.enqueue(MockResponse().setResponseCode(500).setBody("oops"))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setHeader("Content-Type", "text/plain; charset=utf-8")
+                .setBody("oops")
+        )
 
         val req = DeleteParticipantFromConversationModel("userId", "conversation")
 

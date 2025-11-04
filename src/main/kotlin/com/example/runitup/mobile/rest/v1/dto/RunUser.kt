@@ -4,13 +4,13 @@ import com.example.runitup.mobile.enum.SkillLevel
 import com.example.runitup.mobile.utility.AppUtil
 
 class RunUser(
-    val first: String,
-    val last: String,
-    var level: SkillLevel?,
-    val userId: String?,
-    var imageUrl:String?,
+    val first: String = "",
+    val last: String = "",
+    var level: SkillLevel? = null,
+    val userId: String? = null,
+    var imageUrl:String? = null,
     var checkIn: Int = 0,
-    var guest: Int,
+    var guest: Int = 0,
     var verificationCode: String = AppUtil.generate4DigitCode().toString()){
 
 }

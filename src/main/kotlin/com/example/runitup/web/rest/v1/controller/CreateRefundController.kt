@@ -1,21 +1,13 @@
 package com.example.runitup.web.rest.v1.controller
 
-import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RefundReasonCode
-import com.example.runitup.mobile.model.RefundRecord
-import com.example.runitup.mobile.model.Waiver
-import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.repository.WaiverRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.rest.v1.dto.FileUploadModel
 import com.example.runitup.mobile.rest.v1.dto.payment.RefundResult
-import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.service.payment.RefundService
-import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

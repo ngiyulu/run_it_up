@@ -1,105 +1,106 @@
+// src/test/kotlin/com/example/runitup/mobile/repository/service/OtpDbServiceTest.kt
 package com.example.runitup.repository.service
 
-import com.example.runitup.BaseTest
-import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.Otp
+import com.example.runitup.mobile.repository.OtpRepository
 import com.example.runitup.mobile.repository.service.OtpDbService
-import com.mongodb.client.result.DeleteResult
+import io.mockk.*
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
-import org.mockito.kotlin.*
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import java.util.*
+import java.util.regex.Pattern
 
-class OtpDbServiceTest: BaseTest() {
+class OtpDbServiceTest {
 
+    private val mongoTemplate = mockk<MongoTemplate>()
+    private val otpRepository = mockk<OtpRepository>()
     private lateinit var service: OtpDbService
-    override fun setUp() {
-        super.setUp()
-        service = OtpDbService()
-        service.otpRepository = mockOtpRepository
-        service.mongoTemplate = mockMongoTemplate
+
+    @BeforeEach
+    fun setUp() {
+        service = OtpDbService().apply {
+            this.mongoTemplate = this@OtpDbServiceTest.mongoTemplate
+            this.otpRepository = this@OtpDbServiceTest.otpRepository
+        }
+        clearMocks(mongoTemplate, otpRepository)
     }
 
-//    @Test
-//    fun testCancelUserBooking(){
-//        val result = mock<DeleteResult>()
-//        whenever(result.deletedCount).thenReturn(0)
-//        val query = argumentCaptor<Query>()
-//        whenever(mockMongoTemplate.remove(query.capture(), eq(Booking::class.java))).thenReturn(result)
-//        assertFalse(bookingDbService.cancelUserBooking(""))
-//
-//        assertEquals("Query: { \"userId\" : \"\"}, Fields: {}, Sort: {}", query.firstValue.toString())
-//
-//        whenever(result.deletedCount).thenReturn(1)
-//        assertTrue(bookingDbService.cancelUserBooking(""))
-//    }
-//
-//
-//    @Test
-//    fun testGetBooking(){
-//        val query = argumentCaptor<Query>()
-//        whenever(mockMongoTemplate.findOne(query.capture(), eq(Booking::class.java))).thenReturn(null)
-//
-//        assertNull(bookingDbService.getBooking("user", "session"))
-//        assertEquals("Query: { \"userId\" : \"user\", \"runSessionId\" : \"session\"}, Fields: {}, Sort: {}", query.firstValue.toString())
-//
-//    }
-//
-//    @Test
-//    fun testCancelAllBooking(){
-//        val result = mock<DeleteResult>()
-//        whenever(result.deletedCount).thenReturn(0)
-//        val query = argumentCaptor<Query>()
-//        whenever(mockMongoTemplate.remove(query.capture(), eq(Booking::class.java))).thenReturn(result)
-//        assertFalse(bookingDbService.cancelAllBooking("run"))
-//
-//        assertEquals("Query: { \"runSessionId\" : \"run\"}, Fields: {}, Sort: {}", query.firstValue.toString())
-//
-//        whenever(result.deletedCount).thenReturn(1)
-//        assertTrue(bookingDbService.cancelAllBooking("run"))
-//    }
-//
-    @Test fun testDisableOtp(){
-        val otp = com.example.runitup.mobile.model.Otp(null, "code", null, "", null)
-        whenever(mockOtpRepository.save(otp)).thenReturn(otp)
+    @AfterEach
+    fun tearDown() = clearAllMocks()
 
-        service.disableOtp(otp)
+    @Test
+    fun `getOtp delegates to repository`() {
+        val phone = "+15551230000"
+        val expected = Otp(
+            code = "1234",
+            userId = "u1",
+            phoneNumber = phone,
+            created = Date()
+        ).apply { this.isActive = true }
 
-        verify(mockOtpRepository).save(otp)
+        every { otpRepository.findByPhoneNumberAndIsActive(phone, true) } returns expected
+
+        val res = service.getOtp(phone)
+
+        assertThat(res).isSameAs(expected)
+        verify(exactly = 1) { otpRepository.findByPhoneNumberAndIsActive(phone, true) }
+        confirmVerified(otpRepository)
     }
 
     @Test
-    fun getOtp(){
-        val query = argumentCaptor<Query>()
-        whenever(mockMongoTemplate.findOne(query.capture(), eq(com.example.runitup.mobile.model.Otp::class.java))).thenReturn(null)
+    fun `generateOtp deactivates previous and saves new 4-digit code`() {
+        val userId = "u42"
+        val phone = "+15557654321"
 
-        assertNull(service.getOtp("760-571-7457"))
-        assertEquals("Query: { \"phoneNumber\" : \"760-571-7457\", \"isActive\" : true}, Fields: {}, Sort: {}", query.firstValue.toString())
+        // capture query & update
+        val querySlot = slot<Query>()
+        val updateSlot = slot<Update>()
+        every { mongoTemplate.updateFirst(capture(querySlot), capture(updateSlot), Otp::class.java) } returns mockk(relaxed = true)
 
+        // capture saved Otp
+        val savedSlot = slot<Otp>()
+        every { otpRepository.save(capture(savedSlot)) } answers { savedSlot.captured }
+
+        val created = service.generateOtp(userId, phone)
+
+        verify(exactly = 1) { mongoTemplate.updateFirst(any(), any(), Otp::class.java) }
+        verify(exactly = 1) { otpRepository.save(any<Otp>()) }
+
+        val saved = savedSlot.captured
+        assertThat(saved.userId).isEqualTo(userId)
+        assertThat(saved.phoneNumber).isEqualTo(phone)
+        assertThat(saved.created).isNotNull()
+
+        // ensure 4-digit numeric code
+        assertThat(saved.code)
+            .hasSize(4)
+            .matches(Pattern.compile("\\d{4}"))
+
+        // ensure returned value matches what was saved
+        assertThat(created).isSameAs(saved)
     }
 
     @Test
-    fun testGenerateOtp(){
-        val otp = com.example.runitup.mobile.model.Otp(null, "code", null, "", null)
-        val query = argumentCaptor<Query>()
-        val updateQuery = argumentCaptor<Update>()
-        val otpArg = argumentCaptor<com.example.runitup.mobile.model.Otp>()
+    fun `disableOtp flips isActive to false and saves`() {
+        val otp = Otp(
+            code = "9876",
+            userId = "u9",
+            phoneNumber = "+15550009999",
+            created = Date()
+        ).apply { this.isActive = true }
 
-        whenever(mockOtpRepository.save(otpArg.capture())).thenReturn(otp)
+        val savedSlot = slot<Otp>()
+        every { otpRepository.save(capture(savedSlot)) } answers { savedSlot.captured }
 
-        service.generateOtp("oid", "760")
+        val out = service.disableOtp(otp)
 
-        verify(mockMongoTemplate).updateFirst(query.capture(), updateQuery.capture(), eq( com.example.runitup.mobile.model.Otp::class.java))
-        assertEquals("Query: { \"phoneNumber\" : \"760\"}, Fields: {}, Sort: {}", query.firstValue.toString())
-        assertEquals("{ \"\$set\" : { \"isActive\" : false}}", updateQuery.firstValue.toString())
-        val otpCreated = otpArg.firstValue
-        assertEquals("760", otpCreated.phoneNumber)
-        assertEquals("oid", otpCreated.userId)
-        assertEquals(4, otpCreated.code.length)
-
+        assertThat(savedSlot.captured.isActive).isFalse()
+        assertThat(out.isActive).isFalse()
+        verify(exactly = 1) { otpRepository.save(any<Otp>()) }
     }
 }

@@ -12,13 +12,10 @@ import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.web.dto.Role
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
 import com.stripe.param.PaymentIntentCancelParams
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service

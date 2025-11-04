@@ -14,4 +14,4 @@ data class Otp(
     // createDate indexed for automatic expiration 5 minutes after insertion
     @Indexed(name = "otpCreatedAtIdx", expireAfter = "5m")
     var created: Date? = Date.from(Instant.now())
-): com.example.runitup.mobile.model.BaseModel()
+): BaseModel()

@@ -7,7 +7,6 @@ import com.example.runitup.mobile.rest.v1.dto.CreateSupportRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.time.LocalDate
 
 @Service
 class CreateSupportController: BaseController<CreateSupportRequest, Support>() {

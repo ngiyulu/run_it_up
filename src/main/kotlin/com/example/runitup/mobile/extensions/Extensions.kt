@@ -19,12 +19,13 @@ fun PaymentMethod.mapToUserPayment(isDefaultPayment:Boolean): CardModel {
 
 //amount  * 100 converts 10.99 to 1099cents
 fun Double.convertToCents(): Long{
-    return this.roundNumber() * 100
+    // Round to 2 decimals using HALF_UP, then shift 2 places to get cents
+    return BigDecimal.valueOf(this)
+        .setScale(2, RoundingMode.HALF_UP)
+        .movePointRight(2)
+        .longValueExact()
 }
-private fun Double.roundNumber(): Long{
-    val bd = BigDecimal.valueOf(this).setScale(2, RoundingMode.HALF_UP)
-    return  bd.toLong()
-}
+
 inline fun <A : Any, B : Any, R> let(a: A?, b: B?, block: (A, B) -> R): R? =
     if (a != null && b != null) block(a, b) else null
 

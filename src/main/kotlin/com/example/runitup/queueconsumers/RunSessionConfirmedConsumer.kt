@@ -4,8 +4,6 @@ package com.example.runitup.queueconsumers
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.repository.UserRepository
-import com.example.runitup.mobile.rest.v1.controllers.runsession.CoordinateUpdateModel
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService

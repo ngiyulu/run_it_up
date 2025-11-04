@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.data.mongodb.core.mapping.Field
 import java.io.Serializable
 import java.time.Instant
-import java.time.LocalDate
 
 open class BaseModel(
     open var createdAt: Instant = Instant.now(),

@@ -4,7 +4,6 @@ import com.example.runitup.mobile.model.CronRunLogRepository
 import com.example.runitup.mobile.model.CronStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.springframework.stereotype.Service
 import java.time.Instant
 
 

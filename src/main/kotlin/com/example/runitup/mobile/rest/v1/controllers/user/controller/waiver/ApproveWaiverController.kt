@@ -48,7 +48,7 @@ class ApproveWaiverController: BaseController<ApproveWaiverModel, Waiver>() {
         if(waiver.status == WaiverStatus.APPROVED){
             return  waiver
         }
-        user.approveWaiver(savedAdmin.admin.id.orEmpty(), getTimeStamp(), waiver.url, request.isApproved)
+        user.approveWaiver(savedAdmin.admin.id.orEmpty(), waiver.url, request.isApproved)
         cacheManager.updateUser(user)
         waiver.approve(savedAdmin.admin.id.orEmpty(), request.isApproved, request.notes)
         appScope.launch {

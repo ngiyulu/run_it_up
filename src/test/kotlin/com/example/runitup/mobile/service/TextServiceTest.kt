@@ -10,7 +10,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.context.MessageSource
 import org.springframework.context.NoSuchMessageException
-import java.util.Locale
+import java.util.*
 
 class TextServiceTest {
 

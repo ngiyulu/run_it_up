@@ -4,7 +4,6 @@ import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToCents
 import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.Coordinate
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
@@ -17,9 +16,9 @@ import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
-import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
+import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
