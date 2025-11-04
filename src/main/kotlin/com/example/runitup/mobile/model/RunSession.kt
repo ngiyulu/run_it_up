@@ -56,7 +56,8 @@ data class RunSession(
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
     // show remove button on the web portal
-    var showRemoveButton: Boolean = true
+    var showRemoveButton: Boolean = true,
+    var bookingPaymentState: BookingPaymentState? = null
 ): BaseModel(){
 
 
@@ -98,11 +99,14 @@ data class RunSession(
         val findUser = bookingList
             .find { it.userId == userId }
 
-        val waitList = waitList
-            .find { it.userId == userId }
-
         return  findUser != null
     }
+
+    fun getBooking(userId: String): SessionRunBooking? {
+        return bookingList
+            .find { it.userId == userId }
+    }
+
 
     fun isWaitlisted(userId: String): Boolean{
 
@@ -113,7 +117,7 @@ data class RunSession(
     }
 
     fun isDeletable(): Boolean{
-        return status == RunStatus.PENDING
+        return status != RunStatus.CANCELLED || status != RunStatus.COMPLETED || status != RunStatus.PROCESSED
     }
 
     fun isUpdatable(): Boolean{

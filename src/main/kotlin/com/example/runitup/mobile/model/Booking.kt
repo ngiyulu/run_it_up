@@ -27,6 +27,7 @@ class Booking (
     var currentTotalCents: Long = 0L,
     var isLockedAt: Instant? = null,
     var promotedAt: Instant? = null,
+    var customerId:String? = null,
     var bookingPaymentState: BookingPaymentState? = null
 ): BaseModel(){
 

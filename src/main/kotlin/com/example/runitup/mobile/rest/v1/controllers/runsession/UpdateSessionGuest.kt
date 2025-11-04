@@ -47,7 +47,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         val run =
-            runSessionService.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
+            runSessionService.getRunSession(request.sessionId, auth.id) ?: throw ApiRequestException(text("invalid_session_id"))
         if (run.atFullCapacity()) {
             //TODO: later we can find a way to add the guest to the waitlist
             throw ApiRequestException(text("full_capacity"))
