@@ -15,7 +15,6 @@ class PromotionService(
     private val sessionRepo: RunSessionRepository,
     private val bookingRepo: BookingRepository,
     private val waitlistSetupRepo: WaitlistSetupStateRepository,
-    private val paymentAuthService: PaymentAuthorizationService,
     private val adjuster: BookingPricingAdjuster,
     private val cacheManager: MyCacheManager,
     private val sessionService: RunSessionService,

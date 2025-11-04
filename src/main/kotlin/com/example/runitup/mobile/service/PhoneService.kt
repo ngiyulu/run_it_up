@@ -54,7 +54,4 @@ class PhoneService: BaseService() {
         }
     }
 
-    fun getPhonesList():List<com.example.runitup.mobile.model.Phone> {
-        return listOf()
-    }
 }

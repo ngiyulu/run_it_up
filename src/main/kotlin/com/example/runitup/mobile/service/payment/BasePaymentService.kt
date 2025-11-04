@@ -4,7 +4,6 @@ import com.example.runitup.mobile.model.AuthStatus
 import com.example.runitup.mobile.model.BookingPaymentState
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
-import com.example.runitup.mobile.repository.RefundRecordRepository
 import java.time.Instant
 
 open class BasePaymentService(

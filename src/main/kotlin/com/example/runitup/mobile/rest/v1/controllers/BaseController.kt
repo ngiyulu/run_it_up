@@ -6,19 +6,17 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LoggerService
 import com.example.runitup.mobile.service.TextService
-import com.example.runitup.mobile.service.TimeAndDateService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 abstract class BaseController<R, P> {
     @Autowired
     protected lateinit var cacheManager: MyCacheManager
 
-    @Autowired
-    protected lateinit var timeAndDateService: TimeAndDateService
 
     @Autowired
     protected lateinit var textService: TextService
@@ -31,7 +29,7 @@ abstract class BaseController<R, P> {
     abstract fun execute(request: R): P
 
     fun getTimeStamp(): Long{
-        return timeAndDateService.getTimeStamp()
+        return Instant.now().epochSecond
     }
 
     fun getUser(): User {

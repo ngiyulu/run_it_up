@@ -11,7 +11,7 @@ class QueueController(private val q: LightSqsService) {
     @PostMapping("/create")
    fun create(@RequestBody req: CreateQueueRequest) =
         kotlinx.coroutines.runBlocking{
-            q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, req.dlqName).let { mapOf("ok" to true) }
+            q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, "${req.name}-dlq").let { mapOf("ok" to true) }
         }
 
 
@@ -69,7 +69,6 @@ data class CreateQueueRequest(
     val name: String,
     val visibilitySeconds: Int? = null,
     val maxReceiveCount: Int? = null,
-    val dlqName: String? = null
 )
 data class SendMessageRequest(
     val body: String,

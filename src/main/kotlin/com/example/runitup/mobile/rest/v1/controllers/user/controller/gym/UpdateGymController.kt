@@ -10,6 +10,7 @@ import com.example.runitup.mobile.service.ImageService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class UpdateGymController: BaseGymController() {
@@ -44,7 +45,7 @@ class UpdateGymController: BaseGymController() {
         gym.fee = data.fee
         gym.notes = data.notes
         gym.description = data.description
-        gym.updatedAt = getTimeStamp()
+        gym.updatedAt = Instant.now()
 
         ad?.let {
             gym.line1 = it.line1

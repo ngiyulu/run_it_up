@@ -8,6 +8,7 @@ import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Instant
 
 @Document
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,7 +21,7 @@ data class User(
     var waiverUrl:String? = null,
     var waiverAuthorized:Boolean = false,
     var firstSession: Boolean = false,
-    var waiverAuthorizedAt: Long = 0,
+    var waiverAuthorizedAt: Instant? = null,
     var waiverAuthorizedBy: String? = null,
     var verifiedPhone: Boolean = false,
     var email: String = "",
@@ -46,11 +47,11 @@ data class User(
         return "$firstName ${lastName}"
     }
 
-    fun approveWaiver(adminId:String, timeStamp:Long, waiverImageUrl:String?, isAuthorized:Boolean){
+    fun approveWaiver(adminId:String, waiverImageUrl:String?, isAuthorized:Boolean){
         waiverAuthorized = isAuthorized
         waiverSigned = true
         waiverAuthorizedBy = adminId
-        waiverAuthorizedAt = timeStamp
+        waiverAuthorizedAt = Instant.now()
         waiverImageUrl?.let {
             waiverUrl = it
         }

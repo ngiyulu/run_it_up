@@ -1,8 +1,11 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.RedisKeys
 import com.example.runitup.mobile.rest.v1.restcontroller.QueueOverview
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.ScanOptions
@@ -11,6 +14,47 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.*
+
+// ---------- Typed (new) ----------
+
+data class JobReceiveResponse<T>(
+    val jobs: List<ReceivedJob<T>>
+)
+
+data class ReceivedJob<T>(
+    val messageId: String,
+    val envelope: JobEnvelope<T>,
+    val attributes: Map<String, String>,
+    val receiptHandle: String
+)
+
+// ---------- Legacy (kept for back-compat) ----------
+data class ReceiveRequest(
+    val queue: String,
+    val maxNumberOfMessages: Int = 1,
+    val waitSeconds: Int? = null,
+    val visibilitySeconds: Int? = null
+)
+
+data class ReceiveResponse(
+    val messages: List<ReceivedMessage>
+)
+
+data class ReceivedMessage(
+    val messageId: String,
+    val body: String,
+    val attributes: Map<String, String>,
+    val receiptHandle: String
+)
+
+// ---------- Internal storage shape ----------
+data class QueueMessage(
+    val id: String = "",
+    val body: String = "",                       // JSON: JobEnvelope<*>
+    val attributes: Map<String, String> = emptyMap(),
+    val delaySeconds: Int = 0,
+    val receiveCount: Int = 0
+)
 
 @Service
 class LightSqsService(
@@ -22,18 +66,16 @@ class LightSqsService(
     @Value("\${queue.poll.dueScanMs:1000}") private val scanMs: Long,
     @Value("\${queue.dlq.retry.enabled:true}") private val dlqRetryEnabled: Boolean = true,
     @Value("\${queue.dlq.retry.intervalMs:300000}") private val dlqRetryIntervalMs: Long = 300_000,
-    @Value("\${queue.dlq.retry.limitPerDlq:50}") private val dlqRetryLimit: Int = 50
-    ) {
-    private val om = jacksonObjectMapper()
-    private val io = Dispatchers.IO // for blocking Redis ops
+    @Value("\${queue.dlq.retry.limitPerDlq:50}") private val dlqRetryLimit: Int = 50,
+    protected val om: ObjectMapper
+
+) {
+    private val io = Dispatchers.IO
 
     init {
-        // Start async maintenance loop
-        appScope.launch(CoroutineName("queue-maintenance").let { it }) {
-            // runs sequentially; cheap and predictable
+        appScope.launch(CoroutineName("queue-maintenance")) {
             while (isActive) { maintenanceOnce(); delay(scanMs) }
         }
-        // existing maintenance loop stays…
         if (dlqRetryEnabled) {
             appScope.launch(CoroutineName("dlq-redrive")) {
                 while (isActive) { retryAllDlqsOnce(dlqRetryLimit); delay(dlqRetryIntervalMs) }
@@ -41,9 +83,174 @@ class LightSqsService(
         }
     }
 
-    /** Scan all queues, find DLQs, and redrive up to [limitPerDlq] messages each. */
+    // -----------------------
+    // Producer: enqueue jobs
+    // -----------------------
+
+    /** Enqueue a typed JobEnvelope<T>. Returns messageId. */
+    suspend fun <T> sendJob(
+        queue: String,
+        envelope: JobEnvelope<T>,
+        attributes: Map<String, String> = emptyMap(),
+        delaySeconds: Int = 0
+    ): String = withContext(io) {
+        val id = UUID.randomUUID().toString()
+        val msgKey = RedisKeys.msg(queue, id)
+        val bodyJson = om.writeValueAsString(envelope)
+        val qm = QueueMessage(id, bodyJson, attributes, delaySeconds, 0)
+        redis.opsForValue().set(msgKey, om.writeValueAsString(qm))
+
+        if (delaySeconds > 0) {
+            val dueAt = Instant.now().toEpochMilli() + delaySeconds * 1000L
+            redis.opsForZSet().add(RedisKeys.delayed(queue), id, dueAt.toDouble())
+        } else {
+            redis.opsForList().leftPush(RedisKeys.ready(queue), id)
+        }
+        id
+    }
+
+    /** Back-compat: accept raw string; stored as JobEnvelope<JsonNode>. */
+    suspend fun sendMessage(
+        queue: String,
+        body: String,
+        attributes: Map<String, String> = emptyMap(),
+        delaySeconds: Int = 0
+    ): String {
+        val env = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "RAW_STRING",
+            payload = om.readTree(body) as JsonNode,
+            traceId = UUID.randomUUID().toString(),
+            createdAtMs = Instant.now()
+        )
+        return sendJob(queue, env, attributes, delaySeconds)
+    }
+
+    // -----------------------
+    // Consumer: receive jobs
+    // -----------------------
+
+    /** Receive jobs and deserialize to JobEnvelope<T> with payloadClass. */
+    suspend fun <T> receiveJobBatch(
+        req: ReceiveRequest,
+        payloadClass: Class<T>
+    ): JobReceiveResponse<T> {
+        val cfg = loadCfg(req.queue)
+        val wait = req.waitSeconds ?: defaultWaitSeconds
+        val visibility = (req.visibilitySeconds ?: cfg.visibilitySeconds).coerceAtLeast(1)
+        val deadline = System.currentTimeMillis() + wait * 1000L
+        val out = mutableListOf<ReceivedJob<T>>()
+
+        while (out.size < req.maxNumberOfMessages) {
+            val msgId = withContext(io) { redis.opsForList().rightPop(RedisKeys.ready(req.queue)) }
+            if (msgId == null) {
+                if (System.currentTimeMillis() >= deadline) break
+                delay(120); continue
+            }
+
+            val msgKey = RedisKeys.msg(req.queue, msgId)
+            val json = withContext(io) { redis.opsForValue().get(msgKey) } ?: continue
+            val qm = om.readValue(json, QueueMessage::class.java)
+
+            val updated = qm.copy(receiveCount = qm.receiveCount + 1)
+            withContext(io) { redis.opsForValue().set(msgKey, om.writeValueAsString(updated)) }
+
+            if (updated.receiveCount > loadCfg(req.queue).maxReceiveCount) {
+                withContext(io) { moveToDlq(req.queue, updated) }
+                continue
+            }
+
+            val visDeadline = System.currentTimeMillis() + visibility * 1000L
+            withContext(io) { redis.opsForZSet().add(RedisKeys.inflight(req.queue), updated.id, visDeadline.toDouble()) }
+            val receiptHandle = UUID.randomUUID().toString()
+            withContext(io) { redis.opsForValue().set(RedisKeys.receipt(req.queue, receiptHandle), updated.id) }
+
+            // ---- FIX: build JavaType, then readValue with explicit target type ----
+            val envType: JavaType =
+                om.typeFactory.constructParametricType(JobEnvelope::class.java, payloadClass)
+
+            @Suppress("UNCHECKED_CAST")
+            val env: JobEnvelope<T> =
+                om.readValue(updated.body, envType) as JobEnvelope<T>
+            // ---------------------------------------------
+
+            out += ReceivedJob(
+                messageId = updated.id,
+                envelope = env,
+                attributes = updated.attributes,
+                receiptHandle = receiptHandle
+            )
+        }
+        return JobReceiveResponse(out)
+    }
+
+    /** Reified convenience (must be final for inline). */
+    final suspend inline fun <reified T> receiveJobBatch(req: ReceiveRequest): JobReceiveResponse<T> =
+        receiveJobBatch(req, T::class.java)
+
+    /** Back-compat: return legacy string-body response. */
+    suspend fun receiveMessages(req: ReceiveRequest): ReceiveResponse {
+        val r: JobReceiveResponse<JsonNode> = receiveJobBatch(req, JsonNode::class.java)
+        val msgs = r.jobs.map {
+            ReceivedMessage(
+                messageId = it.messageId,
+                body = om.writeValueAsString(it.envelope), // whole envelope as JSON string
+                attributes = it.attributes,
+                receiptHandle = it.receiptHandle
+            )
+        }
+        return ReceiveResponse(msgs)
+    }
+
+    // -----------------------
+    // Ack / visibility
+    // -----------------------
+
+    suspend fun deleteMessage(queue: String, receiptHandle: String): Boolean = withContext(io) {
+        val receiptKey = RedisKeys.receipt(queue, receiptHandle)
+        val msgId = redis.opsForValue().get(receiptKey) ?: return@withContext false
+        redis.delete(receiptKey)
+        redis.opsForZSet().remove(RedisKeys.inflight(queue), msgId)
+        redis.delete(RedisKeys.msg(queue, msgId))
+        true
+    }
+
+    suspend fun changeMessageVisibility(queue: String, receiptHandle: String, visibilitySeconds: Int): Boolean =
+        withContext(io) {
+            val msgId = redis.opsForValue().get(RedisKeys.receipt(queue, receiptHandle)) ?: return@withContext false
+            val newDeadline = System.currentTimeMillis() + visibilitySeconds * 1000L
+            redis.opsForZSet().add(RedisKeys.inflight(queue), msgId, newDeadline.toDouble())
+            true
+        }
+
+    // -----------------------
+    // DLQ / admin / stats
+    // -----------------------
+
+
+    private suspend fun moveToDlq(queue: String, qm: QueueMessage) = withContext(io) {
+        val cfg = loadCfg(queue)
+        val dlq = cfg.dlqName ?: return@withContext
+        val srcKey = RedisKeys.msg(queue, qm.id)
+        val dstKey = RedisKeys.msg(dlq, qm.id)
+        redis.opsForValue().get(srcKey)?.let { redis.opsForValue().set(dstKey, it) }
+        redis.opsForList().leftPush(RedisKeys.dlq(dlq), qm.id)
+        redis.opsForZSet().remove(RedisKeys.inflight(queue), qm.id)
+        redis.delete(srcKey)
+    }
+    private data class Cfg(val visibilitySeconds: Int, val maxReceiveCount: Int, val dlqName: String?)
+
+    private suspend fun loadCfg(queue: String): Cfg = withContext(io) {
+        val h = redis.opsForHash<String, String>()
+        val m = h.entries(RedisKeys.cfg(queue))
+        val vis = m["visibilitySeconds"]?.toIntOrNull() ?: defaultVisibility
+        val max = m["maxReceiveCount"]?.toIntOrNull() ?: defaultMaxReceiveCount
+        val dlq = m["dlqName"].takeUnless { it.isNullOrBlank() }
+        Cfg(vis, max, dlq)
+    }
+
     suspend fun retryAllDlqsOnce(limitPerDlq: Int = 50): Int = withContext(io) {
-        val cfgKeys = scanKeys("q:*:cfg")   // was: redis.keys("q:*:cfg")
+        val cfgKeys = scanKeys("q:*:cfg")
         var totalMoved = 0
         for (cfgKey in cfgKeys) {
             val qName = cfgKey.substringAfter("q:").substringBefore(":cfg")
@@ -54,7 +261,6 @@ class LightSqsService(
         totalMoved
     }
 
-    /** Move up to [limit] messages from [dlqName] back to [mainQueue]. Resets receiveCount to 0. */
     private suspend fun retryDlqMessages(dlqName: String, mainQueue: String, limit: Int): Int = withContext(io) {
         val dlqList = RedisKeys.dlq(dlqName)
         var moved = 0
@@ -63,8 +269,7 @@ class LightSqsService(
             val srcKey = RedisKeys.msg(dlqName, msgId)
             val json = redis.opsForValue().get(srcKey) ?: return@repeat
 
-            // reset receiveCount so it can go through its normal retry window again
-            val qm = om.readValue(json, com.example.runitup.mobile.model.QueueMessage::class.java).copy(receiveCount = 0)
+            val qm = om.readValue(json, QueueMessage::class.java).copy(receiveCount = 0)
             val updatedJson = om.writeValueAsString(qm)
 
             redis.opsForValue().set(RedisKeys.msg(mainQueue, msgId), updatedJson)
@@ -95,120 +300,8 @@ class LightSqsService(
         }
     }
 
-    suspend fun sendMessage(
-        queue: String,
-        body: String,
-        attributes: Map<String, String> = emptyMap(),
-        delaySeconds: Int = 0
-    ): String = withContext(io) {
-        val id = UUID.randomUUID().toString()
-        val msgKey = RedisKeys.msg(queue, id)
-        val message = com.example.runitup.mobile.model.QueueMessage(id, body, attributes, delaySeconds, 0)
-        val json = om.writeValueAsString(message)
-        redis.opsForValue().set(msgKey, json)
-
-        if (delaySeconds > 0) {
-            val dueAt = Instant.now().toEpochMilli() + delaySeconds * 1000L
-            redis.opsForZSet().add(RedisKeys.delayed(queue), id, dueAt.toDouble())
-        } else {
-            redis.opsForList().leftPush(RedisKeys.ready(queue), id)
-        }
-        id
-    }
-
-    suspend fun receiveMessages(req: ReceiveRequest): ReceiveResponse {
-        val cfg = loadCfg(req.queue)
-        val wait = req.waitSeconds ?: defaultWaitSeconds
-        val visibility = (req.visibilitySeconds ?: cfg.visibilitySeconds).coerceAtLeast(1)
-        val deadline = System.currentTimeMillis() + wait * 1000L
-        val out = mutableListOf<ReceivedMessage>()
-
-        while (out.size < req.maxNumberOfMessages) {
-            // Try pop non-blocking
-            val msgId = withContext(io) { redis.opsForList().rightPop(RedisKeys.ready(req.queue)) }
-            if (msgId == null) {
-                if (System.currentTimeMillis() >= deadline) break
-                // non-blocking wait
-                delay(120)
-                continue
-            }
-
-            val msgKey = RedisKeys.msg(req.queue, msgId)
-            val json = withContext(io) { redis.opsForValue().get(msgKey) } ?: continue
-            val qm = om.readValue(json, com.example.runitup.mobile.model.QueueMessage::class.java)
-
-            val updated = qm.copy(receiveCount = qm.receiveCount + 1)
-            withContext(io) { redis.opsForValue().set(msgKey, om.writeValueAsString(updated)) }
-
-            // DLQ threshold?
-            if (updated.receiveCount > loadCfg(req.queue).maxReceiveCount) {
-                withContext(io) { moveToDlq(req.queue, updated) }
-                continue
-            }
-
-            // Lease (visibility)
-            val visDeadline = System.currentTimeMillis() + visibility * 1000L
-            withContext(io) {
-                redis.opsForZSet().add(RedisKeys.inflight(req.queue), updated.id, visDeadline.toDouble())
-            }
-            val receiptHandle = UUID.randomUUID().toString()
-            withContext(io) {
-                redis.opsForValue().set(RedisKeys.receipt(req.queue, receiptHandle), updated.id)
-            }
-
-            out += ReceivedMessage(
-                messageId = updated.id,
-                body = updated.body,
-                attributes = updated.attributes,
-                receiptHandle = receiptHandle
-            )
-        }
-        return ReceiveResponse(out)
-    }
-
-    suspend fun deleteMessage(queue: String, receiptHandle: String): Boolean = withContext(io) {
-        val receiptKey = RedisKeys.receipt(queue, receiptHandle)
-        val msgId = redis.opsForValue().get(receiptKey) ?: return@withContext false
-        redis.delete(receiptKey)
-        redis.opsForZSet().remove(RedisKeys.inflight(queue), msgId)
-        redis.delete(RedisKeys.msg(queue, msgId))
-        true
-    }
-
-    suspend fun changeMessageVisibility(queue: String, receiptHandle: String, visibilitySeconds: Int): Boolean =
-        withContext(io) {
-            val msgId = redis.opsForValue().get(RedisKeys.receipt(queue, receiptHandle)) ?: return@withContext false
-            val newDeadline = System.currentTimeMillis() + visibilitySeconds * 1000L
-            redis.opsForZSet().add(RedisKeys.inflight(queue), msgId, newDeadline.toDouble())
-            true
-        }
-
-    // ---- Queue admin / stats ----
-
-    private data class Cfg(val visibilitySeconds: Int, val maxReceiveCount: Int, val dlqName: String?)
-
-    private suspend fun loadCfg(queue: String): Cfg = withContext(io) {
-        val h = redis.opsForHash<String, String>()
-        val m = h.entries(RedisKeys.cfg(queue))
-        val vis = m["visibilitySeconds"]?.toIntOrNull() ?: defaultVisibility
-        val max = m["maxReceiveCount"]?.toIntOrNull() ?: defaultMaxReceiveCount
-        val dlq = m["dlqName"].takeUnless { it.isNullOrBlank() }
-        Cfg(vis, max, dlq)
-    }
-
-    private suspend fun moveToDlq(queue: String, qm: com.example.runitup.mobile.model.QueueMessage) = withContext(io) {
-        val cfg = loadCfg(queue)
-        val dlq = cfg.dlqName ?: return@withContext
-        val srcKey = RedisKeys.msg(queue, qm.id)
-        val dstKey = RedisKeys.msg(dlq, qm.id)
-        redis.opsForValue().get(srcKey)?.let { redis.opsForValue().set(dstKey, it) }
-        redis.opsForList().leftPush(RedisKeys.dlq(dlq), qm.id)
-        redis.opsForZSet().remove(RedisKeys.inflight(queue), qm.id)
-        redis.delete(srcKey)
-    }
-
     suspend fun listQueuesWithStats(): List<QueueOverview> = withContext(io) {
-        val cfgKeys = scanKeys("q:*:cfg")   // was: redis.keys("q:*:cfg")
+        val cfgKeys = scanKeys("q:*:cfg")
         val listOps = redis.opsForList()
         val zsetOps = redis.opsForZSet()
 
@@ -230,35 +323,11 @@ class LightSqsService(
         }.sortedBy { it.name }
     }
 
-    suspend fun deleteQueue(name: String, includeDlq: Boolean): Map<String, Any> = withContext(io) {
-        val deleted = deleteByPattern("q:$name:*")   // was: keys + delete(keys)
+    // ---- Maintenance ----
 
-        var dlqDeleted = 0L
-        if (includeDlq) {
-            val cfg = redis.opsForHash<String, String>().entries(RedisKeys.cfg(name))
-            val dlq = cfg["dlqName"].takeUnless { it.isNullOrBlank() }
-            if (dlq != null) {
-                dlqDeleted = deleteByPattern("q:$dlq:*")
-            }
-        }
-        mapOf("queue" to name, "deletedKeys" to deleted, "deletedDlqKeys" to dlqDeleted)
-    }
-
-    // One maintenance tick; called in the loop in init{}
-    //maintenanceOnce() function is one of the core background tasks that keeps your Redis-based queue system working correctly behind the scenes.
-    //It’s a housekeeping function that runs regularly (every second, in your case) to handle two things that make a queue like AWS SQS reliable:
-    //
-    //Promote delayed messages → move them into the “ready” queue when their delay expires.
-    //
-    //Re-queue expired in-flight messages → if a worker took a message but didn’t ack/delete it before its visibility timeout, put it back so another worker can process it.
-    //
-    //In SQS terms, it’s doing:
-    //"move messages from DelayQueue → ReadyQueue"
-    //
-    //"move expired leased messages → ReadyQueue"
     private suspend fun maintenanceOnce() = withContext(io) {
         val now = System.currentTimeMillis().toDouble()
-        val delayedKeys = scanKeys("q:*:delayed")   // was: redis.keys("q:*:delayed")
+        val delayedKeys = scanKeys("q:*:delayed")
         for (delayedKey in delayedKeys) {
             val q = delayedKey.substringAfter("q:").substringBefore(":delayed")
 
@@ -282,6 +351,7 @@ class LightSqsService(
             }
         }
     }
+
     /** Non-blocking key scan. */
     private suspend fun scanKeys(pattern: String, count: Long = 1000): Set<String> = withContext(io) {
         val out = mutableSetOf<String>()
@@ -321,23 +391,17 @@ class LightSqsService(
         deleted
     }
 
+    suspend fun deleteQueue(name: String, includeDlq: Boolean): Map<String, Any> = withContext(io) {
+        val deleted = deleteByPattern("q:$name:*")   // was: keys + delete(keys)
 
+        var dlqDeleted = 0L
+        if (includeDlq) {
+            val cfg = redis.opsForHash<String, String>().entries(RedisKeys.cfg(name))
+            val dlq = cfg["dlqName"].takeUnless { it.isNullOrBlank() }
+            if (dlq != null) {
+                dlqDeleted = deleteByPattern("q:$dlq:*")
+            }
+        }
+        mapOf("queue" to name, "deletedKeys" to deleted, "deletedDlqKeys" to dlqDeleted)
+    }
 }
-
-data class ReceiveRequest(
-    val queue: String,
-    val maxNumberOfMessages: Int = 1,
-    val waitSeconds: Int? = null,
-    val visibilitySeconds: Int? = null
-)
-
-data class ReceiveResponse(
-    val messages: List<ReceivedMessage>
-)
-data class ReceivedMessage(
-    val messageId: String,
-    val body: String,
-    val attributes: Map<String, String>,
-    val receiptHandle: String
-)
-

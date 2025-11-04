@@ -15,14 +15,11 @@ import java.io.IOException
 
 @Service
 class SendGridService(
-
-) : com.example.runitup.mobile.service.BaseService() {
-
     @Autowired
-    lateinit var sendGrid: SendGrid
+    private  val  sendGrid: SendGrid,
+    @Value("\${email}") private val  adminEmail: String) : BaseService() {
 
-    @Value("\${email}")
-    private lateinit var adminEmail: String
+
 
 
     // --- generic html sender (same as you had, kept concise) ---

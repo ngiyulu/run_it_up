@@ -3,6 +3,7 @@ package com.example.runitup.mobile.service.push
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.constants.AppConstant.SessionId
 import com.example.runitup.mobile.constants.ScreenConstant
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.service.PhoneDbService
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.service.PushService
@@ -16,7 +17,7 @@ class RunSessionPushNotificationService {
     lateinit var phoneRepository: PhoneDbService
     @Autowired
     lateinit var pushService: PushService
-    fun runSessionConfirmed(userId: String, runSession: com.example.runitup.mobile.model.RunSession){
+    fun runSessionConfirmed(userId: String, runSession: RunSession){
         val notification = PushNotification(
             title = runSession.title,
             body = "Session confirmed",
@@ -25,7 +26,7 @@ class RunSessionPushNotificationService {
         pushService.sendToPhones(getPhones(runSession, userId), notification)
     }
 
-    fun runSessionCancelled(userId:String, runSession: com.example.runitup.mobile.model.RunSession){
+    fun runSessionCancelled(userId:String, runSession: RunSession){
         val notification = PushNotification(
             title = runSession.title,
             body = "Session cancelled",
@@ -34,7 +35,7 @@ class RunSessionPushNotificationService {
         pushService.sendToPhones(getPhones(runSession, userId), notification)
     }
 
-    fun newSession(userId:String, runSession: com.example.runitup.mobile.model.RunSession){
+    fun newSession(userId:String, runSession: RunSession){
         val notification = PushNotification(
             title = runSession.title,
             body = "Session confirmed",
@@ -44,7 +45,7 @@ class RunSessionPushNotificationService {
     }
 
 
-    private fun getPhones(runSession: com.example.runitup.mobile.model.RunSession, userId: String): List<com.example.runitup.mobile.model.Phone>{
+    private fun getPhones(runSession: RunSession, userId: String): List<com.example.runitup.mobile.model.Phone>{
         return phoneRepository.findAllByUserIdIn(
             runSession.bookings.map {
                 it.userId }.filter {

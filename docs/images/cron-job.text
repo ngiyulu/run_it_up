@@ -1,0 +1,8 @@
+cron job list
+
+1. confirm: run a job that checks for all the runSession that are pending to see if there if it has enough people to confirm,
+when the user is within 1 hour and no one respond, cancel run
+2. start: run a job that checks for all runsession confirmed, when it's it's within 10 mins of start time, it will start the session
+3. complete: run a job that checks for all jobs that have been started, if it's 30 mins past end time, complete it
+4. job that goes through all the jobs that are confirmed, if there is a payment that has not been processed, retry
+5. job that runs at the end of every month and sends me the report of how much money we wade, how many people were in the app etc..

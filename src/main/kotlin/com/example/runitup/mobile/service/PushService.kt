@@ -13,24 +13,22 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class PushService{
-
-    @Autowired
-    lateinit var phoneRepo: PhoneRepository
-
+class PushService(
+    private  val phoneRepo: PhoneRepository,
     @Autowired
     @Qualifier(fcmPushGateway)
-    lateinit var fcm: PushGateway
+    private val fcm: PushGateway,
 
     @Autowired
     @Qualifier(apnsPushGateway)
-    lateinit var apns: PushGateway
-
+    private val apns: PushGateway,
 
     // this determines is we want to use firebase tos end to ios or fcm
     // android will always  use fcm
     @Value("\${push.useApnsDirect}")
-    var useApnsDirect: Boolean = false
+    var useApnsDirect: Boolean = false){
+
+
     @Transactional(readOnly = true)
     fun sendToPhone(phone: com.example.runitup.mobile.model.Phone, notif: PushNotification): PushResult {
         val gateway = when (phone.type) {

@@ -550,11 +550,7 @@ class BookingPricingAdjuster(
             updateAggregateState(bookingId, customerId, currency)
             false
         }
-
-
     }
-
-
 
     private fun cancelAllActiveAuthsForBooking(
         bookingId: String,

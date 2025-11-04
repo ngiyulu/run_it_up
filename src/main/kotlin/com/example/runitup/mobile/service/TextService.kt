@@ -1,14 +1,11 @@
 package com.example.runitup.mobile.service
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class TextService: com.example.runitup.mobile.service.BaseService() {
-    @Autowired
-    lateinit var messageSource: MessageSource
+class TextService( private val messageSource: MessageSource): BaseService() {
     fun  getText(key:String, locale:String): String{
         val localeObject = Locale.forLanguageTag(locale)
         return messageSource.getMessage(key, null, localeObject)
