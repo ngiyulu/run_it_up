@@ -1,11 +1,17 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.enum.RunStatus
+import com.example.runitup.mobile.model.Coordinate
+import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.LightSqsService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -18,6 +24,11 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
 
     @Autowired
     private lateinit var runSessionRepository: RunSessionRepository
+    @Autowired
+    lateinit var queueService: LightSqsService
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
     override fun execute(request: SessionListModel): List<RunSession> {
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val radius = 20.0
@@ -35,6 +46,14 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
             startInclusive = Date.from(startUtc),
             endExclusive = Date.from(endUtc)
         )
+        val data = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "User location update",
+            payload = CoordinateUpdateModel(auth.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.LOCATION_JOB, data)
+        }
         val content = page.content.map {
             it.updateStatus(auth.id.orEmpty())
             it
@@ -42,3 +61,5 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         return  content
     }
 }
+
+class CoordinateUpdateModel(val userId: String , val coordinate: Coordinate)

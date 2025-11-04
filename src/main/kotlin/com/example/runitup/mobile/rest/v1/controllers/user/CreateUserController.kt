@@ -3,18 +3,24 @@ package com.example.runitup.mobile.rest.v1.controllers.user
 
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateUserRequest
+import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.utility.AgeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import model.messaging.MessagingUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate
+import java.util.*
 
 @Service
 class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User>() {
@@ -26,6 +32,13 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
 
     @Autowired
     lateinit var paymentService: PaymentService
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
+
+    @Autowired
+    lateinit var queueService: LightSqsService
+
     override fun execute(request: Pair<String, CreateUserRequest>): User {
         val  (zoneId, userRequest)= request
         val existingUser = userRepository.findByAuth(userRequest.user.phoneNumber)
@@ -42,9 +55,22 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
         user.defaultPayment = AppConstant.WALLET
         val age = AgeUtil.ageFrom(user.dob, zoneIdString = zoneId)
         println("age = $age")
+
         if(!user.waiverSigned){
             user.waiverSigned = age >= 18
         }
+        if(user.waiverSigned ){
+            //
+            appScope.launch {
+                val data = JobEnvelope(
+                    jobId = UUID.randomUUID().toString(),
+                    taskType = "New user",
+                    payload = user.id.orEmpty()
+                )
+                queueService.sendJob(QueueNames.NEW_USER_JOB, data)
+            }
+        }
+
         userProvided(user)
         val stripeId = paymentService.createCustomer(user) ?: throw ApiRequestException(text("stripe_error"))
         user.stripeId = stripeId

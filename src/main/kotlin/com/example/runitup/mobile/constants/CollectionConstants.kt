@@ -16,6 +16,7 @@ object CollectionConstants {
     const val REFUND_COLLECTION = "otp"
     const val PAYMENT_STATE_COLLECTION = "payment_state"
     const val BOOKING_COLLECTION = "booking"
+    const val CRON_LOG_COLLECTION = "cronLog"
     const val USER_ACTION_COLLECTION = "user_action_required"
     const val BOOKING_STATE_COLLECTION = "booking_state"
     const val BOOKING_CHANGE_COLLECTION = "booking_change"

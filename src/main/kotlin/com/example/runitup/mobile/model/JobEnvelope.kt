@@ -8,5 +8,5 @@ data class JobEnvelope<T>(
     val payload: T,                 // your business payload
     val attempt: Int = 1,           // consumer can bump; we also have receiveCount in Redis
     val traceId: String? = null,    // for logs/tracing
-    val createdAtMs: Instant
+    val createdAtMs: Instant = Instant.now()
 )

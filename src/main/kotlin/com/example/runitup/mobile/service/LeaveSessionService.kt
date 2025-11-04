@@ -32,8 +32,6 @@ class LeaveSessionService {
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
 
-    @Autowired
-    lateinit var queueService: LightSqsService
 
     @Autowired
     lateinit var runSessionService: RunSessionService
@@ -61,6 +59,9 @@ class LeaveSessionService {
 
     @Autowired
     lateinit var appScope: CoroutineScope
+
+    @Autowired
+    lateinit var queueService: LightSqsService
 
 
      fun execute(request: CancelSessionModel, user:User, admin:AdminUser? = null): RunSession {
@@ -131,7 +132,7 @@ class LeaveSessionService {
         )
 
         appScope.launch {
-            queueService.sendJob<String>(QueueNames.JOB_WAIT_LIST, job)
+            queueService.sendJob(QueueNames.WAIT_LIST_JOB, job)
         }
 
     }
