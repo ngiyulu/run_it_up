@@ -27,6 +27,7 @@ class GcsImageService(
         "image/webp",
         "image/heic"
     )
+    private val logger = myLogger()
 
     data class UploadResult(
         val objectName: String,
@@ -158,7 +159,7 @@ class GcsImageService(
 
             UploadResult(objectName, url, MediaType.APPLICATION_PDF_VALUE)
         } catch (ex: Exception) {
-            println(ex)
+            logger.error("uploadUserWaiverPdf failed $ex")
             null
         }
     }

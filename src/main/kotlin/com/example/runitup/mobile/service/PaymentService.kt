@@ -28,6 +28,8 @@ class PaymentService: BaseService() {
     @Autowired
     lateinit var waitListPaymentService: WaitListPaymentService
 
+    private val logger = myLogger()
+
     @PostConstruct
     fun init() {
         // for stripe-java < 20.x
@@ -37,33 +39,19 @@ class PaymentService: BaseService() {
         // StripeConfiguration.setApiKey(stripeApiKey);
     }
 
-    fun createCustomer(user: User):String?{
+    fun createCustomer(user: User): CreateCustomerResult {
         return try {
             val params = CustomerCreateParams.builder()
                 .setName(user.getFullName())
                 .setEmail(user.email)
                 .build()
+
             val customer = Customer.create(params)
-            customer.id
-        }catch (ex: StripeException){
-            print(ex)
-            logger.logError(TAG, ex)
-            null
-        }
-    }
-
-    // Method to update the hold charge
-    fun updatePaymentIntentAmount(paymentIntentId: String, newAmountCents: Long): PaymentIntent? {
-        return try {
-            val params = PaymentIntentUpdateParams.builder()
-                .setAmount(newAmountCents)
-                .build()
-
-            val paymentIntent = PaymentIntent.retrieve(paymentIntentId)
-            paymentIntent.update(params)
-        }catch (exception: Exception){
-            logger.logError("updatePaymentIntentAmount", exception)
-            null
+            logger.info("Stripe customer created for user ${user.id}: ${customer.id}")
+            CreateCustomerResult(id = customer.id)
+        } catch (ex: StripeException) {
+            logger.error("Failed to create Stripe customer for user ${user.id}: ${ex.message}", ex)
+            CreateCustomerResult(error = ex.message)
         }
     }
 
@@ -155,7 +143,7 @@ class PaymentService: BaseService() {
         } catch (e: CardException) {
             // Card or SCA-specific issue thrown as exception (less common at PI.create time but possible)
             val se = e.stripeError
-            logger.logError("createCharge(CardException)", e)
+            logger.error("createCharge failed(Card or SCA-specific issue thrown as exception (less common at PI.create time but possible)) for customerId $customerId methodPaymentId = $paymentMethodId", e)
             CreateChargeResult(
                 ok = false,
                 status = null,
@@ -178,7 +166,7 @@ class PaymentService: BaseService() {
             )
         } catch (e: StripeException) {
             // API/connection/state errors
-            logger.logError("createCharge(StripeException)", e)
+            logger.error("createCharge failed(API/connection/state errors) for customerId $customerId methodPaymentId = $paymentMethodId", e)
             CreateChargeResult(
                 ok = false,
                 status = null,
@@ -196,7 +184,7 @@ class PaymentService: BaseService() {
             )
         } catch (e: Exception) {
             // Unexpected bug in our code
-            logger.logError("createCharge(Exception)", e)
+            logger.error("createCharge failed(bug in my code) for customerId $customerId methodPaymentId = $paymentMethodId", e)
             CreateChargeResult(
                 ok = false,
                 status = null,
@@ -303,24 +291,6 @@ class PaymentService: BaseService() {
         }
     }
 
-   // create
-    fun createSetupIntentForWaitList(sessionId:String, customerId: String, userId: String, savedPaymentMethodId: String): SetupIntent? {
-        return try{
-            val params = SetupIntentCreateParams.builder()
-                .setCustomer(customerId)
-                .setPaymentMethod(savedPaymentMethodId)
-                .putMetadata("sessionId", sessionId)
-                .putMetadata("userId", userId)
-                .setConfirm(true)      // confirm server-side
-                .setUsage(SetupIntentCreateParams.Usage.OFF_SESSION)
-                .build()
-            SetupIntent.create(params)
-        }catch (exception: Exception){
-            logger.logError("captureHold", exception)
-            null
-        }
-    }
-
 
     /**
      * Cancel the authorization (releases the hold).
@@ -420,39 +390,70 @@ class PaymentService: BaseService() {
         }
     }
 
-    fun deleteCard( cardId: String): PaymentMethod?{
-        return  try {
+    fun deleteCard(cardId: String): DeleteCardResult {
+        return try {
             val resource = PaymentMethod.retrieve(cardId)
             val params = PaymentMethodDetachParams.builder().build()
-            resource.detach(params)
-        }catch (exception: StripeException){
-            logger.logError("deleteCard", exception)
-            null
+            val detached = resource.detach(params)
+
+            logger.info("Successfully detached card ${detached.id} for customer ${detached.customer}")
+
+            DeleteCardResult(
+                ok = true,
+                deletedCardId = detached.id,
+                paymentMethod = detached
+            )
+        } catch (ex: StripeException) {
+            logger.error("Failed to detach card $cardId: ${ex.message}", ex)
+            DeleteCardResult(
+                ok = false,
+                deletedCardId = cardId,
+                error = ex.message
+            )
         }
     }
 
-    fun makeDefaultCard(customerId: String, paymentMethodId: String): Customer? {
-        return  try {
-            val pm = PaymentMethod.retrieve(paymentMethodId)
+    fun makeDefaultCard(customerId: String, paymentMethodId: String): MakeDefaultCardResult {
+        return try {
+            // Retrieve the payment method
+            var pm = PaymentMethod.retrieve(paymentMethodId)
+
+            // Attach if not already attached to the customer
             if (pm.customer == null || pm.customer != customerId) {
                 val attachParams = PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build()
-                pm.attach(attachParams) // (Best practice is to save via SetupIntent client-side)
+
+                pm = pm.attach(attachParams)
+                logger.info("Attached payment method ${pm.id} to customer $customerId")
             }
 
-            // 2) Set as customer's default for invoices/subscriptions
+            // Retrieve and update the customer’s default payment method
             val customer = Customer.retrieve(customerId)
-            val update = CustomerUpdateParams.builder()
+            val updateParams = CustomerUpdateParams.builder()
                 .setInvoiceSettings(
                     CustomerUpdateParams.InvoiceSettings.builder()
                         .setDefaultPaymentMethod(paymentMethodId)
                         .build()
-                ).build()
-            customer.update(update)
-        }catch (exception: Exception){
-            logger.logError("makeDefaultCard", exception)
-           null
+                )
+                .build()
+
+            val updatedCustomer = customer.update(updateParams)
+
+            logger.info("Set default payment method ${pm.id} for customer ${updatedCustomer.id}")
+
+            MakeDefaultCardResult(
+                ok = true,
+                customer = updatedCustomer,
+                paymentMethod = pm
+            )
+        } catch (ex: Exception) {
+            logger.error("Failed to set default payment method $paymentMethodId for customer $customerId: ${ex.message}", ex)
+
+            MakeDefaultCardResult(
+                ok = false,
+                error = ex.message
+            )
         }
     }
 
@@ -494,7 +495,7 @@ class PaymentService: BaseService() {
                 currency = pi.currency
             )
         }catch (exception: Exception){
-            logger.logError("createPaymentIntent", exception)
+            logger.error("createPaymentIntent failed", exception)
             null
         }
     }
@@ -506,35 +507,46 @@ class PaymentService: BaseService() {
             params["customer"] = customerId
             params["type"] = "card"
             val pmCollection: PaymentMethodCollection = PaymentMethod.list(params)
-            val defaultPayment = getDefaultPayment(customerId)
+            val defaultPaymentModel = getDefaultPayment(customerId)
+            if(!defaultPaymentModel.ok){
+                return  null
+            }
+            val defaultPayment = defaultPaymentModel.paymentMethodId
             print("default payment = $defaultPayment")
             return pmCollection.data.map {
                 it.mapToUserPayment(it.id == defaultPayment)
             }
         }catch (exception: StripeException){
-            logger.logError("listOfCustomerCards", exception)
+            logger.error("listOfCustomerCards failed", exception)
             null
         }
 
     }
 
-    fun createWaitListPayment( customerId: String,
-                               paymentMethodId: String,
-                               idempotencyKey: String?){
-        waitListPaymentService.ensureOffSessionReadyServerSide(customerId, paymentMethodId, idempotencyKey)
+    fun getDefaultPayment(customerId: String): DefaultPaymentMethodResult {
+        return try {
+            val params = CustomerRetrieveParams.builder()
+                .addExpand("invoice_settings.default_payment_method")
+                .build()
+
+            val customer = Customer.retrieve(customerId, params, null)
+            val paymentMethodId = customer.invoiceSettings?.defaultPaymentMethod // always String
+
+            DefaultPaymentMethodResult(
+                ok = true,
+                customerId = customerId,
+                paymentMethodId = paymentMethodId,
+                paymentMethod = null
+            )
+        } catch (ex: StripeException) {
+            logger.error("Failed to get default payment method for customer {}: {}", customerId, ex.message, ex)
+            DefaultPaymentMethodResult(
+                ok = false,
+                customerId = customerId,
+                error = ex.message
+            )
+        }
     }
-
-    private fun getDefaultPayment(customerId: String): String?{
-        // 2) Get the customer's default payment method id (expanded for convenience)
-        val custParams = CustomerRetrieveParams.builder()
-            .addExpand("invoice_settings.default_payment_method")
-            .build()
-        val customer = Customer.retrieve(customerId, custParams, null)
-
-        // In stripe-java, default_payment_method is expandable; get the id if present
-        return customer.invoiceSettings?.defaultPaymentMethod
-    }
-
 
 }
 
@@ -583,4 +595,36 @@ data class StripeError(
     val code: String? = null,
     val message: String? = null,
     val type: String? = null
+)
+
+
+data class CreateCustomerResult(
+    val id: String? = null,
+    val error: String? = null
+) {
+    val ok: Boolean get() = id != null && error == null
+}
+
+
+data class DeleteCardResult(
+    val ok: Boolean,
+    val deletedCardId: String? = null,
+    val error: String? = null,
+    val paymentMethod: PaymentMethod? = null
+)
+
+data class MakeDefaultCardResult(
+    val ok: Boolean,
+    val customer: Customer? = null,
+    val paymentMethod: PaymentMethod? = null,
+    val error: String? = null
+)
+
+
+data class DefaultPaymentMethodResult(
+    val ok: Boolean,
+    val customerId: String,
+    val paymentMethodId: String? = null,
+    val paymentMethod: PaymentMethod? = null,
+    val error: String? = null
 )

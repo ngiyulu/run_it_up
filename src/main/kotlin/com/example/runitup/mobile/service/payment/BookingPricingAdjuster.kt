@@ -10,6 +10,7 @@ import com.example.runitup.mobile.rest.v1.dto.DeltaHoldIncreaseResult
 import com.example.runitup.mobile.service.ChangeBookingEventService
 import com.example.runitup.mobile.service.PaymentAuthorizationService
 import com.example.runitup.mobile.service.PaymentService
+import com.example.runitup.mobile.service.myLogger
 import com.stripe.param.PaymentIntentCancelParams
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
@@ -47,6 +48,7 @@ class BookingPricingAdjuster(
     private val changeBookingEventService: ChangeBookingEventService
 ): BasePaymentService(authRepo, bookingStateRepo) {
 
+    private val logger = myLogger()
     fun createPrimaryHoldWithChange(
         bookingId: String,
         userId: String,
@@ -115,6 +117,7 @@ class BookingPricingAdjuster(
                 paymentIntentId = create.paymentIntentId
             )
         } catch (e: Exception) {
+            logger.error("createPrimaryHoldWithChange failed ${e.message}")
             PrimaryHoldResult(ok = false, message = "Error creating primary hold: ${e.message}")
         }
     }
@@ -206,6 +209,7 @@ class BookingPricingAdjuster(
                 message = create.message ?: "Delta hold authorized"
             )
         } catch (e: Exception) {
+            logger.error("Error creating primary hold: ${e.message}")
             DeltaHoldIncreaseResult(
                 ok = false,
                 bookingId = bookingId,
@@ -259,6 +263,7 @@ class BookingPricingAdjuster(
                 )
             )
         } catch (e: Exception) {
+            logger.error("handleDecreaseBeforeCapture failed ${e.message}")
             return DecreaseBeforeCaptureResult(
                 ok = false,
                 bookingId = bookingId,

@@ -4,8 +4,8 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.security.UserPrincipal
-import com.example.runitup.mobile.service.LoggerService
 import com.example.runitup.mobile.service.TextService
+import com.google.cloud.firestore.telemetry.MetricsUtil.logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.security.core.context.SecurityContextHolder
@@ -17,12 +17,8 @@ abstract class BaseController<R, P> {
     @Autowired
     protected lateinit var cacheManager: MyCacheManager
 
-
     @Autowired
     protected lateinit var textService: TextService
-
-    @Autowired
-    protected lateinit var logger: LoggerService
 
     var TAG = this.javaClass.simpleName
 

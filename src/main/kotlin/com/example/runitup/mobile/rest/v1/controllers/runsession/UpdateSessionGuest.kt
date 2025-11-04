@@ -12,6 +12,7 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
+import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.BookingUpdateService
 import com.example.runitup.mobile.service.payment.DeltaType
@@ -42,6 +43,8 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
     @Autowired
     lateinit var bookingStateRepo: BookingPaymentStateRepository
 
+    private val logger = myLogger()
+
 
     override fun execute(request: JoinSessionModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
@@ -59,7 +62,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
         val signedUpUser = run.bookingList.find { it.userId == user.id }
         // this means the user making the call is not part of the session
         if (signedUpUser == null) {
-            logger.logError("error updating session, user is null", null)
+            logger.error("error updating session, user is null {}", request)
             throw ApiRequestException(text("invalid params"))
         }
         val booking = bookingRepository.findByUserIdAndRunSessionIdAndStatusIn(

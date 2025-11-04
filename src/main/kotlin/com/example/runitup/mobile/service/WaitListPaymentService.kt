@@ -19,6 +19,8 @@ class WaitListPaymentService {
 
     @Autowired
     lateinit var waitlistSetupRepo: WaitlistSetupStateRepository
+
+    private val logger = myLogger()
     /**
      * Ensure an already-saved card is approved for future OFF_SESSION use.
      * It confirms a SetupIntent server-side with the saved payment method.
@@ -135,7 +137,7 @@ class WaitListPaymentService {
      */
     fun cancelWaitlistSetupIntent(setupIntentId: String): WaitlistSetupState? {
         val si = SetupIntent.retrieve(setupIntentId)
-        val canceled = si.cancel(SetupIntentCancelParams.builder().build())
+        si.cancel(SetupIntentCancelParams.builder().build())
 
         val row = waitlistSetupRepo.findBySetupIntentId(setupIntentId) ?: return null
         row.status = SetupStatus.CANCELED
@@ -172,6 +174,7 @@ class WaitListPaymentService {
                 SmartSetupResult(ok = true, setupIntentId = si.id, status = si.status)
             }
         } catch (e: CardException) {
+            logger.error("ensureOffSessionReadyServerSide failed ${e.message}")
             val stripeErr = e.stripeError
             val si = stripeErr?.setupIntent  // ✅ correct way to access the SI from the exception
             SmartSetupResult(
@@ -213,6 +216,7 @@ class WaitListPaymentService {
                 message = "SetupIntent successfully canceled."
             )
         } catch (e: StripeException) {
+            logger.error("cancelSetupIntent failed ${e.message}")
             CancelIntentResult(
                 ok = false,
                 intentId = intentId,
@@ -220,6 +224,7 @@ class WaitListPaymentService {
                 message = e.message
             )
         } catch (e: Exception) {
+            logger.error("cancelSetupIntent failed ${e.message}")
             CancelIntentResult(
                 ok = false,
                 intentId = intentId,

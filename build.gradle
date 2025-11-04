@@ -68,6 +68,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.9")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // or brave bridge
+    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     runtimeOnly("io.opentelemetry:opentelemetry-exporter-otlp")     // if you export traces
 
 

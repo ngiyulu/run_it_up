@@ -28,9 +28,10 @@ class ErrorOccurredJob(
     private val cacheManager: MyCacheManager
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.PAYMENT_FAILED_JOB, objectMapper) {
 
+
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        log.info("ErrorOccurredJob is running")
+        logger.info("ErrorOccurredJob is running")
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val payload = data.payload
         withContext(Dispatchers.IO) {

@@ -27,7 +27,7 @@ class RunSessionConfirmedConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        log.info("RunSessionConfirmedConsumer is running")
+        logger.info("RunSessionConfirmedConsumer is running")
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val payload = data.payload
         withContext(Dispatchers.IO) {

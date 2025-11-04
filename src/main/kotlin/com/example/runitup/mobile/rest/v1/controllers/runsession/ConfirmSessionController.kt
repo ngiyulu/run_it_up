@@ -9,6 +9,7 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.RunSessionService
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -28,6 +29,8 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
+    private val logger = myLogger()
+
 
     override fun execute(request: ConfirmSessionModel): RunSession {
         val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
@@ -35,7 +38,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             return run
         }
         if(run.status != RunStatus.PENDING){
-            logger.logError("trying to confirm a run session that's not in pending", run)
+            logger.error("user is trying to confirm a run session that's not in pending for run {}", run.id)
             return run
         }
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
