@@ -1,0 +1,44 @@
+package com.example.runitup.mobile.rest.v1.controllers.user
+
+import com.example.runitup.common.repo.AdminUserRepository
+import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.model.UserType
+import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.PaymentService
+import com.example.runitup.mobile.service.http.MessagingService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Service
+
+@Service
+class LinkUserToAdminController: BaseController<LinkUserToAdminModel, User>() {
+    @Autowired
+    lateinit var paymentService: PaymentService
+
+    @Autowired
+    lateinit var adminUserRepository: AdminUserRepository
+
+    override fun execute(request: LinkUserToAdminModel): User {
+        val auth = SecurityContextHolder.getContext().authentication
+        val savedUser = auth.principal as UserPrincipal
+        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
+        val adminDb = adminUserRepository.findById(request.admin)
+        if(!adminDb.isPresent){
+            throw ApiRequestException(text("admin_not_found"))
+        }
+        val admin = adminDb.get()
+        user.linkedAdmin = admin.id
+        user.userType = UserType.ADMIN
+        user.stripeId?.let { it ->
+            user.payments = paymentService.listOfCustomerCards(it)
+        }
+        return user
+
+
+
+    }
+}
+
+class LinkUserToAdminModel(val admin:String)

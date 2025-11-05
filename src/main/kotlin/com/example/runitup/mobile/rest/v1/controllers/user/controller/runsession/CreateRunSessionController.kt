@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession
 
+import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
@@ -27,6 +28,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
     lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
+    lateinit var adminUserRepository: AdminUserRepository
+
+    @Autowired
     lateinit var gymRepository: GymRepository
 
     @Autowired
@@ -48,6 +52,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         val auth =  SecurityContextHolder.getContext().authentication
         val savedAdmin = auth.principal as AdminPrincipal
         val runGym = gymDb.get()
+
         val run = RunSession(
             id = ObjectId().toString(),
             gym = runGym,
@@ -66,7 +71,8 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             minimumPlayer = request.minPlayer,
             maxPlayer = request.maxPlayer,
             description = request.description,
-            duration = 0
+            duration = 0,
+            createdBy = request.createdBy
             ).apply {
             createdAt = Instant.now()
             status = RunStatus.PENDING
@@ -104,7 +110,6 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             title = runSession.getConversationTitle())
         messagingService.createConversation(
             CreateConversationModel(runSession.id.orEmpty(), conversation)
-
         ).block()
 
         return  runSession

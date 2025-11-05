@@ -63,7 +63,8 @@ data class RunSession(
     var startedAt:Instant? = null,
     var completedAt:Instant? = null,
     var bookingPaymentState: BookingPaymentState? = null,
-    var lockStart:Boolean = false
+    var lockStart:Boolean = false,
+    val createdBy: String? = null
 ): BaseModel(){
 
 

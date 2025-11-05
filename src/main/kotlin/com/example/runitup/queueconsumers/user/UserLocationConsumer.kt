@@ -24,7 +24,6 @@ class UserLocationConsumer(
     private val userRepository: UserRepository
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.LOCATION_JOB, objectMapper) {
 
-
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("UserLocationConsumer is running")

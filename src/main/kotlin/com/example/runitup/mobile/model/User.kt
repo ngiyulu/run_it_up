@@ -40,11 +40,13 @@ data class User(
     var skillLevel: SkillLevel? = null,
     var creator: Creator = Creator.USER,
     var coordinate: Coordinate? = null,
-    var actions:List<UserActionRequired> = mutableListOf()
+    var actions:List<UserActionRequired> = mutableListOf(),
+    var linkedAdmin: String? = null,
+    var userType: UserType? = null
 ): BaseModel(){
 
     fun getFullName(): String{
-        return "$firstName ${lastName}"
+        return "$firstName $lastName"
     }
 
     fun approveWaiver(adminId:String, waiverImageUrl:String?, isAuthorized:Boolean){
@@ -60,6 +62,10 @@ data class User(
 
 enum class Creator{
     ADMIN, USER
+}
+
+enum class UserType{
+    ADMIN, SUPER_ADMIN
 }
 
 class Coordinate(val longitude: Long, val latitude: Long)
