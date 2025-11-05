@@ -2,14 +2,18 @@ package com.example.runitup.mobile.handler
 
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.rest.v1.dto.ApiError
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
+
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-@ControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice
 class ApiExceptionHandler {
     @ExceptionHandler(value = [ApiRequestException::class])
     fun handleApiRequestException(e: ApiRequestException): ResponseEntity<Any> {

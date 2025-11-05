@@ -1,6 +1,9 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.rest.v1.controllerprovider.UserControllersProvider
+import com.example.runitup.mobile.rest.v1.controllers.user.LinkUserToAdminController
+import com.example.runitup.mobile.rest.v1.controllers.user.LinkUserToAdminModel
 import com.example.runitup.mobile.rest.v1.controllers.user.VerifyPhoneNumberController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
@@ -15,7 +18,10 @@ import org.springframework.web.bind.annotation.*
 class UserRestController {
 
     @Autowired
-    lateinit var userControllersProvider: com.example.runitup.mobile.rest.v1.controllerprovider.UserControllersProvider
+    lateinit var userControllersProvider: UserControllersProvider
+
+    @Autowired
+    lateinit var linkedUserToAdminController: LinkUserToAdminController
 
 
 
@@ -62,6 +68,11 @@ class UserRestController {
     @PostMapping("/update/name")
     fun updateName(@RequestBody model: UpdateNameModel): User {
         return userControllersProvider.updateNameController.execute(model)
+    }
+
+    @PostMapping("/link")
+    fun linkUserToAdmin(@RequestBody model: LinkUserToAdminModel): User {
+        return linkedUserToAdminController.execute(model)
     }
 
     @PostMapping("/update/email")
