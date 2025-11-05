@@ -7,6 +7,7 @@ object QueueNames {
     const val LOCATION_JOB = "LOCATION_JOB"
     const val NEW_USER_JOB = "NEW_USER_JOB"
     const val RUN_CONFIRMATION_JOB = "RUN_CONFIRMATION_JOB"
+    const val RUN_PROCESS_PAYMENT = "RUN_PROCESS_PAYMENT"
     const val PAYMENT_FAILED_JOB = "PAYMENT_FAILED_JOB"
     const val RUN_CANCELLED_JOB = "RUN_CANCELLED_JOB"
 

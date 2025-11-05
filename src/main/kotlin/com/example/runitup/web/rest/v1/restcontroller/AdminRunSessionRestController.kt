@@ -32,7 +32,7 @@ class AdminRunSessionRestController {
     lateinit var cacheManager: MyCacheManager
 
     @Autowired
-    lateinit var createSessionController: CreateSessionController
+    lateinit var createSessionController: CreateRunSessionController
 
     @Autowired
     lateinit var leaveSessionAdminController: LeaveSessionAdminController

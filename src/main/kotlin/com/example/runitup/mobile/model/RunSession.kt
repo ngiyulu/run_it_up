@@ -55,9 +55,15 @@ data class RunSession(
     var showUpdatePaymentButton: Boolean = true,
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
+    var confirmedAt:Instant? = null,
+    var statusBeforeCancel: RunStatus = RunStatus.PENDING,
     // show remove button on the web portal
     var showRemoveButton: Boolean = true,
-    var bookingPaymentState: BookingPaymentState? = null
+    var cancelledAt:Instant? = null,
+    var startedAt:Instant? = null,
+    var completedAt:Instant? = null,
+    var bookingPaymentState: BookingPaymentState? = null,
+    var lockStart:Boolean = false
 ): BaseModel(){
 
 
@@ -81,14 +87,12 @@ data class RunSession(
             JoinButtonStatus.JOIN
         }
         val isPendingOrConfirmed = status == RunStatus.PENDING || status == RunStatus.CONFIRMED
-        if(isParticiPant(userId)){
-            userStatus = UserButtonStatus.PARTICIPANT
-        }
-        else if(isWaitlisted(userId)){
-            userStatus = UserButtonStatus.WAITLISTED
-        }
-        else {
-            userStatus = UserButtonStatus.NONE
+        userStatus = if(isParticiPant(userId)){
+            UserButtonStatus.PARTICIPANT
+        } else if(isWaitlisted(userId)){
+            UserButtonStatus.WAITLISTED
+        } else {
+            UserButtonStatus.NONE
         }
         showUpdatePaymentButton = status == RunStatus.PENDING
         guestUpdateAllowed = isPendingOrConfirmed

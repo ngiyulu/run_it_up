@@ -45,7 +45,10 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
         if(!run.isDeletable()){
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
+        // this is so we remeber what the status was for cancelling job
+        run.statusBeforeCancel = run.status
         run.status = RunStatus.CANCELLED
+        run.cancelledAt = Instant.now()
         val job = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "RAW_STRING",
@@ -53,6 +56,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
             traceId = UUID.randomUUID().toString(),
             createdAtMs = Instant.now()
         )
+
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_CANCELLED_JOB, job)
         }

@@ -36,9 +36,7 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
         }
         """
     }
-    fun findByLocationNear(point: Point, distance: Distance): List<RunSession>
-    fun findAllByDate(date: LocalDate): List<RunSession>
-    fun findAllByDateBetween(start: LocalDate, end: LocalDate): List<RunSession>
+    fun findByStatus(status: RunStatus): List<RunSession>
 
     @Query("{ 'date': { \$gte: ?0, \$lt: ?1 } }")
     fun findAllByDateBetween(startInclusive: Date, endExclusive: Date, pageable: Pageable): Page<RunSession>
@@ -46,6 +44,7 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
 
     @Query("{ 'date': { \$eq: ?0} }")
     fun findAllByDatePageable(startInclusive: Date, pageable: Pageable): Page<RunSession>
+
 
     @Query(value = QUERY_NEAR_EXCLUDE_DAY_RANGE)
     fun findJoinableRunsExcludingUserNearOnLocalDay(

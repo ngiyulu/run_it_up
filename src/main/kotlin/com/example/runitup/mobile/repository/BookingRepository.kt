@@ -33,4 +33,6 @@ interface BookingRepository : MongoRepository<Booking, String> {
     @Query("{'createdAt': { \$eq: ?0} }")
     fun findByDate( date: Date, pageable: Pageable): Page<Booking>
 
+
+
 }
