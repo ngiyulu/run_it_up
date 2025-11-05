@@ -19,8 +19,6 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
 
 
     override fun execute(request: CancelSessionModel): RunSession {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
-        return leaveSessionService.execute(request, user)
+        return leaveSessionService.execute(request)
     }
 }

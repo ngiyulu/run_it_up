@@ -1,4 +1,4 @@
-package com.example.runitup.queueconsumers
+package com.example.runitup.queueconsumers.payment
 
 
 import com.example.runitup.mobile.cache.MyCacheManager
@@ -6,11 +6,10 @@ import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.service.ClickSendSmsService
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
-import com.example.runitup.mobile.service.TextService
+import com.example.runitup.queueconsumers.BaseQueueConsumer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
@@ -62,4 +61,3 @@ class PaymentFailedConsumer(
 
 }
 
-data class PaymentFailedModel(val bookingId:String, val runSessionId:String)

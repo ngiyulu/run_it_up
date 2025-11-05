@@ -21,7 +21,7 @@ import java.time.Instant
 import java.util.*
 
 @Service
-class CreateSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
+class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
@@ -73,6 +73,9 @@ class CreateSessionController: BaseController<CreateRunSessionRequest, RunSessio
             gym = runGym
             total = 0.0
             location = runGym.location
+        }
+        if(!paymentConfig.payment){
+            run.amount = 0.0
         }
         if(run.minimumPlayer >= run.maxPlayer){
             throw ApiRequestException(text("invalid_min_player"))

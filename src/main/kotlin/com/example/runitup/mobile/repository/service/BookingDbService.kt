@@ -33,4 +33,11 @@ class BookingDbService: BaseService() {
         val res: DeleteResult = mongoTemplate.remove(query, Booking::class.java)
         return res.deletedCount > 0
     }
+
+    fun getBookingList(runSessionId:String): List<Booking>{
+        return bookingRepository.findByRunSessionIdAndStatusIn(
+            runSessionId,
+            mutableListOf(BookingStatus.JOINED)
+        )
+    }
 }

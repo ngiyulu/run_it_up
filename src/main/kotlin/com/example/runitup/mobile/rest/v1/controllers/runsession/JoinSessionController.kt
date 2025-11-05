@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.enum.PaymentStatus
+import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToCents
 import com.example.runitup.mobile.model.Booking
@@ -152,7 +153,14 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             payload = JoinSessionQueueModel(user.id.toString(), run.id.orEmpty()),
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
+            // this event is to send a text message to user to let them know they have joined
+            // the run successfully
+            // if the session is already confriemd, we don't need to confirm again
+            if(run.status == RunStatus.PENDING){
+                queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
+            }
+            // we have to trigger this event to confirm session if the number of participants have been reached
+            queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
         }
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)

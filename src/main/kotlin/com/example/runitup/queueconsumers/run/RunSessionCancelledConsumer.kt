@@ -1,4 +1,4 @@
-package com.example.runitup.queueconsumers
+package com.example.runitup.queueconsumers.run
 
 
 import com.example.runitup.mobile.enum.RunStatus
@@ -12,10 +12,10 @@ import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
-import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.RefundService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
+import com.example.runitup.queueconsumers.BaseQueueConsumer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
@@ -46,17 +46,15 @@ class RunSessionCancelledConsumer(
             val run = runSessionDb.get()
             if(!run.isSessionFree()){
                 // this means payment were processed so we need a refund
-                if(run.status == RunStatus.ONGOING || run.status == RunStatus.CONFIRMED){
+                if(run.statusBeforeCancel == RunStatus.ONGOING || run.statusBeforeCancel == RunStatus.CONFIRMED){
                     refund(run)
                 }
                 else if(run.status == RunStatus.PENDING){
                     cancelHold(run)
                 }
             }
-
             run.bookingList.forEach {
                 runSessionPushNotificationService.runSessionCancelled(it.userId, run)
-
             }
         }
     }

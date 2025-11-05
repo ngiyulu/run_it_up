@@ -1,12 +1,20 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.BookingStatus
+import com.example.runitup.mobile.model.Otp
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
+import com.mongodb.client.result.UpdateResult
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class RunSessionService(): BaseService(){
@@ -20,6 +28,9 @@ class RunSessionService(): BaseService(){
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
+
+    @Autowired
+    lateinit var mongoTemplate: MongoTemplate
 
     @Autowired
     lateinit var bookingPaymentStateRepository: BookingPaymentStateRepository
@@ -41,6 +52,17 @@ class RunSessionService(): BaseService(){
             }
         }
         return  session
+    }
+    fun confirmRunSession(runSessionId:String): UpdateResult{
+        val q = Query(
+            Criteria.where("_id").`is`(runSessionId)
+                .and("status").`is`(RunStatus.CONFIRMED)
+        )
+        val u = Update()
+            .set("status", RunStatus.CONFIRMED)
+            .set("confirmedAt", Instant.now())
+
+        return mongoTemplate.updateFirst(q, u, RunSession::class.java)
     }
 
     fun updateRunSession(runSession: RunSession): RunSession{
