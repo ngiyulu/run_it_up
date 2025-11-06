@@ -1,6 +1,9 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.rest.v1.controllerprovider.SessionControllersProvider
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.CreateRunSessionController
+import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.mobile.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel
@@ -21,6 +24,9 @@ import java.time.ZoneId
 @RequestMapping("/api/v1/run-session")
 @RestController
 class RunSessionRestController {
+
+    @Autowired
+    lateinit var createSessionController: CreateRunSessionController
 
     @Autowired
     lateinit var sessionControllersProvider: SessionControllersProvider
@@ -109,5 +115,10 @@ class RunSessionRestController {
     @PostMapping("/payment/intent")
     fun createPaymentIntent(@RequestBody model: CreatePIRequest): CreatePIResponse {
         return sessionControllersProvider.createPaymentIntent.execute(model)
+    }
+
+    @PostMapping("/create")
+    fun create(@RequestBody model: CreateRunSessionRequest): RunSession {
+        return createSessionController.execute(model)
     }
 }
