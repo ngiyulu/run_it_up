@@ -41,9 +41,15 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
     @Query("{ 'date': { \$gte: ?0, \$lt: ?1 } }")
     fun findAllByDateBetween(startInclusive: Date, endExclusive: Date, pageable: Pageable): Page<RunSession>
 
-
     @Query("{ 'date': { \$eq: ?0} }")
     fun findAllByDatePageable(startInclusive: Date, pageable: Pageable): Page<RunSession>
+
+    @Query("{ 'date': { \$eq: ?0 }, 'hostedBy': { \$eq: ?1 } }")
+    fun findAllByDateAndHostedBy(
+        date: Date,
+        hostedBy: String,
+        pageable: Pageable
+    ): Page<RunSession>
 
 
     @Query(value = QUERY_NEAR_EXCLUDE_DAY_RANGE)
@@ -54,6 +60,6 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
         maxDistanceMeters: Double,
         statuses: List<RunStatus>,
         startInclusive: Date, endExclusive: Date,
-        pageable: org.springframework.data.domain.Pageable
-    ): org.springframework.data.domain.Page<RunSession>
+        pageable: Pageable
+    ): Page<RunSession>
 }

@@ -31,12 +31,11 @@ class LinkUserToAdminController: BaseController<LinkUserToAdminModel, User>() {
         val admin = adminDb.get()
         user.linkedAdmin = admin.id
         user.userType = UserType.ADMIN
-        user.stripeId?.let { it ->
+        user.stripeId?.let {
             user.payments = paymentService.listOfCustomerCards(it)
         }
-        return user
 
-
+        return  cacheManager.updateUser(user)
 
     }
 }
