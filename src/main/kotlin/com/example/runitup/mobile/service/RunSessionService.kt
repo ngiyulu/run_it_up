@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.*
@@ -133,7 +134,7 @@ class RunSessionService(): BaseService(){
         return updateRunSession(run)
     }
 
-    fun startRunSession(model: StartSessionModel, run: RunSession): StartRunSessionModel{
+    fun startRunSession(model: StartSessionModel, run: RunSession, adminId: String? = null): StartRunSessionModel{
         if(run.status != RunStatus.CONFIRMED){
             return StartRunSessionModel(StartRunSessionModelEnum.CONFIRMED)
         }
@@ -141,6 +142,11 @@ class RunSessionService(): BaseService(){
             return  StartRunSessionModel(StartRunSessionModelEnum.SUCCESS, run)
         }
         run.status = RunStatus.ONGOING
+        run.startedAt = Instant.now()
+        adminId?.let {
+            run.startedBy = it
+        }
+
         val updated = updateRunSession(run)
         return StartRunSessionModel(StartRunSessionModelEnum.SUCCESS, updated)
     }
