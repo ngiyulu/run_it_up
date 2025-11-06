@@ -53,6 +53,7 @@ data class RunSession(
     var buttonStatus: JoinButtonStatus = JoinButtonStatus.JOIN,
     var userStatus: UserButtonStatus = UserButtonStatus.NONE,
     var showUpdatePaymentButton: Boolean = true,
+    var showStartButton: Boolean = false,
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
     var confirmedAt:Instant? = null,
@@ -69,6 +70,10 @@ data class RunSession(
 
     fun isSessionFree(): Boolean{
         return amount == 0.0
+    }
+    fun updateStatus(){
+        isFree = isSessionFree()
+        showStartButton = status == RunStatus.CONFIRMED
     }
     fun updateStatus(userId: String){
         isFree = isSessionFree()

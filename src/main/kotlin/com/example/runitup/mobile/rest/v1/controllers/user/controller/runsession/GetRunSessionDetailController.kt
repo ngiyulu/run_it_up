@@ -5,6 +5,7 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,19 +20,19 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
     @Autowired
     lateinit var runSessionService: RunSessionService
 
-    @Autowired
-    lateinit var authRepo: PaymentAuthorizationRepository
 
     @Autowired
-    lateinit var bookingPaymentStateRepository: BookingPaymentStateRepository
+    lateinit var bookingDbService: BookingDbService
+
+
+
 
     override fun execute(request: String): RunSession {
         val run = runSessionService.getRunSession(request) ?: throw  ApiRequestException("not_found")
-        run.bookings.forEach {
-            it.bookingPaymentState = bookingPaymentStateRepository.findByBookingId(it.id.orEmpty())
-            val active = authRepo.findByBookingId(it.id.orEmpty())
-            it.paymentAuthorization = active
-        }
+        run.updateStatus()
+        run.bookings = run.bookings.map {
+            bookingDbService.getBookingDetails(it)
+        }.toMutableList()
         return  run
     }
 }
