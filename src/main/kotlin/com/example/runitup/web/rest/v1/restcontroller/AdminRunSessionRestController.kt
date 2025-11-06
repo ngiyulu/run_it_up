@@ -41,6 +41,8 @@ class AdminRunSessionRestController {
     lateinit var runSessionController: GetUserRunSessionController
 
 
+
+
     @Autowired
     lateinit var createRefundController: CreateRefundController
 
@@ -70,7 +72,6 @@ class AdminRunSessionRestController {
             it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
             it
         }
-        // If you used the Instant overload, pass startUtc/endUtc directly.
     }
 
     @GetMapping("/by-range")
@@ -87,6 +88,8 @@ class AdminRunSessionRestController {
             Sort.by("created_at"))
         return getUserRunSessionControllerByRange.execute(GetUserRunSessionControllerByRangeModel(userId, start, end, pageable))
     }
+
+
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: String): RunSession? {
