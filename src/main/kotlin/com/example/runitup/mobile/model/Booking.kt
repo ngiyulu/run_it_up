@@ -29,6 +29,7 @@ class Booking (
     var isLockedAt: Instant? = null,
     var promotedAt: Instant? = null,
     var customerId:String? = null,
+    var paymentAuthorization: List<PaymentAuthorization> = emptyList(),
     var bookingPaymentState: BookingPaymentState? = null
 ): BaseModel(){
 
