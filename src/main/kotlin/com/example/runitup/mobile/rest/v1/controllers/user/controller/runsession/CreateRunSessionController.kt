@@ -10,6 +10,7 @@ import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.service.http.MessagingService
+import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.web.security.AdminPrincipal
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import model.messaging.Conversation
@@ -36,6 +37,8 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
     @Autowired
     lateinit var messagingService: MessagingService
 
+    private val logger = myLogger()
+
 
     @Autowired
     lateinit var paymentConfig: AppConfig
@@ -49,10 +52,15 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         if(request.startTime.isAfter(request.endTime)){
             throw ApiRequestException("time_invalid")
         }
-        val auth =  SecurityContextHolder.getContext().authentication
-        val savedAdmin = auth.principal as AdminPrincipal
+        var adminId = request.createdBy
+        try {
+            val auth =  SecurityContextHolder.getContext().authentication
+            val savedAdmin = auth.principal as AdminPrincipal
+            adminId = savedAdmin.admin.id
+        }catch (e: Exception){
+            logger.error("create run session, mobile app exception expected $e")
+        }
         val runGym = gymDb.get()
-
         val run = RunSession(
             id = ObjectId().toString(),
             gym = runGym,
@@ -61,7 +69,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             startTime = request.startTime,
             endTime = request.endTime,
             zoneId = request.zoneId,
-            hostedBy = savedAdmin.admin.id,
+            hostedBy = adminId,
             allowGuest = request.allowGuest,
             notes = request.notes,
             privateRun = request.privateRun,
@@ -72,7 +80,6 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             maxPlayer = request.maxPlayer,
             description = request.description,
             duration = 0,
-            createdBy = request.createdBy
             ).apply {
             createdAt = Instant.now()
             status = RunStatus.PENDING
