@@ -56,7 +56,6 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
             traceId = UUID.randomUUID().toString(),
             createdAtMs = Instant.now()
         )
-
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_CANCELLED_JOB, job)
         }

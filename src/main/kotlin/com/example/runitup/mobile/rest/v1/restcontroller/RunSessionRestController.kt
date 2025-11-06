@@ -10,10 +10,7 @@ import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.mobile.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel
-import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
-import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
-import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
-import com.example.runitup.mobile.rest.v1.dto.session.JoinWaitListModel
+import com.example.runitup.mobile.rest.v1.dto.session.*
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.example.runitup.mobile.rest.v1.dto.user.CheckIn
@@ -126,7 +123,7 @@ class RunSessionRestController {
     }
 
     @PostMapping("/start")
-    fun startSession(@RequestBody model: ConfirmSessionModel): RunSession {
+    fun startSession(@RequestBody model: StartSessionModel): RunSession {
         return sessionControllersProvider.startSessionController.execute(model)
     }
 

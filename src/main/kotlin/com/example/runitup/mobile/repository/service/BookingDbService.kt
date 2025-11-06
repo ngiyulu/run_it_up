@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.repository.service
 
+import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
@@ -7,11 +8,15 @@ import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.service.BaseService
 import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.UpdateResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.update
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 
 @Service
@@ -34,12 +39,14 @@ class BookingDbService: BaseService() {
        return bookingRepository.findByUserIdAndRunSessionIdAndStatusIn(userId, runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
     }
 
-    fun cancelAllBooking(runId: String): Boolean {
+    fun cancelAllBooking(runId: String): UpdateResult {
         val query = Query.query(
             Criteria.where("runSessionId").`is`(runId)
         )
-        val res: DeleteResult = mongoTemplate.remove(query, Booking::class.java)
-        return res.deletedCount > 0
+        val u = Update()
+            .set("status", BookingStatus.CANCELLED)
+            .set("cancelledAt", Instant.now())
+        return  mongoTemplate.updateMulti(query,  u,  Booking::class.java)
     }
 
     fun getBookingList(runSessionId:String): List<Booking>{

@@ -4,8 +4,10 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.StartRunSessionModelEnum
 import com.google.protobuf.Api
@@ -13,19 +15,22 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class StartSessionController: BaseController<ConfirmSessionModel, RunSession>() {
+class StartSessionController: BaseController<StartSessionModel, RunSession>() {
 
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
     @Autowired
     lateinit var sessionService: RunSessionService
 
-    override fun execute(request: ConfirmSessionModel): RunSession {
+    @Autowired
+    lateinit var bookingDbService: BookingDbService
+
+    override fun execute(request: StartSessionModel): RunSession {
         val runDb = runSessionRepository.findById(request.sessionId)
         if(!runDb.isPresent){
             throw ApiRequestException("not_found")
         }
-        val run = runDb.get()
+        var run = runDb.get()
         if(run.lockStart){
             throw ApiRequestException("run locked")
         }
@@ -36,7 +41,12 @@ class StartSessionController: BaseController<ConfirmSessionModel, RunSession>() 
         else if(session.status == StartRunSessionModelEnum.CONFIRMED){
             throw  ApiRequestException("invalid status")
         }
-        return  session.session!!
+        run = session.session!!
+        run.updateStatus()
+        run.bookings = run.bookings.map {
+            bookingDbService.getBookingDetails(it)
+        }.toMutableList()
+        return run
     }
 
 }
