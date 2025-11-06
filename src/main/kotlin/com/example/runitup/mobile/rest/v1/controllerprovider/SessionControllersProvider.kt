@@ -42,6 +42,9 @@ class SessionControllersProvider {
     lateinit var leaveSessionController: LeaveSessionController
 
     @Autowired
+    lateinit var cancelBookingController: CancelBookingController
+
+    @Autowired
     lateinit var startSessionController: StartSessionController
 
     @Autowired

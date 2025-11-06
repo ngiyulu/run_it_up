@@ -110,6 +110,7 @@ class LeaveSessionService {
 
          booking.status =  BookingStatus.CANCELLED
          booking.cancelledAt = Instant.now()
+         booking.cancelledBy = admin?.id
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
          completeFlow(run)

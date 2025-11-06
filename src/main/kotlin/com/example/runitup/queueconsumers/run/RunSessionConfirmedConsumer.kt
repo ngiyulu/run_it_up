@@ -30,7 +30,6 @@ class RunSessionConfirmedConsumer(
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val bookingDbService: BookingDbService,
-    private val runSessionPushNotificationService: RunSessionPushNotificationService,
     private val runSessionRepository: RunSessionRepository,
     private val runSessionService: RunSessionService
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CONFIRMATION_JOB, objectMapper) {
@@ -62,7 +61,7 @@ class RunSessionConfirmedConsumer(
                 if(!run.isSessionFree()){
                     val data = JobEnvelope(
                         jobId = UUID.randomUUID().toString(),
-                        taskType = "Process payment after confirmation",
+                        taskType = "Process payment after confirmation from admin",
                         payload = run.id.orEmpty()
                     )
                     queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
@@ -79,9 +78,7 @@ class RunSessionConfirmedConsumer(
     }
 
     private fun complete(booking:List<Booking>, runSession: RunSession){
-        booking.forEach {
-            runSessionPushNotificationService.runSessionConfirmed(it.userId, runSession)
-        }
+        runSessionService.notifyUsers(booking, runSession)
         runSession.status = RunStatus.CONFIRMED
         runSessionRepository.save(runSession)
     }

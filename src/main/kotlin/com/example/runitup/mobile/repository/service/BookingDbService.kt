@@ -2,7 +2,9 @@ package com.example.runitup.mobile.repository.service
 
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.BookingStatus
+import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.service.BaseService
 import com.mongodb.client.result.DeleteResult
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,6 +22,12 @@ class BookingDbService: BaseService() {
 
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
+
+    @Autowired
+    lateinit var authRepo: PaymentAuthorizationRepository
+
+    @Autowired
+    lateinit var bookingPaymentStateRepository: BookingPaymentStateRepository
 
 
     fun getBooking(userId: String, runSessionId:String): Booking? {
@@ -39,5 +47,12 @@ class BookingDbService: BaseService() {
             runSessionId,
             mutableListOf(BookingStatus.JOINED)
         )
+    }
+    fun getBookingDetails(booking: Booking): Booking{
+        booking.bookingPaymentState = bookingPaymentStateRepository.findByBookingId(booking.id.orEmpty())
+        val active = authRepo.findByBookingId(booking.id.orEmpty())
+        booking.paymentAuthorization = active
+
+        return  booking
     }
 }

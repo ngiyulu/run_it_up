@@ -7,10 +7,13 @@ import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.myLogger
+import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -23,16 +26,16 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
 
-    @Autowired
-    lateinit var paymentService: PaymentService
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
     private val logger = myLogger()
 
-
     override fun execute(request: ConfirmSessionModel): RunSession {
+        val auth =  SecurityContextHolder.getContext().authentication
+        val savedUser = auth.principal as UserPrincipal
+        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
         val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
             return run
@@ -44,22 +47,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
-        run.status = RunStatus.CONFIRMED
-        if(!run.isSessionFree()){
-            // we captured the charge in stripe
-            // we updated the booking list payment status
-            // we created the payment list that needs stored in the payment db
-//            val paymentList  = runSessionService.confirmSession(run)
-//
-//            paymentList.forEach {
-//                paymentRepository.save(it)
-//            }
-        }
-        // we storing the bookings because we updated the payment status
-        run.bookings.forEach {
-            bookingRepository.save(it)
-        }
-        return runSessionService.updateRunSession(run)
+        return  runSessionService.startConfirmationProcess(run, user.id.orEmpty())
     }
 
 }

@@ -24,6 +24,7 @@ class Booking (
     var joinedAtFromWaitList: Instant?,
     var status: BookingStatus = BookingStatus.JOINED,
     var cancelledAt:Instant? = null,
+    var cancelledBy:String? = null,
     var isLocked:Boolean = false,
     var currentTotalCents: Long = 0L,
     var isLockedAt: Instant? = null,
