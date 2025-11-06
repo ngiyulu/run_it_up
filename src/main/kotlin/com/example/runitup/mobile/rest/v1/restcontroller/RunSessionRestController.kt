@@ -3,6 +3,7 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.rest.v1.controllerprovider.SessionControllersProvider
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.CreateRunSessionController
+import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.GetRunSessionDetailController
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.GetUserRunSessionByDate
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.GetUserRunSessionByDateModel
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
@@ -37,6 +38,9 @@ class RunSessionRestController {
     @Autowired
     lateinit var getUserRunSessionByDate: GetUserRunSessionByDate
 
+    @Autowired
+    lateinit var getRunSessionDetailController: GetRunSessionDetailController
+
     @PostMapping("/join")
     fun join(@RequestBody model: JoinSessionModel): JoinRunSessionResponse {
         return sessionControllersProvider.joinSessionController.execute(model)
@@ -62,10 +66,16 @@ class RunSessionRestController {
         return sessionControllersProvider.getRunSessionController.execute(id)
     }
 
+    @GetMapping("/retrieve/details/{id}")
+    fun getSessionDetails(@PathVariable id:String): RunSession {
+        return getRunSessionDetailController.execute(id)
+    }
+
     @GetMapping("/booking/{id}")
     fun getMyBooking(@PathVariable id:String):List<RunSession> {
         return sessionControllersProvider.getMyBookingSessionController.execute(id)
     }
+
 
     @GetMapping("/list")
     fun getSessionList( @RequestParam(required = true) long: Double,
