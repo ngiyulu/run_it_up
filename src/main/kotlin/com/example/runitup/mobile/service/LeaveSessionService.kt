@@ -114,7 +114,7 @@ class LeaveSessionService {
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
          completeFlow(run)
-         return runSessionService.updateRunSession(run)
+         return run
     }
 
     private fun cancelWaitListPayment(booking: Booking){

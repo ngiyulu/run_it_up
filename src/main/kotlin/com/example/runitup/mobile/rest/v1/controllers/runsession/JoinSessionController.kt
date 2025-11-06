@@ -20,6 +20,7 @@ import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -47,6 +48,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
 
     @Autowired
     lateinit var messagingService: MessagingService
+
+    @Autowired
+    lateinit var pushNotificationService: RunSessionPushNotificationService
 
     @Autowired
     lateinit var queueService: LightSqsService
@@ -155,12 +159,15 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         appScope.launch {
             // this event is to send a text message to user to let them know they have joined
             // the run successfully
-            // if the session is already confriemd, we don't need to confirm again
+            // if the session is already confirmed, we don't need to confirm again
             if(run.status == RunStatus.PENDING){
                 queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
             }
             // we have to trigger this event to confirm session if the number of participants have been reached
             queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
+        }
+        run.hostedBy?.let {
+            pushNotificationService.userJoinedRunSession(it, user, run)
         }
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
