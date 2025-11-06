@@ -39,7 +39,7 @@ class StartRunSessionCronJob(
                         it.startTime,
                         ZoneId.of(it.zoneId)
                     )
-                    if(shouldProcess && !it.lockStart){
+                    if(shouldProcess){
                         val model = sessionService.startRunSession(StartSessionModel(it.id.orEmpty()), it)
                         when (model.status) {
                             StartRunSessionModelEnum.INVALID_ID -> {
