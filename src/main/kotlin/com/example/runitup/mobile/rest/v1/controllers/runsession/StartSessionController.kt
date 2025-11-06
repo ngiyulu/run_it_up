@@ -8,10 +8,12 @@ import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
+import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.StartRunSessionModelEnum
 import com.google.protobuf.Api
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -26,6 +28,9 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
     lateinit var bookingDbService: BookingDbService
 
     override fun execute(request: StartSessionModel): RunSession {
+        val auth = SecurityContextHolder.getContext().authentication
+        val savedUser = auth.principal as UserPrincipal
+        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
         val runDb = runSessionRepository.findById(request.sessionId)
         if(!runDb.isPresent){
             throw ApiRequestException("not_found")
@@ -34,7 +39,7 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
         if(run.lockStart){
             throw ApiRequestException("run locked")
         }
-       val session = sessionService.startRunSession(request, run)
+       val session = sessionService.startRunSession(request, run, user.linkedAdmin)
         if(session.status ==  StartRunSessionModelEnum.INVALID_ID){
             throw ApiRequestException("invalid_id")
         }

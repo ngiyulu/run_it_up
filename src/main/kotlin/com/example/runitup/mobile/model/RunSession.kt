@@ -62,6 +62,7 @@ data class RunSession(
     var showRemoveButton: Boolean = true,
     var cancelledAt:Instant? = null,
     var startedAt:Instant? = null,
+    var startedBy:String? = null,
     var completedAt:Instant? = null,
     var bookingPaymentState: BookingPaymentState? = null,
     var lockStart:Boolean = false,
