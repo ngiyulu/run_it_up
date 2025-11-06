@@ -42,6 +42,9 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
         var run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
+            run.bookings = run.bookings.map {
+                bookingDbService.getBookingDetails(it)
+            }.toMutableList()
             return run
         }
         if(run.status != RunStatus.PENDING){

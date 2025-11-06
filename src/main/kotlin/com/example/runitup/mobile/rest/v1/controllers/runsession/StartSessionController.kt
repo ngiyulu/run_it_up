@@ -27,15 +27,20 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
     @Autowired
     lateinit var bookingDbService: BookingDbService
 
+    @Autowired
+    lateinit var runSessionService: RunSessionService
+
     override fun execute(request: StartSessionModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedUser = auth.principal as UserPrincipal
         val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
-        val runDb = runSessionRepository.findById(request.sessionId)
-        if(!runDb.isPresent){
-            throw ApiRequestException("not_found")
+        var run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
+
+        if(run.status == RunStatus.ONGOING){
+            run.bookings = run.bookings.map {
+                bookingDbService.getBookingDetails(it)
+            }.toMutableList()
         }
-        var run = runDb.get()
        val session = sessionService.startRunSession(request, run, user.linkedAdmin)
         if(session.status ==  StartRunSessionModelEnum.INVALID_ID){
             throw ApiRequestException("invalid_id")
