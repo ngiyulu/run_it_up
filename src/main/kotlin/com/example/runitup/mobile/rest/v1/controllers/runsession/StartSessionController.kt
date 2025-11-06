@@ -36,9 +36,6 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
             throw ApiRequestException("not_found")
         }
         var run = runDb.get()
-        if(run.lockStart){
-            throw ApiRequestException("run locked")
-        }
        val session = sessionService.startRunSession(request, run, user.linkedAdmin)
         if(session.status ==  StartRunSessionModelEnum.INVALID_ID){
             throw ApiRequestException("invalid_id")
