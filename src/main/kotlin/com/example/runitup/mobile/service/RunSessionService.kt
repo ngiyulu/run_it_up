@@ -8,7 +8,7 @@ import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
-import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.mongodb.client.result.UpdateResult
@@ -61,12 +61,16 @@ class RunSessionService(): BaseService(){
     lateinit var runSessionPushNotificationService: RunSessionPushNotificationService
 
 
+
+    fun getBooking(runSessionId: String):List<Booking>{
+        return bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
+    }
     fun getRunSession(runSessionId:String, userId:String? = null): RunSession?{
         val db = runSessionRepository.findById(runSessionId)
         if(!db.isPresent){
             return  null
         }
-        val bookings = bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
+        val bookings = getBooking(runSessionId)
         val session = db.get()
         session.bookings = bookings.toMutableList()
         if(userId != null){
@@ -98,6 +102,7 @@ class RunSessionService(): BaseService(){
 
     fun startConfirmationProcess(run: RunSession, actor:String): RunSession{
         val bookingList  = bookingDbService.getBookingList(run.id.orEmpty())
+        run.bookings = bookingList.toMutableList()
         if(!run.isSessionFree()){
             // we captured the charge in stripe
             // we updated the booking list payment status
@@ -128,7 +133,7 @@ class RunSessionService(): BaseService(){
         return updateRunSession(run)
     }
 
-    fun startRunSession(model: ConfirmSessionModel, run: RunSession): StartRunSessionModel{
+    fun startRunSession(model: StartSessionModel, run: RunSession): StartRunSessionModel{
         if(run.status != RunStatus.CONFIRMED){
             return StartRunSessionModel(StartRunSessionModelEnum.CONFIRMED)
         }

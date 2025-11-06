@@ -5,6 +5,7 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
@@ -26,6 +27,9 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     @Autowired
     lateinit var runSessionRepository: RunSessionRepository
 
+    @Autowired
+    lateinit var bookingDbService: BookingDbService
+
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
@@ -36,7 +40,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         val auth =  SecurityContextHolder.getContext().authentication
         val savedUser = auth.principal as UserPrincipal
         val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
-        val run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
+        var run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
             return run
         }
@@ -47,7 +51,14 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
-        return  runSessionService.startConfirmationProcess(run, user.id.orEmpty())
+        run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
+        if(request.isAdmin){
+            run.updateStatus()
+            run.bookings = run.bookings.map {
+                bookingDbService.getBookingDetails(it)
+            }.toMutableList()
+        }
+        return  run
     }
 
 }

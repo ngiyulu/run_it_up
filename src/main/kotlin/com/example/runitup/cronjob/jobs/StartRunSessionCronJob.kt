@@ -5,7 +5,7 @@ import com.example.runitup.cronjob.CronJobRunner
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
+import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.StartRunSessionModelEnum
 import com.example.runitup.mobile.service.TimeService
@@ -40,7 +40,7 @@ class StartRunSessionCronJob(
                         ZoneId.of(it.zoneId)
                     )
                     if(shouldProcess && !it.lockStart){
-                        val model = sessionService.startRunSession(ConfirmSessionModel(it.id.orEmpty(), false), it)
+                        val model = sessionService.startRunSession(StartSessionModel(it.id.orEmpty(), false), it)
                         when (model.status) {
                             StartRunSessionModelEnum.INVALID_ID -> {
                                 throw ApiRequestException("invalid id")
