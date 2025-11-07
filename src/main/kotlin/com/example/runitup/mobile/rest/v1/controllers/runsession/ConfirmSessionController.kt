@@ -51,9 +51,13 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             logger.error("user is trying to confirm a run session that's not in pending for run {}", run.id)
             return run
         }
+        if(run.bookings.isEmpty()){
+            throw ApiRequestException(text("no booking"))
+        }
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
+
         run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
         if(request.isAdmin){
             run.updateStatus()
