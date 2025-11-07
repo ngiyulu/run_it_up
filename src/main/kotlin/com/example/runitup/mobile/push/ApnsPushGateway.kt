@@ -8,6 +8,7 @@ import com.eatthepath.pushy.apns.util.TokenUtil
 import com.example.runitup.mobile.constants.ConfigConstant.apnsPushGateway
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
+import com.example.runitup.mobile.service.myLogger
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.annotation.Value
@@ -27,6 +28,8 @@ class ApnsPushGateway(
     @Value("\${push.apns.bundleId}") private val bundleId: String,
     @Value("\${push.apns.useSandbox:true}") private val sandbox: Boolean
 ) : PushGateway {
+
+    val logger = myLogger()
 
     private val client: ApnsClient by lazy {
         val signingKey = loadSigningKey()
@@ -58,6 +61,11 @@ class ApnsPushGateway(
 
     override fun sendToTokens(tokens: List<String>, notif: PushNotification): PushResult {
         if (tokens.isEmpty()) return PushResult(0, 0, 0)
+
+        logger.info(
+            "Sending APNs push via ${if (sandbox) "SANDBOX" else "PRODUCTION"} " +
+                    "env | topic=$bundleId | teamId=$teamId | tokens=${tokens.joinToString { it.take(8) + "…" }}"
+        )
 
         val results = tokens.map { token ->
             val payload = buildJsonPayload(notif)
