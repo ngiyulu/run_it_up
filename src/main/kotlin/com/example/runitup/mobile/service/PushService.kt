@@ -55,7 +55,7 @@ class PushService(
         }
         if (iosTokens.isNotEmpty()) {
             val gw = if (useApnsDirect) apns else fcm
-            val r = gw.sendToTokens(listOf("5cd69584eb0b0f0fcaaa12c96c0ee6ad4ff0ec90d155374065e00ff217ac6e8d"), notif)
+            val r = gw.sendToTokens(iosTokens, notif)
             requested += r.requested; success += r.success; failed += r.failed
             invalid += r.invalidTokens; errors += r.errors
         }

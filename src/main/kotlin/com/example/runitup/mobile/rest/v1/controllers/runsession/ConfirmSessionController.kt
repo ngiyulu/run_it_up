@@ -42,15 +42,22 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
         var run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
+            run.bookings = run.bookings.map {
+                bookingDbService.getBookingDetails(it)
+            }.toMutableList()
             return run
         }
         if(run.status != RunStatus.PENDING){
             logger.error("user is trying to confirm a run session that's not in pending for run {}", run.id)
             return run
         }
+        if(run.bookings.isEmpty()){
+            throw ApiRequestException(text("no booking"))
+        }
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
+
         run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
         if(request.isAdmin){
             run.updateStatus()
