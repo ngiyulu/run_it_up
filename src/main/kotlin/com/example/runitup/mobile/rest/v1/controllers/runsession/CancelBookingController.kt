@@ -8,6 +8,7 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
+import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
@@ -37,17 +38,17 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedPrincipal = auth.principal
-        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
         // this means the service call was called from web portal
+        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
         if (savedPrincipal is AdminPrincipal){
             val admin = adminUserRepository.findById(savedPrincipal.admin.id.orEmpty())
             if(!admin.isPresent){
                 throw ApiRequestException("user_not_found")
             }
-          return complete(user, request.sessionId, admin.get())
+            return complete(user, request.sessionId, admin.get())
         }
-
-        if(user.linkedAdmin == null){
+        val adminUser = cacheManager.getUser((savedPrincipal as UserPrincipal).id.orEmpty()) ?: throw ApiRequestException("user_not_found")
+        if(adminUser.linkedAdmin == null){
             throw ApiRequestException("not_authorized")
         }
         val admin = adminUserRepository.findById(user.linkedAdmin.orEmpty())
