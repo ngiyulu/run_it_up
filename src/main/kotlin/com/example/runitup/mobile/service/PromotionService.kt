@@ -3,7 +3,6 @@ package com.example.runitup.mobile.service
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
@@ -12,7 +11,6 @@ import java.time.Instant
 
 @Service
 class PromotionService(
-    private val sessionRepo: RunSessionRepository,
     private val bookingRepo: BookingRepository,
     private val waitlistSetupRepo: WaitlistSetupStateRepository,
     private val adjuster: BookingPricingAdjuster,
@@ -27,11 +25,7 @@ class PromotionService(
      * Idempotent by (bookingId + promotionVersion) & Stripe idempotency.
      */
     fun promoteNextWaitlistedUser(sessionId: String): PromotionResult {
-        val sessionDb = sessionRepo.findById(sessionId)
-            if(!sessionDb.isPresent){
-                return PromotionResult(false, "Session not found: $sessionId")
-            }
-        val session =sessionDb.get()
+        val session = cacheManager.getRunSession(sessionId) ?: return PromotionResult(false, "Session not found: $sessionId")
         if(session.waitList.isEmpty()){
             return PromotionResult(false, "No available spots right now.")
         }

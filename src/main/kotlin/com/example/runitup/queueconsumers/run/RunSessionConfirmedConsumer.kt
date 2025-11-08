@@ -1,19 +1,16 @@
 package com.example.runitup.queueconsumers.run
 
 
+import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.queueconsumers.BaseQueueConsumer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -30,7 +27,7 @@ class RunSessionConfirmedConsumer(
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val bookingDbService: BookingDbService,
-    private val runSessionRepository: RunSessionRepository,
+    private val cacheManager: MyCacheManager,
     private val runSessionService: RunSessionService
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CONFIRMATION_JOB, objectMapper) {
 
@@ -41,8 +38,7 @@ class RunSessionConfirmedConsumer(
         val jobData: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val payload = jobData.payload
         withContext(Dispatchers.IO) {
-            val runSessionDb = runSessionRepository.findById(payload)
-            val run = runSessionDb.get()
+            val run = cacheManager.getRunSession(payload) ?: return@withContext
             val runSessionId = run.id.orEmpty()
             if(run.status != RunStatus.PENDING){
                 logger.info("Run $payload already ${run.status}, skipping")
@@ -80,6 +76,6 @@ class RunSessionConfirmedConsumer(
     private fun complete(booking:List<Booking>, runSession: RunSession){
         runSessionService.notifyUsers(booking, runSession)
         runSession.status = RunStatus.CONFIRMED
-        runSessionRepository.save(runSession)
+        cacheManager.updateRunSession(runSession)
     }
 }

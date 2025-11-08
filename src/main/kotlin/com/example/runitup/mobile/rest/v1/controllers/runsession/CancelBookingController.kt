@@ -8,8 +8,6 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
-import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.web.security.AdminPrincipal

@@ -17,7 +17,6 @@ class LeaveSessionAdminController: BaseController<CancelSessionModel, RunSession
     @Autowired
     lateinit var leaveSessionService: LeaveSessionService
 
-
     override fun execute(request: CancelSessionModel): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication
         val principal = auth.principal as AdminPrincipal

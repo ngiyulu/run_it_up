@@ -32,6 +32,7 @@ class AdminAuthRestController{
 
     @Autowired
     lateinit var adminUserRepository: AdminUserRepository
+
     @PostMapping("/login")
     fun login(@RequestBody body: AdminLoginRequest): AdminLoginResponse {
         val auth = authenticationManager.authenticate(

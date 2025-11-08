@@ -1,6 +1,7 @@
 package com.example.runitup.queueconsumers.run
 
 
+import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.JobEnvelope
@@ -9,7 +10,6 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -33,8 +33,8 @@ class RunSessionCancelledConsumer(
     private val bookingRepository: BookingRepository,
     private val paymentStateRepository: BookingPaymentStateRepository,
     private val refundService: RefundService,
+    private val cacheManager: MyCacheManager,
     private val runSessionPushNotificationService: RunSessionPushNotificationService,
-    private val runSessionRepository: RunSessionRepository
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CANCELLED_JOB, objectMapper) {
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
@@ -42,8 +42,7 @@ class RunSessionCancelledConsumer(
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val payload = data.payload
         withContext(Dispatchers.IO) {
-            val runSessionDb = runSessionRepository.findById(payload)
-            val run = runSessionDb.get()
+            val run = cacheManager.getRunSession(payload) ?: return@withContext
             if(!run.isSessionFree()){
                 // this means payment were processed so we need a refund
                 if(run.statusBeforeCancel == RunStatus.ONGOING || run.statusBeforeCancel == RunStatus.CONFIRMED){

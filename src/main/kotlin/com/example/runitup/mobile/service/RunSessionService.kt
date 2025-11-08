@@ -1,13 +1,14 @@
 package com.example.runitup.mobile.service
 
-import com.example.runitup.common.model.AdminUser
+import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.BookingStatus
+import com.example.runitup.mobile.model.JobEnvelope
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -31,14 +32,10 @@ class RunSessionService(): BaseService(){
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var textService: TextService
+    lateinit var cacheManager: MyCacheManager
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
-
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
-
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
@@ -67,12 +64,8 @@ class RunSessionService(): BaseService(){
         return bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
     }
     fun getRunSession(runSessionId:String, userId:String? = null): RunSession?{
-        val db = runSessionRepository.findById(runSessionId)
-        if(!db.isPresent){
-            return  null
-        }
+        val session  = cacheManager.getRunSession(runSessionId) ?: return  null
         val bookings = getBooking(runSessionId)
-        val session = db.get()
         session.bookings = bookings.toMutableList()
         if(userId != null){
             session.getBooking(userId)?.let {
@@ -83,6 +76,7 @@ class RunSessionService(): BaseService(){
         }
         return  session
     }
+
     fun confirmRunSession(runSessionId:String): UpdateResult{
         val q = Query(
             Criteria.where("_id").`is`(runSessionId)
@@ -92,12 +86,13 @@ class RunSessionService(): BaseService(){
             .set("status", RunStatus.CONFIRMED)
             .set("confirmedAt", Instant.now())
 
+        cacheManager.evictRunSession(runSessionId)
         return mongoTemplate.updateFirst(q, u, RunSession::class.java)
     }
 
     fun updateRunSession(runSession: RunSession): RunSession{
         runSession.bookings = mutableListOf()
-        runSessionRepository.save(runSession)
+        cacheManager.updateRunSession(runSession)
         return runSession
     }
 

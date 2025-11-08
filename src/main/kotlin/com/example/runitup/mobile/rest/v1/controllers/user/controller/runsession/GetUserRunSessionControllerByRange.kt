@@ -58,11 +58,9 @@ class GetUserRunSessionControllerByRange: BaseController<GetUserRunSessionContro
         val list = mutableListOf<RunSession>()
         val booking = getBooking(startDate, endDate, userId, page)
         booking.forEach {
-            val sessionDb = runSessionRepository.findById(it.runSessionId)
-            if(sessionDb.isPresent){
-                val session = sessionDb.get().apply {
-                    this.host = cacheManager.getAdmin(this.hostedBy.orEmpty())
-                }
+            val session = cacheManager.getRunSession(it.runSessionId)
+            if(session != null){
+                session.host = cacheManager.getAdmin(session.hostedBy.orEmpty())
                 list.add(session)
             }
         }

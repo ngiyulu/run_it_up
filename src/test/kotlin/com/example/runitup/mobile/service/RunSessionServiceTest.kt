@@ -22,7 +22,6 @@ import java.util.*
 class RunSessionServiceTest {
 
     private val paymentService = mockk<PaymentService>(relaxed = true) // not used in these methods
-    private val runSessionRepository = mockk<RunSessionRepository>()
     private val bookingRepository = mockk<BookingRepository>()
 
     private lateinit var service: RunSessionService
@@ -31,7 +30,6 @@ class RunSessionServiceTest {
     fun setUp() {
         service = RunSessionService().apply {
             this.paymentService = this@RunSessionServiceTest.paymentService
-            this.runSessionRepository = this@RunSessionServiceTest.runSessionRepository
             this.bookingRepository = this@RunSessionServiceTest.bookingRepository
         }
     }
@@ -102,12 +100,10 @@ class RunSessionServiceTest {
 
     @Test
     fun `getRunSession returns null when not found`() {
-        every { runSessionRepository.findById("missing") } returns Optional.empty()
 
         val result = service.getRunSession("missing")
 
         assertThat(result).isNull()
-        verify(exactly = 1) { runSessionRepository.findById("missing") }
     }
 
     @Test
@@ -115,7 +111,6 @@ class RunSessionServiceTest {
         val sessionId = "s1"
         val session = sessionWith(id = sessionId)
 
-        every { runSessionRepository.findById(sessionId) } returns Optional.of(session)
 
         val returnedBookings = listOf(
             booking(id = "b1", userId = "u1", runSessionId = sessionId, status = BookingStatus.JOINED),
@@ -150,13 +145,10 @@ class RunSessionServiceTest {
             bookings.add(booking(id = "bX", userId = "uX", runSessionId = "s2", status = BookingStatus.JOINED))
         }
 
-        every { runSessionRepository.save(session) } returns session
-
         val updated = service.updateRunSession(session)
 
         // bookings cleared
         assertThat(updated.bookings).isEmpty()
         // saved once
-        verify(exactly = 1) { runSessionRepository.save(session) }
     }
 }

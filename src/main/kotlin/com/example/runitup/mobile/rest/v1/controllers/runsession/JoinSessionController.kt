@@ -9,7 +9,6 @@ import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionStatus
@@ -34,8 +33,6 @@ import java.util.*
 @Service
 class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
 
-    @Autowired
-    private lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
     private lateinit var bookingRepository: BookingRepository
@@ -59,13 +56,12 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
     lateinit var appScope: CoroutineScope
 
     override fun execute(request: JoinSessionModel): JoinRunSessionResponse {
-        val runDb = runSessionRepository.findById(request.sessionId)
-        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        if(!runDb.isPresent){
+        val run = cacheManager.getRunSession(request.sessionId)
+        if (run == null){
             throw ApiRequestException(text("invalid_session_id"))
         }
+        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
-        val run = runDb.get()
         // this mean the event is full
         if( user.stripeId == null || (run.isFree && request.paymentMethodId == null)){
             throw ApiRequestException(text("payment_error"))

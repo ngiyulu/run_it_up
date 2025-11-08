@@ -12,8 +12,6 @@ import com.example.runitup.mobile.service.TimeService
 import com.example.runitup.mobile.service.myLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.ZoneId

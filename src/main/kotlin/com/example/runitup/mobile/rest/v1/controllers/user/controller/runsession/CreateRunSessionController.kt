@@ -6,7 +6,6 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.GymRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.service.http.MessagingService
@@ -25,8 +24,6 @@ import java.util.*
 @Service
 class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
 
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
     lateinit var adminUserRepository: AdminUserRepository
@@ -104,7 +101,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             throw ApiRequestException(text("payment_disabled"))
         }
 
-        val runSession = runSessionRepository.save(run)
+        val runSession = cacheManager.updateRunSession(run)
         val conversation =   Conversation(UUID.randomUUID().toString(),
             ConversationType.GROUP,
             "",

@@ -8,9 +8,6 @@ import com.example.runitup.mobile.service.push.PaymentPushNotificationService
 import com.example.runitup.mobile.utility.CaptureFailurePolicy
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.time.Instant
 
