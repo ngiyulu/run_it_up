@@ -1,7 +1,10 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.common.model.AdminUser
+import com.example.runitup.common.repo.AdminUserRepository
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
@@ -19,6 +22,9 @@ class CancelBookingController: BaseController<CancelSessionModel, RunSession>() 
 
     @Autowired
     lateinit var leaveSessionService: LeaveSessionService
+
+    @Autowired
+    lateinit var adminUserRepository: AdminUserRepository
     @Autowired
     lateinit var runService: RunSessionService
 
@@ -28,14 +34,29 @@ class CancelBookingController: BaseController<CancelSessionModel, RunSession>() 
     override fun execute(request: CancelSessionModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedPrincipal = auth.principal
+        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
+        // this means the service call was called from web portal
         if (savedPrincipal is AdminPrincipal){
-          return complete(request, savedPrincipal.admin)
+            val admin = adminUserRepository.findById(savedPrincipal.admin.id.orEmpty())
+            if(!admin.isPresent){
+                throw ApiRequestException("user_not_found")
+            }
+          return complete(user, request.sessionId, admin.get())
         }
-        return complete(request, null)
+
+        if(user.linkedAdmin == null){
+            throw ApiRequestException("not_authorized")
+        }
+        val admin = adminUserRepository.findById(user.linkedAdmin.orEmpty())
+        if(!admin.isPresent){
+            throw ApiRequestException("user_not_found")
+        }
+
+        return complete(user, request.sessionId, admin.get())
     }
 
-    private fun complete(request: CancelSessionModel, admin: AdminUser?): RunSession{
-        val run = leaveSessionService.execute(request, admin)
+    private fun complete(user: User, sessionId:String, admin: AdminUser?): RunSession{
+        val run = leaveSessionService.cancelBooking(user, sessionId, admin)
         run.updateStatus()
         // we need to return this for admin
         run.bookings = run.bookings.map {

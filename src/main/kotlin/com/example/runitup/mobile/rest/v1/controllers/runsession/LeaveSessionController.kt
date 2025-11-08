@@ -23,7 +23,8 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
 
 
     override fun execute(request: CancelSessionModel): RunSession {
-        val run = leaveSessionService.execute(request)
+        val user = cacheManager.getUser(request.userId)?: throw ApiRequestException("user_not_found")
+        val run = leaveSessionService.cancelBooking(user, request.sessionId)
         return runService.updateRunSession(run)
     }
 }

@@ -61,10 +61,9 @@ class LeaveSessionService {
     lateinit var queueService: LightSqsService
 
 
-     fun execute(request: CancelSessionModel, admin:AdminUser? = null): RunSession {
+     fun cancelBooking(user:User, sessionId:String, admin:AdminUser? = null): RunSession {
          val locale = LocaleContextHolder.getLocale().toString()
-         val runDb = runSessionRepository.findById(request.sessionId)
-         val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+         val runDb = runSessionRepository.findById(sessionId)
          if(!runDb.isPresent){
             throw ApiRequestException(textService.getText("invalid_session_id",locale ))
         }
