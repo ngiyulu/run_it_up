@@ -46,6 +46,16 @@ class BookingDbService: BaseService() {
         return  mongoTemplate.updateMulti(query,  u,  Booking::class.java)
     }
 
+    fun completeAllBooking(runId: String): UpdateResult {
+        val query = Query.query(
+            Criteria.where("runSessionId").`is`(runId).and("status").`is`(BookingStatus.JOINED)
+        )
+        val u = Update()
+            .set("status", BookingStatus.COMPLETED)
+            .set("completedAt", Instant.now())
+        return  mongoTemplate.updateMulti(query,  u,  Booking::class.java)
+    }
+
     fun getBookingList(runSessionId:String): List<Booking>{
         return bookingRepository.findByRunSessionIdAndStatusIn(
             runSessionId,

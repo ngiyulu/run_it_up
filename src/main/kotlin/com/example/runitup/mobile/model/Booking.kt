@@ -31,7 +31,8 @@ class Booking (
     var promotedAt: Instant? = null,
     var customerId:String? = null,
     var paymentAuthorization: List<PaymentAuthorization> = emptyList(),
-    var bookingPaymentState: BookingPaymentState? = null
+    var bookingPaymentState: BookingPaymentState? = null,
+    var completedAt:Instant? = null,
 ): BaseModel(){
 
     fun getNumOfGuest(): Int{
@@ -40,5 +41,5 @@ class Booking (
 }
 class  BookingPayment(var amount: Double, var stripePaymentId:String,  var paymentStatus: PaymentStatus = PaymentStatus.PENDING)
 enum class BookingStatus{
-    JOINED, WAITLISTED, CANCELLED
+    JOINED, WAITLISTED, CANCELLED, COMPLETED
 }
