@@ -118,7 +118,7 @@ class RunSessionRestController {
     // this is the same as leaveSession except this will be triggered by admin from the app
     // this another endpoint for the web
     @PostMapping("/booking/cancel")
-    fun cancelBooking(@RequestBody model: CancelSessionModel): RunSession {
+    fun cancelBooking(@RequestBody model: CancelBookingModel): RunSession {
         return sessionControllersProvider.cancelBookingController.execute(model)
     }
 

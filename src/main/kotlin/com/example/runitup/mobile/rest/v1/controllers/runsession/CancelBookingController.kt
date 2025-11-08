@@ -7,6 +7,7 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service
 
 @Service
 // admin decides to remove user
-class CancelBookingController: BaseController<CancelSessionModel, RunSession>() {
+class CancelBookingController: BaseController<CancelBookingModel, RunSession>() {
 
     @Autowired
     lateinit var leaveSessionService: LeaveSessionService
@@ -31,7 +32,7 @@ class CancelBookingController: BaseController<CancelSessionModel, RunSession>() 
     @Autowired
     lateinit var bookingDbService: BookingDbService
 
-    override fun execute(request: CancelSessionModel): RunSession {
+    override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedPrincipal = auth.principal
         val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
@@ -51,7 +52,6 @@ class CancelBookingController: BaseController<CancelSessionModel, RunSession>() 
         if(!admin.isPresent){
             throw ApiRequestException("user_not_found")
         }
-
         return complete(user, request.sessionId, admin.get())
     }
 
