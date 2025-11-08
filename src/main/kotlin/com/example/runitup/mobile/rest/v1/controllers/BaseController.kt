@@ -22,7 +22,7 @@ abstract class BaseController<R, P> {
 
     var TAG = this.javaClass.simpleName
 
-    val logger = myLogger()
+    protected val logger = myLogger()
 
     abstract fun execute(request: R): P
 

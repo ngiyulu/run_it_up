@@ -34,9 +34,6 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
     @Autowired
     lateinit var messagingService: MessagingService
 
-    private val logger = myLogger()
-
-
     @Autowired
     lateinit var paymentConfig: AppConfig
 
