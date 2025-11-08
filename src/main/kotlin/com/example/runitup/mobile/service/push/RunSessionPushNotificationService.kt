@@ -50,7 +50,7 @@ class RunSessionPushNotificationService {
         val notification = PushNotification(
             title = runSession.title,
             body = "You have ben removed from the run session",
-            data = mapOf(AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL, SessionId to runSession.id.orEmpty())
+            data = mapOf(AppConstant.SCREEN to ScreenConstant.RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
         pushService.sendToPhones(getPhoneByUser(userId), notification)
     }
