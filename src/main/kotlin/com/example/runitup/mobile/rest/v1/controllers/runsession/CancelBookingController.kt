@@ -51,7 +51,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         if(adminUser.linkedAdmin == null){
             throw ApiRequestException("not_authorized")
         }
-        val admin = adminUserRepository.findById(user.linkedAdmin.orEmpty())
+        val admin = adminUserRepository.findById(adminUser.linkedAdmin.orEmpty())
         if(!admin.isPresent){
             throw ApiRequestException("user_not_found")
         }
