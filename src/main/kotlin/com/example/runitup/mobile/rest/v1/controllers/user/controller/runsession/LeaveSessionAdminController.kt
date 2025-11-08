@@ -21,7 +21,8 @@ class LeaveSessionAdminController: BaseController<CancelSessionModel, RunSession
     override fun execute(request: CancelSessionModel): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication
         val principal = auth.principal as AdminPrincipal
+        val user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
         val admin = cacheManager.getAdmin(principal.admin.id.orEmpty())?:  throw ApiRequestException(text(text("admin_not_found")))
-        return leaveSessionService.execute(request, admin)
+        return leaveSessionService.cancelBooking(user, request.sessionId, admin)
     }
 }
