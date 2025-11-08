@@ -5,6 +5,7 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.TextService
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.security.core.context.SecurityContextHolder
@@ -20,6 +21,8 @@ abstract class BaseController<R, P> {
     protected lateinit var textService: TextService
 
     var TAG = this.javaClass.simpleName
+
+    val logger = myLogger()
 
     abstract fun execute(request: R): P
 

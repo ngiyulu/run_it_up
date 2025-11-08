@@ -35,6 +35,8 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     @Autowired
     lateinit var runSessionPushNotificationService: RunSessionPushNotificationService
 
+
+
     override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedPrincipal = auth.principal
@@ -43,16 +45,19 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         if (savedPrincipal is AdminPrincipal){
             val admin = adminUserRepository.findById(savedPrincipal.admin.id.orEmpty())
             if(!admin.isPresent){
+                logger.error("admin is not found from web flow")
                 throw ApiRequestException("user_not_found")
             }
             return complete(user, request.sessionId, admin.get())
         }
         val adminUser = cacheManager.getUser((savedPrincipal as UserPrincipal).id.orEmpty()) ?: throw ApiRequestException("user_not_found")
         if(adminUser.linkedAdmin == null){
+            logger.error("admin is not found from app flow")
             throw ApiRequestException("not_authorized")
         }
         val admin = adminUserRepository.findById(adminUser.linkedAdmin.orEmpty())
         if(!admin.isPresent){
+            logger.error("admin is not found from app flow")
             throw ApiRequestException("user_not_found")
         }
         return complete(user, request.sessionId, admin.get())
