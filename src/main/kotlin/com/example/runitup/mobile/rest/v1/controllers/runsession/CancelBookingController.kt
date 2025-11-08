@@ -10,6 +10,7 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.RunSessionService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.web.security.AdminPrincipal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
@@ -29,6 +30,9 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
+
+    @Autowired
+    lateinit var runSessionPushNotificationService: RunSessionPushNotificationService
 
     override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
@@ -60,6 +64,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         run.bookings = run.bookings.map {
             bookingDbService.getBookingDetails(it)
         }.toMutableList()
+        runSessionPushNotificationService.runSessionBookingCancelled(user.id.orEmpty(), run)
         return runService.updateRunSession(run)
     }
 }

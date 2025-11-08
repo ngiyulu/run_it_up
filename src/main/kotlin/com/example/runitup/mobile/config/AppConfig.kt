@@ -11,4 +11,5 @@ class AppConfig {
     var paymentIos: Boolean = false
     var paymentAndroid: Boolean = false
     var waiverUrl:String = ""
+    var messaging:Boolean = false
 }

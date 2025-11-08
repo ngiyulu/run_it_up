@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.service.http
 
 import ServiceResult
+import com.example.runitup.mobile.config.AppConfig
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
@@ -22,7 +23,13 @@ class MessagingService {
     @Autowired
     @Qualifier(ServiceConstant.messagingService) lateinit var  client: WebClient
 
+    @Autowired
+     lateinit var  appConfig: AppConfig
+
     fun createConversation(conversation: CreateConversationModel):Mono<ServiceResult<Conversation>>{
+        if(!appConfig.messaging){
+            return Mono.just(ServiceResult.disable())
+        }
         return client.post()
             .uri("/api/v1/conversation/create")
             .accept(MediaType.APPLICATION_JSON)
@@ -56,6 +63,9 @@ class MessagingService {
 
 
     fun createUser(user: MessagingUser):Mono<ServiceResult<MessagingUser>>{
+        if(!appConfig.messaging){
+            return Mono.just(ServiceResult.disable())
+        }
         return client.post()
             .uri("/api/v1/user/create")
             .accept(MediaType.APPLICATION_JSON)
@@ -88,6 +98,9 @@ class MessagingService {
 
 
     fun createParticipant(model: CreateParticipantModel):Mono<ServiceResult<Participant>>{
+        if(!appConfig.messaging){
+            return Mono.just(ServiceResult.disable())
+        }
         return client.post()
             .uri("/api/v1/conversation/participant/add")
             .accept(MediaType.APPLICATION_JSON)
@@ -120,6 +133,9 @@ class MessagingService {
 
 
     fun removeParticipant(model: DeleteParticipantFromConversationModel):Mono<ServiceResult<Unit>>{
+        if(!appConfig.messaging){
+            return Mono.just(ServiceResult.disable())
+        }
         return client.post()
             .uri("/api/v1/conversation/participant/remove")
             .accept(MediaType.APPLICATION_JSON)

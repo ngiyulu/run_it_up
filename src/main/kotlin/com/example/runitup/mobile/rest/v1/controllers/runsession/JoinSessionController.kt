@@ -9,6 +9,7 @@ import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
 import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionStatus
@@ -51,6 +52,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
 
     @Autowired
     lateinit var queueService: LightSqsService
+
+    @Autowired
+    lateinit var userRepository: UserRepository
 
     @Autowired
     lateinit var appScope: CoroutineScope
@@ -162,8 +166,15 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             // we have to trigger this event to confirm session if the number of participants have been reached
             queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
         }
-        run.hostedBy?.let {
-            pushNotificationService.userJoinedRunSession(it, user, run)
+        run.hostedBy?.let { host->
+            // find the user linked to the admin that created this event
+            // technically it should only be one object but we are making it a list
+            // just to make it crash resistant
+            // if the admin user is the same as the user that created this session, filter him out
+            val users = userRepository.findByLinkedAdmin(host).filter { it.linkedAdmin != user.id }
+            users.forEach {
+                pushNotificationService.userJoinedRunSession(it.id.orEmpty(), user, run)
+            }
         }
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
