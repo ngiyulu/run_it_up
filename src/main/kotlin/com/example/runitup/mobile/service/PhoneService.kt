@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.enum.PhoneType
+import com.example.runitup.mobile.model.Phone
 import com.example.runitup.mobile.repository.PhoneRepository
 import com.example.runitup.mobile.rest.v1.dto.FirebaseTokenModel
 import constant.HeaderConstants
@@ -15,13 +16,14 @@ class PhoneService: BaseService() {
     fun createPhone(token: FirebaseTokenModel, os:String, userId: String): com.example.runitup.mobile.model.Phone {
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
+        println("createPhone userId = $userId")
         if(ph == null){
             if(token.type == HeaderConstants.IOS_TYPE){
                 phoneType = PhoneType.IOS
             }
             print("we didn't find phone")
             ph =phoneRepository.save(
-                com.example.runitup.mobile.model.Phone(
+                Phone(
                     os = os,
                     model = "",
                     userId = userId,
@@ -38,11 +40,10 @@ class PhoneService: BaseService() {
             if(ph.token != token.token){
                 ph.token = token.token
                 ph.phoneId = token.phoneId
+                ph.userId = userId
                 print("update phone")
                 phoneRepository.save(ph)
             }
-
-
         }
         return ph
     }
