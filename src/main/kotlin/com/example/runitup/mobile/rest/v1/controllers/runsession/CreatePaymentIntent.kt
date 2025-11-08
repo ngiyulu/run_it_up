@@ -17,7 +17,6 @@ class CreatePaymentIntent: BaseController<CreatePIRequest, CreatePIResponse>()  
     @Autowired
     lateinit var paymentService: PaymentService
 
-    private val logger = myLogger()
     override fun execute(request: CreatePIRequest): CreatePIResponse {
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))

@@ -37,8 +37,6 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
     @Autowired
     lateinit var bookingStateRepo: BookingPaymentStateRepository
 
-    private val logger = myLogger()
-
 
     override fun execute(request: JoinSessionModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal

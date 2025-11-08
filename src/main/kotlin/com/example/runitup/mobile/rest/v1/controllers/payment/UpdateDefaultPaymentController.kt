@@ -18,8 +18,6 @@ class UpdateDefaultPaymentController: BaseController<UpdateDefaultCardModel, Use
     @Autowired
     lateinit var paymentService: PaymentService
 
-    private val logger = myLogger()
-
     override fun execute(request: UpdateDefaultCardModel): User {
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))

@@ -28,8 +28,6 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
-    private val logger = myLogger()
-
     override fun execute(request: ConfirmSessionModel): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication
         val savedUser = auth.principal as UserPrincipal

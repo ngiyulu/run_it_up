@@ -13,7 +13,6 @@ class GetSupportController: BaseController<String, Support>() {
 
     @Autowired
     lateinit var supportRepository: SupportRepository
-    private val logger = myLogger()
     override fun execute(request: String): Support {
         val dbSupport = supportRepository.findById(request)
         if(!dbSupport.isPresent){
