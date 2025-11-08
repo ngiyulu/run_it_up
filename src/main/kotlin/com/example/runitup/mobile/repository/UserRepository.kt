@@ -17,6 +17,8 @@ interface UserRepository : MongoRepository<User, String> {
     @Query("{email:'?0'}")
     fun findByEmail(email: String): User?
 
+    fun findByLinkedAdmin(linkedAdmin: String): List<User>
+
     @Query("{phoneNumber:'?0'}")
     fun findByPhone(phoneNumber: String): User?
 

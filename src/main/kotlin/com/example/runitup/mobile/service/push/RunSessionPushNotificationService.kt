@@ -24,7 +24,7 @@ class RunSessionPushNotificationService {
             body = "Session confirmed",
             data = mapOf(AppConstant.SCREEN to ScreenConstant.RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
-        pushService.sendToPhones(getPhones(runSession, userId), notification)
+        pushService.sendToPhones(getAllUsersPhones(runSession, userId), notification)
     }
 
     fun runSessionCancelled(userId:String, runSession: RunSession){
@@ -33,7 +33,7 @@ class RunSessionPushNotificationService {
             body = "Session cancelled",
             data = mapOf(AppConstant.SCREEN to ScreenConstant.RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
-        pushService.sendToPhones(getPhones(runSession, userId), notification)
+        pushService.sendToPhones(getAllUsersPhones(runSession, userId), notification)
     }
 
     fun userJoinedRunSession(userId:String, user:User, runSession: RunSession){
@@ -42,24 +42,30 @@ class RunSessionPushNotificationService {
             body = "${user.getFullName()} joined session",
             data = mapOf(AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
-        pushService.sendToPhones(getPhones(runSession, userId), notification)
+        pushService.sendToPhones(getAllUsersPhones(runSession, userId), notification)
     }
 
-    fun newSession(userId:String, runSession: RunSession){
+    fun runSessionBookingCancelled(userId:String, runSession: RunSession){
         val notification = PushNotification(
             title = runSession.title,
-            body = "Session confirmed",
-            data = mapOf(AppConstant.SCREEN to ScreenConstant.RUN_DETAIL, SessionId to runSession.id.orEmpty())
+            body = "You have ben removed from the run session",
+            data = mapOf(AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
-        pushService.sendToPhones(getPhones(runSession, userId), notification)
+        pushService.sendToPhones(getPhoneByUser(userId), notification)
     }
 
 
-    private fun getPhones(runSession: RunSession, userId: String): List<com.example.runitup.mobile.model.Phone>{
+
+    private fun getAllUsersPhones(runSession: RunSession, userId: String): List<com.example.runitup.mobile.model.Phone>{
         return phoneRepository.findAllByUserIdIn(
             runSession.bookings.map {
                 it.userId }.filter {
                 it != userId
             })
+    }
+
+    private fun getPhoneByUser(userId: String): List<com.example.runitup.mobile.model.Phone>{
+        return phoneRepository.findAllByUserId(userId)
+
     }
 }

@@ -12,6 +12,7 @@ data class ServiceResult<T>(
 ) {
     companion object {
         fun <T> ok(value: T) = ServiceResult(ok = true, data = value)
+        fun <T> disable() = ServiceResult<T>(ok = true, data = null)
         fun <T> err(status: Int, source: String, message: String, body: String? = null) =
             ServiceResult<T>(ok = false, error = ServiceError(status, source, message, body))
     }

@@ -25,9 +25,9 @@ import org.springframework.stereotype.Component
 
 @Component
 class RunSessionCancelledConsumer(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
-    private val trackerService: JobTrackerService,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
+    trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val  bookingPricingAdjuster: BookingPricingAdjuster,
     private val bookingRepository: BookingRepository,
