@@ -5,7 +5,6 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
@@ -22,9 +21,6 @@ import java.util.*
 class CancelSessionController: BaseController<CancelSessionModel, RunSession>() {
 
     @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
-
-    @Autowired
     lateinit var bookingDbService: BookingDbService
 
     @Autowired
@@ -37,11 +33,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
     lateinit var appScope: CoroutineScope
 
     override fun execute(request: CancelSessionModel): com.example.runitup.mobile.model.RunSession {
-        val runDb = runSessionRepository.findById(request.sessionId)
-        if(!runDb.isPresent){
-            throw ApiRequestException(text("invalid_session_id"))
-        }
-        var run = runDb.get()
+        var run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         if(!run.isDeletable()){
             throw  ApiRequestException(text("invalid_session_cancel"))
         }
@@ -59,7 +51,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_CANCELLED_JOB, job)
         }
-        run = runSessionService.updateRunSession(run)
+        run = cacheManager.updateRunSession(run)
         bookingDbService.cancelAllBooking(run.id.orEmpty())
         return run
     }

@@ -99,7 +99,10 @@ class AdminRunSessionRestController {
     }
 
     @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: String) = repo.deleteById(id)
+    fun delete(@PathVariable id: String) {
+        cacheManager.evictRunSession(id)
+        repo.deleteById(id)
+    }
 
     @GetMapping("/{id}/list")
     fun listRunSession(@PathVariable id: String): List<RunSession> {

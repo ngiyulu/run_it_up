@@ -7,7 +7,6 @@ import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
@@ -24,12 +23,7 @@ import org.springframework.stereotype.Service
 class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
 
     @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
-
-
-    @Autowired
     private lateinit var bookingRepository: BookingRepository
-
 
     @Autowired
     lateinit var runSessionService: RunSessionService

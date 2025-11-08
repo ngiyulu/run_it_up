@@ -57,12 +57,10 @@ class GetUserRunSessionByDate: BaseController<GetUserRunSessionByDateModel, List
     fun getRunSessionList(startDate: LocalDate, endDate: LocalDate?, userId:String, page: Pageable): List<RunSession>{
         val list = mutableListOf<RunSession>()
         val booking = getBooking(startDate, endDate, userId, page)
-        booking.forEach {
-            val sessionDb = runSessionRepository.findById(it.runSessionId)
-            if(sessionDb.isPresent){
-                val session = sessionDb.get().apply {
-                    this.host = cacheManager.getAdmin(this.hostedBy.orEmpty())
-                }
+        booking.forEach { it ->
+            val session = cacheManager.getRunSession(it.runSessionId)
+            session?.let {
+                it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
                 list.add(session)
             }
         }

@@ -5,13 +5,10 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.RunSession
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.geo.Distance
-import org.springframework.data.geo.Point
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
-import java.time.LocalDate
 import java.util.*
 
 
@@ -37,6 +34,10 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
         """
     }
     fun findByStatus(status: RunStatus): List<RunSession>
+
+
+    @Query("{id:'?0'}")
+    fun findByIdentifier(identifier: String): RunSession?
 
     @Query("{ 'date': { \$gte: ?0, \$lt: ?1 } }")
     fun findAllByDateBetween(startInclusive: Date, endExclusive: Date, pageable: Pageable): Page<RunSession>

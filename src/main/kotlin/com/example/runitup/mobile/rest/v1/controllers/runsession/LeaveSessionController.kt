@@ -4,11 +4,9 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service

@@ -6,9 +6,7 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
-import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.web.dto.Role
@@ -25,10 +23,6 @@ import java.util.*
 @Service
 // user decides not to participate anymore
 class LeaveSessionService {
-
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
-
 
     @Autowired
     lateinit var runSessionService: RunSessionService
@@ -63,13 +57,10 @@ class LeaveSessionService {
 
      fun cancelBooking(user:User, sessionId:String, admin:AdminUser? = null): RunSession {
          val locale = LocaleContextHolder.getLocale().toString()
-         val runDb = runSessionRepository.findById(sessionId)
-         if(!runDb.isPresent){
-            throw ApiRequestException(textService.getText("invalid_session_id",locale ))
-        }
+         val run = cacheManager.getRunSession(sessionId)
+             ?: throw ApiRequestException(textService.getText("invalid_session_id",locale ))
 
-        val run = runDb.get()
-        if(!run.isDeletable()){
+         if(!run.isDeletable()){
             throw  ApiRequestException(textService.getText("invalid_session_cancel", locale))
         }
          if(admin != null){

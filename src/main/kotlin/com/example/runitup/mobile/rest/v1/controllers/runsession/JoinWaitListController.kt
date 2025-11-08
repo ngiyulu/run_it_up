@@ -1,13 +1,12 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
-import com.example.runitup.common.service.IdempotencyKeyGenerator
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.BookingStatus
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.SetupStatus
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.JoinWaitListResponse
 import com.example.runitup.mobile.rest.v1.dto.RunUser
@@ -24,31 +23,20 @@ import org.springframework.stereotype.Service
 class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResponse>() {
 
     @Autowired
-    private lateinit var runSessionRepository: RunSessionRepository
-
-    @Autowired
     private lateinit var bookingRepository: BookingRepository
 
-    @Autowired
-    lateinit var idempotencyKeyGenerator: IdempotencyKeyGenerator
 
     @Autowired
     lateinit var paymentService: WaitListPaymentService
-
 
     @Autowired
     lateinit var runSessionService: RunSessionService
 
 
-
     override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
-        val runDb = runSessionRepository.findById(request.sessionId)
+        var run: RunSession = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        if (!runDb.isPresent) {
-            throw ApiRequestException(text("invalid_session_id"))
-        }
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
-        val run = runDb.get()
         // this mean the event is full
         if (user.stripeId == null) {
             throw ApiRequestException(text("payment_error"))

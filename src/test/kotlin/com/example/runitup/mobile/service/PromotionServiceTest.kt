@@ -36,8 +36,7 @@ class PromotionServiceTest {
 
     @BeforeEach
     fun setup() {
-        service = PromotionService(
-            sessionRepo, bookingRepo, waitlistSetupRepo,
+        service = PromotionService(bookingRepo, waitlistSetupRepo,
             adjuster, cacheManager, sessionService, pushSvc
         )
     }

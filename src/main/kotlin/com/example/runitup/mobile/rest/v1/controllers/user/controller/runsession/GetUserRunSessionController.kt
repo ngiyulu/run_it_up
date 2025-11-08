@@ -3,9 +3,7 @@ package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsessio
 import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -15,16 +13,14 @@ class GetUserRunSessionController: BaseController<String, List<RunSession>>() {
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
 
     override fun execute(request: String): List<RunSession> {
         val booking = bookingRepository.findByUserIdAndStatusIn(request,  mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
         val list: MutableList<RunSession> = mutableListOf()
         booking.forEach {
-            val session = runSessionRepository.findById(it.runSessionId)
-            if (session.isPresent){
-                list.add(session.get())
+            val session = cacheManager.getRunSession(it.runSessionId)
+            if(session != null){
+                list.add(session)
             }
         }
         return list

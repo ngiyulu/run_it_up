@@ -2,9 +2,7 @@ package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsessio
 
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.service.RunSessionService

@@ -4,7 +4,6 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RefundReasonCode
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.payment.RefundResult
 import com.example.runitup.mobile.service.payment.RefundService
@@ -16,9 +15,6 @@ class CreateRefundController: BaseController<CreateRefundModel, RefundResult>() 
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
-
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
     lateinit var bookingPaymentStateRepository: BookingPaymentStateRepository

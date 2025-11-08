@@ -5,10 +5,7 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.repository.BookingPaymentStateRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
-import com.example.runitup.mobile.service.ClickSendSmsService
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -26,8 +23,8 @@ class ProcessPaymentJob(
     private val appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
-    private val runSessionRepository: RunSessionRepository,
     private val bookingDbService: BookingDbService,
+    private val cacheManager: MyCacheManager,
     private val bookingPricingAdjuster: BookingPricingAdjuster
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_PROCESS_PAYMENT, objectMapper) {
 
@@ -38,11 +35,10 @@ class ProcessPaymentJob(
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         val runSessionId = data.payload
         withContext(Dispatchers.IO) {
-            val runDb = runSessionRepository.findById(runSessionId)
-            if(!runDb.isPresent){
+            val run = cacheManager.getRunSession(runSessionId)
+            if(run == null){
                 return@withContext
             }
-            val run = runDb.get()
             if(run.status != RunStatus.CONFIRMED){
                 return@withContext
             }

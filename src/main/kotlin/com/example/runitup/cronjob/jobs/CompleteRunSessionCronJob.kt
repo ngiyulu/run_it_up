@@ -2,12 +2,12 @@ package com.example.runitup.cronjob.jobs
 
 
 import com.example.runitup.cronjob.CronJobRunner
+import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.service.TimeService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.ZoneId
@@ -16,6 +16,7 @@ import java.time.ZoneId
 class CompleteRunSessionCronJob(
     private val runner: CronJobRunner,
     private val runSessionRepository: RunSessionRepository,
+    private val cacheManager: MyCacheManager,
     private val timeService: TimeService) {
 
     // it will run ever 25 mins
@@ -34,7 +35,7 @@ class CompleteRunSessionCronJob(
                         )
                     if(shouldProcess){
                         it.status = RunStatus.COMPLETED
-                        runSessionRepository.save(it)
+                        cacheManager.updateRunSession(it)
                         audit.incrementProcessedBy(1)
                     }
                 }

@@ -5,8 +5,6 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.service.ClickSendSmsService
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.queueconsumers.BaseQueueConsumer
@@ -23,9 +21,7 @@ class PaymentFailedConsumer(
     private val appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
-    private val runSessionRepository: RunSessionRepository,
     private val bookingPaymentStateRepository: BookingPaymentStateRepository,
-    private val smsService: ClickSendSmsService,
     private val cacheManager: MyCacheManager
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.PAYMENT_FAILED_JOB, objectMapper) {
 
@@ -36,24 +32,24 @@ class PaymentFailedConsumer(
         val data: JobEnvelope<PaymentFailedModel> = objectMapper.readValue(rawBody) as JobEnvelope<PaymentFailedModel>
         val payload = data.payload
         withContext(Dispatchers.IO) {
-            val runDb = runSessionRepository.findById(payload.runSessionId)
-            val run = runDb.get()
-            val bookingPayment = bookingPaymentStateRepository.findByBookingId(payload.bookingId)
-            if(bookingPayment != null){
-                val user = cacheManager.getUser(bookingPayment?.userId.orEmpty())
-                if(user != null){
-                    val message = "run ${run.title} taking place on ${run.date} with id ${run.id} has a failed payment for ${user.getFullName()} "
-                    //smsService.sendSmsDetailed("", message)
+            val run = cacheManager.getRunSession(payload.runSessionId)
+            if(run != null){
+                val bookingPayment = bookingPaymentStateRepository.findByBookingId(payload.bookingId)
+                if(bookingPayment != null){
+                    val user = cacheManager.getUser(bookingPayment?.userId.orEmpty())
+                    if(user != null){
+                        val message = "run ${run.title} taking place on ${run.date} with id ${run.id} has a failed payment for ${user.getFullName()} "
+                        //smsService.sendSmsDetailed("", message)
+                    }
+                    else{
+                        throw Error("user is null $payload")
+                    }
+
                 }
                 else{
-                    throw Error("user is null $payload")
+                    throw Error("booking payment  is null $payload")
                 }
-
             }
-            else{
-                throw Error("booking payment  is null $payload")
-            }
-
 
         }
 

@@ -4,15 +4,12 @@ import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
-import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.myLogger
-import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -23,9 +20,6 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
 
     @Autowired
     lateinit var runSessionService: RunSessionService
-
-    @Autowired
-    lateinit var runSessionRepository: RunSessionRepository
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
