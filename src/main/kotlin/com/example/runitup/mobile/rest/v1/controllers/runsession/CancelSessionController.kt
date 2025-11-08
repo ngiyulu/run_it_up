@@ -32,7 +32,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
     @Autowired
     lateinit var appScope: CoroutineScope
 
-    override fun execute(request: CancelSessionModel): com.example.runitup.mobile.model.RunSession {
+    override fun execute(request: CancelSessionModel): RunSession {
         var run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         if(!run.isDeletable()){
             throw  ApiRequestException(text("invalid_session_cancel"))
