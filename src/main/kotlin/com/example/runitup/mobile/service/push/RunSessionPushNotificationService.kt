@@ -3,6 +3,7 @@ package com.example.runitup.mobile.service.push
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.constants.AppConstant.SessionId
 import com.example.runitup.mobile.constants.ScreenConstant
+import com.example.runitup.mobile.model.Phone
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.service.PhoneDbService
@@ -42,7 +43,7 @@ class RunSessionPushNotificationService {
             body = "${user.getFullName()} joined session",
             data = mapOf(AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL, SessionId to runSession.id.orEmpty())
         )
-        pushService.sendToPhones(getAllUsersPhones(runSession, userId), notification)
+        pushService.sendToPhones(getPhoneByUser(userId), notification)
     }
 
     fun runSessionBookingCancelled(userId:String, runSession: RunSession){
@@ -56,7 +57,7 @@ class RunSessionPushNotificationService {
 
 
 
-    private fun getAllUsersPhones(runSession: RunSession, userId: String): List<com.example.runitup.mobile.model.Phone>{
+    private fun getAllUsersPhones(runSession: RunSession, userId: String): List<Phone>{
         return phoneRepository.findAllByUserIdIn(
             runSession.bookings.map {
                 it.userId }.filter {
@@ -64,7 +65,7 @@ class RunSessionPushNotificationService {
             })
     }
 
-    private fun getPhoneByUser(userId: String): List<com.example.runitup.mobile.model.Phone>{
+    private fun getPhoneByUser(userId: String): List<Phone>{
         return phoneRepository.findAllByUserId(userId)
 
     }
