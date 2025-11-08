@@ -2,6 +2,7 @@ package com.example.runitup.mobile.repository
 
 import com.example.runitup.mobile.constants.CollectionConstants
 import com.example.runitup.mobile.enum.RunStatus
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.RunSession
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -51,6 +52,9 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
         hostedBy: String,
         pageable: Pageable
     ): Page<RunSession>
+
+    @Query("{'date': { \$gte: ?0, \$lt: ?1 } }")
+    fun findAllByDate( startInclusive: Date, endExclusive: Date,  pageable: Pageable): Page<RunSession>
 
 
     @Query(value = QUERY_NEAR_EXCLUDE_DAY_RANGE)

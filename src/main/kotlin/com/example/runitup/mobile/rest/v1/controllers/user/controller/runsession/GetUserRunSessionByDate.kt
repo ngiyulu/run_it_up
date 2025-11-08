@@ -34,7 +34,8 @@ class GetUserRunSessionByDate: BaseController<GetUserRunSessionByDateModel, List
             throw ApiRequestException("not_authorized")
         }
         if(user.userType == UserType.ADMIN){
-            return runSessionRepository.findAllByDatePageable(Date.from(startUtc), request.page).content.map {
+            val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
+            return runSessionRepository.findAllByDate(Date.from(startUtc), Date.from(endUtc), request.page).content.map {
                 it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
                 it
             }
