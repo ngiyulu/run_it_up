@@ -38,8 +38,8 @@ class PushMetricsService(
         return Aggregation.match(Criteria().andOperator(*ands.toTypedArray()))
     }
 
-    private fun rate(success: Long, attempts: Long): Double =
-        if (attempts == 0L) 0.0 else round((success.toDouble() / attempts.toDouble()) * 1000.0) / 10.0
+    private fun rate(success: Int, attempts: Int): Double =
+        if (attempts == 0) 0.0 else round((success.toDouble() / attempts.toDouble()) * 1000.0) / 10.0
 
     fun overview(range: TimeRange): OverviewMetrics {
         val statusSucceeded = ConditionalOperators.`when`(Criteria.where("status").`is`("SUCCESS")).then(1).otherwise(0)
@@ -58,10 +58,10 @@ class PushMetricsService(
         val result = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java)
             .mappedResults.firstOrNull()
 
-        val attempts = result?.getLong("attempts") ?: 0L
-        val success = result?.getLong("success") ?: 0L
-        val failed = result?.getLong("failed") ?: 0L
-        val invalid = result?.getLong("invalidTokens") ?: 0L
+        val attempts = result?.getInteger("attempts") ?: 0
+        val success = result?.getInteger("success") ?: 0
+        val failed = result?.getInteger("failed") ?: 0
+        val invalid = result?.getInteger("invalidTokens") ?: 0
 
         return OverviewMetrics(
             attempts = attempts,
@@ -88,9 +88,9 @@ class PushMetricsService(
         val docs = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java).mappedResults
         return docs.map {
             val key = it.getString("_id") ?: "UNKNOWN"
-            val attempts = it.getLong("attempts") ?: 0L
-            val success = it.getLong("success") ?: 0L
-            val failed = it.getLong("failed") ?: 0L
+            val attempts = it.getInteger("attempts") ?: 0
+            val success = it.getInteger("success") ?: 0
+            val failed = it.getInteger("failed") ?: 0
             BreakdownRow(
                 key = key,
                 attempts = attempts,
@@ -110,7 +110,7 @@ class PushMetricsService(
             Aggregation.limit(limit.toLong())
         )
         val docs = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java).mappedResults
-        return docs.map { ErrorRow(it.getString("_id") ?: "UNKNOWN", it.getLong("count") ?: 0L) }
+        return docs.map { ErrorRow(it.getString("_id") ?: "UNKNOWN", it.getInteger("count") ?: 0) }
     }
 
     // Convenience wrappers
@@ -166,10 +166,10 @@ class PushMetricsService(
         val result = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java)
             .mappedResults.firstOrNull()
 
-        val attempts = result?.getLong("attempts") ?: 0L
-        val success = result?.getLong("success") ?: 0L
-        val failed = result?.getLong("failed") ?: 0L
-        val invalid = result?.getLong("invalidTokens") ?: 0L
+        val attempts = result?.getInteger("attempts") ?: 0
+        val success = result?.getInteger("success") ?: 0
+        val failed = result?.getInteger("failed") ?: 0
+        val invalid = result?.getInteger("invalidTokens") ?: 0
 
         return OverviewMetrics(
             attempts = attempts,
@@ -197,9 +197,9 @@ class PushMetricsService(
         val docs = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java).mappedResults
         return docs.map {
             val key = it.getString("_id") ?: "UNKNOWN"
-            val attempts = it.getLong("attempts") ?: 0L
-            val success = it.getLong("success") ?: 0L
-            val failed = it.getLong("failed") ?: 0L
+            val attempts = it.getInteger("attempts") ?: 0
+            val success = it.getInteger("success") ?: 0
+            val failed = it.getInteger("failed") ?: 0
             BreakdownRow(
                 key = key,
                 attempts = attempts,
@@ -220,6 +220,6 @@ class PushMetricsService(
             Aggregation.limit(limit.toLong())
         )
         val docs = mongo.aggregate(agg, PushDeliveryAttempt::class.java, org.bson.Document::class.java).mappedResults
-        return docs.map { ErrorRow(it.getString("_id") ?: "UNKNOWN", it.getLong("count") ?: 0L) }
+        return docs.map { ErrorRow(it.getString("_id") ?: "UNKNOWN", it.getInteger("count") ?: 0) }
     }
 }

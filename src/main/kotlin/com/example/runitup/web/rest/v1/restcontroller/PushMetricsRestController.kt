@@ -1,4 +1,4 @@
-// package com.example.runitup.mobile.rest.v1.controllers.metrics
+package com.example.runitup.web.rest.v1.restcontroller// package com.example.runitup.mobile.rest.v1.controllers.metrics
 
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.service.PushMetricsService
@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
 @RestController
-@RequestMapping("/api/v1/metrics/push")
-class PushMetricsController(
+@RequestMapping("/admin/api/v1/metrics/push")
+class PushMetricsRestController(
     private val svc: PushMetricsService
 ) {
 

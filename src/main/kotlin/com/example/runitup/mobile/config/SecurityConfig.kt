@@ -65,6 +65,7 @@ class SecurityConfig{
                     "admin/users/view/**",
                     "/admin/gyms",
                     "admin/support",
+                    "admin/push",
                     "admin/support/detail/**",
                     "/admin/auth/login",
                     "admin/users",

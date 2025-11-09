@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Push Metrics • RunItUp Admin</title>
+    <link th:href="@{/styles.css}" rel="stylesheet" />
+    <style>
+        .metrics-grid { display:flex; flex-wrap:wrap; gap:1rem; margin-top:1rem; }
+        .metric-card { flex:1; min-width:200px; background:#fff; border-radius:8px; padding:1rem; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+        .metric-card h4 { margin:0 0 .25rem; font-size:1rem; color:#444; }
+        .metric-value { font-size:1.5rem; font-weight:700; }
+        .toolbar .filters { display:flex; gap:.5rem; align-items:center; }
+        .toolbar input { padding:.35rem .5rem; }
+        .toolbar button { padding:.4rem .8rem; }
+        table { width:100%; border-collapse:collapse; margin-top:1rem; }
+        th, td { padding:8px; text-align:left; border-bottom:1px solid #ddd; }
+        th { background:#f9f9f9; }
+        .badge { background:#eef; border-radius:999px; padding:.2rem .6rem; font-size:.85rem; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <div class="brand">RunItUp • Admin</div>
+        <nav class="nav">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <a th:href="@{/admin/gyms}">Gyms</a>
+            <a th:href="@{/admin/runsessions}">Run Sessions</a>
+            <a th:href="@{/admin/payments}">Payments</a>
+            <a th:href="@{/admin/users}">Users</a>
+            <a th:href="@{/admin/push}" class="active">Push Metrics</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar">
+        <h2>Push Notification Metrics</h2>
+        <div class="filters">
+            <span class="badge">Range</span>
+            <input type="datetime-local" id="from" />
+            <input type="datetime-local" id="to" />
+            <button id="applyBtn" class="primary">Apply</button>
+            <button id="last7Btn" type="button">Last 7d</button>
+            <button id="last24hBtn" type="button">Last 24h</button>
+        </div>
+    </div>
+
+    <div class="metrics-grid" id="overviewGrid">
+        <!-- populated by JS -->
+    </div>
+
+    <h3 style="margin-top:1.5rem;">Breakdown by Template</h3>
+    <table id="templateTable">
+        <thead>
+        <tr><th>Template</th><th>Attempts</th><th>Success</th><th>Failed</th><th>Success Rate (%)</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h3 style="margin-top:1.5rem;">Top Errors</h3>
+    <table id="errorTable">
+        <thead>
+        <tr><th>Error Code</th><th>Count</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<footer>
+    <div>© RunItUp Admin • v1.0</div>
+</footer>
+
+<script th:src="@{/app.js}"></script>
+<script>
+    // ---- Reuse shared helpers from app.js ----
+    requireAuth();
+
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+    });
+
+    // Utils to build query string using ISO strings
+    function qs(range) {
+        const p = new URLSearchParams();
+        if (range.from) p.set('from', range.from);
+        if (range.to)   p.set('to', range.to);
+        const s = p.toString();
+        return s ? `?${s}` : '';
+    }
+
+    // Range helpers
+    function toIsoLocal(dtInput) {
+        // dtInput value is local "yyyy-MM-ddTHH:mm"
+        if (!dtInput) return null;
+        const d = new Date(dtInput);
+        if (isNaN(d.getTime())) return null;
+        return d.toISOString();
+    }
+
+    function setRangeLast(hours) {
+        const to = new Date();
+        const from = new Date(Date.now() - hours * 3600 * 1000);
+        // Set inputs as local datetime-local
+        document.getElementById('from').value = new Date(from.getTime() - from.getTimezoneOffset()*60000)
+            .toISOString().slice(0,16);
+        document.getElementById('to').value = new Date(to.getTime() - to.getTimezoneOffset()*60000)
+            .toISOString().slice(0,16);
+    }
+
+    // Bind range buttons
+    document.getElementById('last7Btn').addEventListener('click', () => {
+        setRangeLast(24*7);
+        loadAll();
+    });
+    document.getElementById('last24hBtn').addEventListener('click', () => {
+        setRangeLast(24);
+        loadAll();
+    });
+    document.getElementById('applyBtn').addEventListener('click', () => loadAll());
+
+    // Initial range = last 7d
+    setRangeLast(24*7);
+
+    async function loadOverview(range) {
+        const url = `/admin/api/v1/metrics/push/overview${qs(range)}`;
+        const data = await api(url);
+        const grid = document.getElementById('overviewGrid');
+        grid.innerHTML = `
+      <div class="metric-card"><h4>Attempts</h4><div class="metric-value">${data.attempts}</div></div>
+      <div class="metric-card"><h4>Success</h4><div class="metric-value">${data.success}</div></div>
+      <div class="metric-card"><h4>Failed</h4><div class="metric-value">${data.failed}</div></div>
+      <div class="metric-card"><h4>Success Rate</h4><div class="metric-value">${data.successRate}%</div></div>
+      <div class="metric-card"><h4>Invalid Tokens</h4><div class="metric-value">${data.invalidTokenCount}</div></div>
+    `;
+    }
+
+    async function loadByTemplate(range) {
+        const rows = await api(`/admin/api/v1/metrics/push/breakdown/templates${qs(range)}`);
+        const tbody = document.querySelector('#templateTable tbody');
+        tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.key || '—'}</td>
+        <td>${r.attempts}</td>
+        <td>${r.success}</td>
+        <td>${r.failed}</td>
+        <td>${r.successRate}</td>
+      </tr>
+    `).join('');
+    }
+
+    async function loadTopErrors(range) {
+        const rows = await api(`/admin/api/v1/metrics/push/errors/top${qs(range)}`);
+        const tbody = document.querySelector('#errorTable tbody');
+        tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.errorCode || '—'}</td>
+        <td>${r.count}</td>
+      </tr>
+    `).join('');
+    }
+
+    function getRangeFromInputs() {
+        const fromIso = toIsoLocal(document.getElementById('from').value);
+        const toIso   = toIsoLocal(document.getElementById('to').value);
+        return { from: fromIso, to: toIso };
+    }
+
+    async function loadAll() {
+        try {
+            showOverlay('Loading metrics...');
+            const range = getRangeFromInputs();
+            // Parallelize calls using our api() helper
+            await Promise.all([
+                loadOverview(range),
+                loadByTemplate(range),
+                loadTopErrors(range)
+            ]);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to load metrics: ' + (err?.message || err));
+        } finally {
+            hideOverlay();
+        }
+    }
+
+    // Kickoff
+    loadAll();
+</script>
+</body>
+</html>

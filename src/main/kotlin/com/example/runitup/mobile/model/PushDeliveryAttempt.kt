@@ -4,6 +4,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 enum class PushVendor { FCM, APNS }
 enum class AttemptStatus { SUCCESS, FAILED }
@@ -40,6 +41,6 @@ data class PushDeliveryAttempt(
     val errorMessage: String?,                  // sanitized
 
     // TTL (keep shorter for attempts)
-    @Indexed(expireAfter = "30d")
-    val expiresAt: Instant = Instant.now()
+    @Indexed(expireAfter = "0s", name = "expiresAtIndex")
+    val expiresAt: Instant = Instant.now().plus(30, ChronoUnit.DAYS),
 )

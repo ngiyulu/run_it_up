@@ -7,24 +7,24 @@ data class TimeRange(
 )
 
 data class OverviewMetrics(
-    val attempts: Long,
-    val success: Long,
-    val failed: Long,
+    val attempts: Int,
+    val success: Int,
+    val failed: Int,
     val successRate: Double,
-    val invalidTokenCount: Long
+    val invalidTokenCount: Int
 )
 
 data class BreakdownRow(
     val key: String,
-    val attempts: Long,
-    val success: Long,
-    val failed: Long,
+    val attempts: Int,
+    val success: Int,
+    val failed: Int,
     val successRate: Double
 )
 
 data class ErrorRow(
     val errorCode: String,
-    val count: Long
+    val count: Int
 )
 
 data class SessionMetrics(
