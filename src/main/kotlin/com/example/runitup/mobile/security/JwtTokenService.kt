@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.security
 
+import com.example.runitup.mobile.service.myLogger
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
@@ -19,6 +20,8 @@ class JwtTokenService {
 
     @Value("\${security.jwt.access-ttl-months:2}")
     var accessTtlMonths: Long = 0
+
+    private val logger = myLogger()
 
     private val key: Key by lazy {
         // HS256 requires a 256-bit key (>= 32 bytes)
@@ -64,6 +67,7 @@ class JwtTokenService {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
             true
         } catch (ex: Exception) {
+            logger.error("validateToken failed $ex")
             false
         }
     }

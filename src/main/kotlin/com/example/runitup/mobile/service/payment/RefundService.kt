@@ -5,6 +5,7 @@ import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.repository.RefundRecordRepository
 import com.example.runitup.mobile.rest.v1.dto.payment.RefundResult
+import com.example.runitup.mobile.service.myLogger
 import com.stripe.exception.CardException
 import com.stripe.exception.StripeException
 import com.stripe.model.Refund
@@ -26,6 +27,8 @@ class RefundService(
 
     @Autowired
     lateinit var refundPolicyService: RefundPolicyService
+
+    private val logger = myLogger()
 
     fun startRefund(runSession: RunSession, booking: BookingPaymentState){
         val decision = refundPolicyService.computeRefundForCancellation(runSession, chargeCents = booking.totalCapturedCents)
@@ -143,6 +146,7 @@ class RefundService(
                 message = "Refund succeeded."
             )
         } catch (e: CardException) {
+            logger.error("refundPaymentIntent failed CardException = ${e.message}")
             val se = e.stripeError
             record.status = RefundStatus.FAILED
             record.errorType = se?.type ?: "card_error"
@@ -164,6 +168,7 @@ class RefundService(
                 declineCode = se?.declineCode
             )
         } catch (e: StripeException) {
+            logger.error("refundPaymentIntent failed StripeException = ${e.message}")
             record.status = RefundStatus.FAILED
             record.errorType = e.stripeError?.type ?: "api_error"
             record.errorCode = e.code
@@ -184,6 +189,7 @@ class RefundService(
                 declineCode = e.stripeError?.declineCode
             )
         } catch (e: Exception) {
+            logger.error("refundPaymentIntent failed Exception = ${e.message}")
             record.status = RefundStatus.FAILED
             record.errorType = "internal_error"
             record.errorMessage = e.message

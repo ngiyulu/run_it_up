@@ -70,6 +70,9 @@ class LeaveSessionService {
          }
         val booking: Booking = bookingDbService.getBooking(user.id.orEmpty(), run.id.orEmpty())
             ?: throw  ApiRequestException(textService.getText("invalid_params", locale))
+         if(booking.isLocked){
+             throw  ApiRequestException(textService.getText("try-again", locale))
+         }
         // this means a hold payment was created so we have to cancel it
          if(!run.isSessionFree()){
              if(run.status != RunStatus.PENDING){

@@ -3,6 +3,7 @@ import com.example.runitup.mobile.model.FailureKind
 import com.example.runitup.mobile.repository.PaymentAuthorizationRepository
 import com.example.runitup.mobile.service.PaymentAuthorizationService
 import com.example.runitup.mobile.service.PaymentService
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -13,6 +14,7 @@ class CaptureRetryRunner(
     private val paymentAuthorizationService: PaymentAuthorizationService
 ) {
     // @Scheduled(fixedDelay = 60_000)
+    val logger = myLogger()
     fun run() {
         val now = System.currentTimeMillis()
         val candidates = authRepo.findCaptureRetryCandidates(now)
@@ -50,6 +52,7 @@ class CaptureRetryRunner(
                     )
                 }
             } catch (e: Exception) {
+                logger.error("validateToken failed $e")
                 // swallow and let next run handle
             }
         }

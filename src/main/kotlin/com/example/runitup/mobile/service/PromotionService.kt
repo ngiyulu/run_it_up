@@ -4,6 +4,7 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
 import org.springframework.stereotype.Service
@@ -14,127 +15,176 @@ class PromotionService(
     private val bookingRepo: BookingRepository,
     private val waitlistSetupRepo: WaitlistSetupStateRepository,
     private val adjuster: BookingPricingAdjuster,
+    private  val bookingDbService: BookingDbService,
     private val cacheManager: MyCacheManager,
     private val sessionService: RunSessionService,
     private val paymentPushNotificationService: PaymentPushNotificationService
 ) {
-    private val TAG = "PromotionService"
+    val logger = myLogger()
 
     /**
      * Promote the next waitlisted user if a spot is available.
-     * Idempotent by (bookingId + promotionVersion) & Stripe idempotency.
+     * - Skips entries whose bookings are currently locked by another worker.
+     * - Continues scanning until a promotable candidate is found or the list is exhausted.
+     * Idempotent by (bookingId + promotionVersion) & Stripe idempotency (in adjuster).
      */
     fun promoteNextWaitlistedUser(sessionId: String): PromotionResult {
-        val session = cacheManager.getRunSession(sessionId) ?: return PromotionResult(false, "Session not found: $sessionId")
-        if(session.waitList.isEmpty()){
+        val session = cacheManager.getRunSession(sessionId)
+            ?: return PromotionResult(false, "Session not found: $sessionId")
+
+        if (session.waitList.isEmpty()) {
             return PromotionResult(false, "No available spots right now.")
         }
-        val candidate = session.waitList[0]
-        val booking = bookingRepo.findByUserIdAndRunSessionIdAndStatusIn(
-            candidate.userId.orEmpty(), sessionId, mutableListOf(BookingStatus.WAITLISTED)
-        ) ?: return PromotionResult(false, "Booking not found")
-        val user: User = cacheManager.getUser(candidate.userId.orEmpty()) ?: return PromotionResult(false, "I couldn't find user")
-        if(user.stripeId == null){
-            return PromotionResult(false, "Stripe id is null")
-        }
-        // 3) Make a brief reservation/lock on the booking (server-side gate)
-        //    Mark as RESERVED_PENDING_AUTH to avoid duplicate promotions in concurrent workers.
-        booking.isLocked = true
-        booking.isLockedAt = Instant.now()
-        bookingRepo.save(booking)
 
-        // 4) Ensure the card is off-session ready (should already be true if you required SCA on waitlist)
-        val pmId = booking.paymentMethodId
-        if(!session.isSessionFree()){
-            if (pmId.isNullOrBlank()) {
-                // fallback: you could look up default PM — but best to fail and notify
-                // technically this shouldn't happen
-                return PromotionResult(false, "No saved payment method for waitlist candidate.", booking.id.orEmpty(), candidate.userId)
+        // Snapshot so we can iterate safely even if we mutate session later
+        val candidates = session.waitList.toList()
 
-            }
-            val setup = waitlistSetupRepo.findByBookingIdAndPaymentMethodId(candidate.userId.orEmpty(), pmId)
-            if (setup == null || setup.status != SetupStatus.SUCCEEDED) {
-                // Not ready for off-session charge. Revert reservation & notify user to finish SCA.
-                booking.status = BookingStatus.WAITLISTED
-                booking.isLocked = false
-                bookingRepo.save(booking)
-                paymentPushNotificationService.notifyPaymentActionRequired(candidate.userId.orEmpty(), setup?.setupIntentId.orEmpty())
+        for (candidate in candidates) {
+            val userId = candidate.userId.orEmpty()
+            // Find a WAITLISTED booking for this candidate
+            val booking = bookingRepo.findByUserIdAndRunSessionIdAndStatusIn(
+                userId, sessionId, mutableListOf(BookingStatus.WAITLISTED)
+            ) ?: continue // no booking; try next
 
-                return PromotionResult(
-                    ok = false,
-                    message = "Payment method not off-session ready (SCA required).",
-                    bookingId = candidate.userId,
-                    userId = candidate.userId,
-                    requiresAction = true
-                )
+            // If already locked or cannot lock now, skip to next
+            if (booking.isLocked || !tryLockBooking(booking)) {
+                logger.info("booking is already locked so we are skipping")
+                continue
             }
 
-            // 5) Create the PRIMARY hold (manual capture) immediately.
-            val hold = adjuster.createPrimaryHoldWithChange(
-                bookingId = booking.id.orEmpty(),
-                userId = candidate.userId.orEmpty(),
-                customerId = user.stripeId.orEmpty(),
-                currency = "usd",
-                totalCents = booking.currentTotalCents,
-                savedPaymentMethodId = pmId,
-                actorId = "SYSTEM_WAITLIST_PROMOTION"
-            )
+            try {
+                val user: User = cacheManager.getUser(userId)
+                    ?: return PromotionResult(false, "I couldn't find user")
 
-            // 6) Handle hold result
-            if (!hold.ok || hold.paymentIntentId == null) {
-                // Primary hold failed. Put booking back to WAITLIST; send notification if needed.
-                unlockBooking(booking)
+                if (user.stripeId == null) {
+                    unlockBooking(booking)
+                    return PromotionResult(false, "Stripe id is null")
+                }
 
-                // If the underlying failure was requires_action, PaymentAuthorizationService already
-                // updated PA row; you can notify the user to finish SCA.
-                return PromotionResult(
-                    ok = false,
-                    message = hold.message ?: "Failed to create primary hold.",
+                // If session is free (no payment required), just promote
+                if (session.isSessionFree()) {
+                    finishPromotionSuccess(session, user.id.orEmpty(), booking)
+                    return PromotionResult(
+                        ok = true,
+                        message = "User promoted (free session).",
+                        bookingId = booking.id.orEmpty(),
+                        userId = userId,
+                        paymentIntentId = null
+                    )
+                }
+
+                // Paid session: require off-session-ready payment method
+                val pmId = booking.paymentMethodId
+                if (pmId.isNullOrBlank()) {
+                    unlockBooking(booking)
+                    return PromotionResult(
+                        ok = false,
+                        message = "No saved payment method for waitlist candidate.",
+                        bookingId = booking.id.orEmpty(),
+                        userId = userId
+                    )
+                }
+
+                val setup = waitlistSetupRepo.findByBookingIdAndPaymentMethodId(userId, pmId)
+                if (setup == null || setup.status != SetupStatus.SUCCEEDED) {
+                    // Not ready for off-session charge. Revert & notify.
+                    booking.status = BookingStatus.WAITLISTED
+                    booking.isLocked = false
+                    bookingRepo.save(booking)
+                    paymentPushNotificationService.notifyPaymentActionRequired(userId, setup?.setupIntentId.orEmpty())
+
+                    return PromotionResult(
+                        ok = false,
+                        message = "Payment method not off-session ready (SCA required).",
+                        bookingId = booking.id.orEmpty(),
+                        userId = userId,
+                        requiresAction = true
+                    )
+                }
+
+                // Create the PRIMARY hold (manual capture)
+                val hold = adjuster.createPrimaryHoldWithChange(
                     bookingId = booking.id.orEmpty(),
-                    userId = candidate.userId,
-                    requiresAction = false // set true only if you surfaced action above
+                    userId = userId,
+                    customerId = user.stripeId.orEmpty(),
+                    currency = "usd",
+                    totalCents = booking.currentTotalCents,
+                    savedPaymentMethodId = pmId,
+                    actorId = "SYSTEM_WAITLIST_PROMOTION"
                 )
+
+                if (!hold.ok || hold.paymentIntentId == null) {
+                    unlockBooking(booking)
+                    // Move to next candidate if hold failed (don’t abort the whole loop)
+                    continue
+                }
+
+                finishPromotionSuccess(session, user.id.orEmpty(), booking)
+                return PromotionResult(
+                    ok = true,
+                    message = "User promoted and primary hold authorized.",
+                    bookingId = booking.id.orEmpty(),
+                    userId = userId,
+                    paymentIntentId = hold.paymentIntentId
+                )
+            } catch (ex: Exception) {
+                logger.error("promoteNextWaitlistedUser failed $ex")
+                // Safety: In case anything above throws, unlock so others can retry later
+                unlockBooking(booking)
+                // Try the next candidate instead of failing the whole operation
+                continue
             }
-            finishPromotionSuccess(session, user.id.orEmpty(), booking)
-            return PromotionResult(
-                ok = true,
-                message = "User promoted and primary hold authorized.",
-                bookingId = booking.id.orEmpty(),
-                userId = candidate.userId,
-                paymentIntentId = hold.paymentIntentId
-            )
-
-
         }
-        finishPromotionSuccess(session, user.id.orEmpty(), booking)
-        return PromotionResult(
-            ok = true,
-            message = "User promoted and primary hold authorized.",
-            bookingId = booking.id.orEmpty(),
-            userId = candidate.userId,
-            paymentIntentId = null
-        )
-
+        // If we got here, nobody in the waitlist could be promoted right now
+        return PromotionResult(false, "No promotable candidate at this time (all locked or invalid).")
     }
 
-    private fun unlockBooking(booking: Booking){
+    /**
+     * Try to acquire a server-side lock on the booking.
+     * Prefer an atomic DB update; fall back to optimistic-locking save if needed.
+     */
+    private fun tryLockBooking(booking: Booking): Boolean {
+        val now = Instant.now()
+        // Attempt atomic DB-level lock (preferred)
+        return try {
+            val modified = bookingDbService.tryLock(booking.id.orEmpty(), now)// Someone else locked it first
+            // Successfully acquired the lock
+            modified == 1
+        } catch (ex: Exception) {
+            logger.error("tryLockBooking failed $ex")
+            // Fallback to safe mode — only if something unexpected happened with Mongo
+            try {
+                if (booking.isLocked) return false
+                booking.isLocked = true
+                booking.isLockedAt = now
+                bookingRepo.save(booking)
+                true
+            } catch (e: Exception) {
+                logger.error("tryLockBooking failed $e")
+                false
+            }
+        }
+    }
+
+
+    private fun unlockBooking(booking: Booking) {
         booking.status = BookingStatus.WAITLISTED
         booking.isLocked = false
         bookingRepo.save(booking)
     }
-    private fun finishPromotionSuccess(runSession: RunSession, userId:String, booking: Booking){
-        runSession.waitList.removeAll {
-            it.userId == userId
-        }
+
+    private fun finishPromotionSuccess(runSession: RunSession, userId: String, booking: Booking) {
+        runSession.waitList.removeAll { it.userId == userId }
         sessionService.updateRunSession(runSession)
+
         booking.status = BookingStatus.JOINED
         booking.promotedAt = Instant.now()
         booking.isLocked = false
         bookingRepo.save(booking)
-        //TODO: add text message and email
-
+        // TODO: add text message and email
     }
 }
+
 data class PromotionResult(
     val ok: Boolean,
     val message: String? = null,

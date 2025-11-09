@@ -4,12 +4,15 @@ package com.example.runitup.mobile.service.payment
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.rest.v1.dto.RefundDecision
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.stereotype.Service
 import java.time.*
 
 
 @Service
 class RefundPolicyService {
+
+    val logger = myLogger()
 
     /**
      * Compute refund based on run status and time until start (run's local zone).
@@ -36,7 +39,8 @@ class RefundPolicyService {
         // Resolve start Instant in the run's zone
         val zone = try {
             ZoneId.of(run.zoneId)
-        } catch (_: Exception) {
+        } catch (ex: Exception) {
+            logger.error("computeRefundForCancellation failed Exception = $ex")
             // Fallback to UTC if zone invalid/missing
             ZoneOffset.UTC
         }
