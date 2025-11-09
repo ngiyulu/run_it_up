@@ -53,7 +53,7 @@ class GcsImageService(
              UploadResult(objectName, url, MediaType.IMAGE_JPEG_VALUE)
         }
         catch (ex: Exception){
-            println(ex)
+            logger.error("uploadProfileImage failed $ex")
             null
         }
     }
@@ -96,7 +96,7 @@ class GcsImageService(
             UploadResult(objectName, url, MediaType.IMAGE_JPEG_VALUE)
         }
         catch (ex: Exception){
-            println(ex)
+            logger.error("uploadGymImage failed $ex")
             null
         }
 

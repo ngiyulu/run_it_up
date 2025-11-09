@@ -2,6 +2,7 @@ package com.example.runitup.mobile.push
 import com.example.runitup.mobile.constants.ConfigConstant.fcmPushGateway
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
+import com.example.runitup.mobile.service.myLogger
 import com.google.firebase.messaging.*
 import org.springframework.stereotype.Component
 
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Component
 //So you don’t need to manage Apple certificates or APNs connections yourself.
 @Component(fcmPushGateway)
 class FcmPushGateway : PushGateway {
+
+    val logger = myLogger()
 
     // FCM allows up to 500 tokens per MulticastMessage
     private val maxBatch = 500
@@ -61,6 +64,7 @@ class FcmPushGateway : PushGateway {
 
                     // Prefer structured error codes when available
                     if (ex is FirebaseMessagingException) {
+                        logger.error("sendToTokens $ex")
                         when (ex.messagingErrorCode) {
                             MessagingErrorCode.UNREGISTERED,
                             MessagingErrorCode.INVALID_ARGUMENT -> invalid += t

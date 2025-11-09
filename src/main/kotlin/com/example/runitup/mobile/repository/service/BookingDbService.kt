@@ -56,6 +56,24 @@ class BookingDbService: BaseService() {
         return  mongoTemplate.updateMulti(query,  u,  Booking::class.java)
     }
 
+    fun tryLock(bookingId: String, now: Instant): Int {
+        val query = Query(
+            Criteria.where("_id").`is`(bookingId)
+                .andOperator(
+                    Criteria().orOperator(
+                        Criteria.where("isLocked").`is`(false),
+                        Criteria.where("isLocked").exists(false)
+                    )
+                )
+        )
+        val update = Update()
+            .set("isLocked", true)
+            .set("isLockedAt", now)
+
+        val result = mongoTemplate.updateFirst(query, update, Booking::class.java)
+        return result.modifiedCount.toInt() // 1 if lock succeeded, 0 if already locked
+    }
+
     fun getBookingList(runSessionId:String): List<Booking>{
         return bookingRepository.findByRunSessionIdAndStatusIn(
             runSessionId,

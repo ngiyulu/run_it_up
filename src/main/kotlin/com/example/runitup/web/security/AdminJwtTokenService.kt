@@ -1,5 +1,6 @@
 package com.example.runitup.web.security
 
+import com.example.runitup.mobile.service.myLogger
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import jakarta.annotation.PostConstruct
@@ -22,6 +23,8 @@ class AdminJwtTokenService {
     var accessTtlMonths: Long = 0
 
     private lateinit var jwtKey: Key
+
+    private val logger = myLogger()
 
     @PostConstruct
     fun init() {
@@ -58,6 +61,7 @@ class AdminJwtTokenService {
             Jwts.parserBuilder().setSigningKey(jwtKey).build().parseClaimsJws(token)
             true
         } catch (ex: Exception) {
+            logger.error("uploadGymImage failed $ex")
             false
         }
     }

@@ -2,6 +2,7 @@ package com.example.runitup.web.rest.v1.restcontroller
 
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.common.repo.AdminUserRepository
+import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.web.config.AdminLoginResponse
 import com.example.runitup.web.dto.AdminLoginRequest
 import com.example.runitup.web.dto.CreateAdminRequest
@@ -32,6 +33,8 @@ class AdminAuthRestController{
 
     @Autowired
     lateinit var adminUserRepository: AdminUserRepository
+
+    private val logger = myLogger()
 
     @PostMapping("/login")
     fun login(@RequestBody body: AdminLoginRequest): AdminLoginResponse {
@@ -74,6 +77,7 @@ class AdminAuthRestController{
                 ResponseEntity.ok(mapOf("valid" to true, "userId" to userId))
             }
         } catch (ex: Exception) {
+            logger.error("uploadGymImage failed $ex")
             ResponseEntity.status(401)
                 .body(mapOf("valid" to false, "message" to (ex.message ?: "Invalid token")))
         }

@@ -242,6 +242,7 @@ class PaymentService: BaseService() {
                 latestChargeId = pi.latestCharge
             )
         } catch (e: CardException) {
+            logger.error("captureHold failed CardException = $e")
             // Typical card/issuer errors
             val se = e.stripeError
             // Try to fetch current PI snapshot so you can display updated amounts/status
@@ -265,6 +266,7 @@ class PaymentService: BaseService() {
                 }
             )
         } catch (e: StripeException) {
+            logger.error("captureHold failed StripeException = $e")
             // API/connection errors, invalid state, etc.
             val current = runCatching { PaymentIntent.retrieve(paymentIntentId) }.getOrNull()
             CaptureHoldResult(
@@ -283,6 +285,7 @@ class PaymentService: BaseService() {
                 canRetry = true // transient errors often safe to retry with same idempotency key
             )
         } catch (e: Exception) {
+            logger.error("captureHold failed Exception = $e")
             // Unexpected bug in our code path
             CaptureHoldResult(
                 ok = false,
@@ -323,6 +326,7 @@ class PaymentService: BaseService() {
                 message = "PaymentIntent ${canceledPI.id} canceled successfully"
             )
         } catch (e: CardException) {
+            logger.error("cancelHold failed CardException = $e")
             val se = e.stripeError
             CancelHoldResult(
                 ok = false,
@@ -335,6 +339,7 @@ class PaymentService: BaseService() {
                 canRetry = false // cancels usually not retriable
             )
         } catch (e: StripeException) {
+            logger.error("cancelHold failed StripeException = $e")
             CancelHoldResult(
                 ok = false,
                 paymentIntentId = paymentIntentId,
@@ -346,6 +351,7 @@ class PaymentService: BaseService() {
                 canRetry = true // can retry if network issue
             )
         } catch (e: Exception) {
+            logger.error("cancelHold failed Exception = $e")
             CancelHoldResult(
                 ok = false,
                 paymentIntentId = paymentIntentId,
@@ -375,6 +381,7 @@ class PaymentService: BaseService() {
 
         } catch (e: StripeException) {
            // logger.error("Stripe API error during attach: ${e.message}", e)
+            logger.error("createPaymentMethod failed StripeException = $e")
             PaymentMethodResult(
                 success = false,
                 error = StripeError(
@@ -386,6 +393,7 @@ class PaymentService: BaseService() {
 
         } catch (e: Exception) {
             //logger.error("Unexpected error during attach: ${e.message}", e)
+            logger.error("createPaymentMethod failed Exception = $e")
             PaymentMethodResult(
                 success = false,
                 error = StripeError(message = e.localizedMessage ?: "Unexpected error")

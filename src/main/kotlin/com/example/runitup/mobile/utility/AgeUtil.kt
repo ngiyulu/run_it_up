@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.utility
 
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
@@ -10,18 +11,19 @@ import java.time.format.DateTimeParseException
 
 object AgeUtil {
 
+    var logger = myLogger()
     fun ageFrom(
         dateStr: String,
         zoneIdString:String,
     ): Int {
         val dob = try { LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE) }
-        catch (_: DateTimeParseException) {
+        catch (ex: DateTimeParseException) {
+            logger.error("ageFrom = $ex")
             throw ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Invalid birthDate. Use yyyy-MM-dd, e.g. 1993-10-01"
             )
         }
-
         val zoneId  = ZoneId.of(zoneIdString)
         val todayInZone = LocalDate.now(zoneId)
         return Period.between(dob, todayInZone).years
