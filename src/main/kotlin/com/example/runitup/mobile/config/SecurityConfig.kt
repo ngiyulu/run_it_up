@@ -102,22 +102,22 @@ class SecurityConfig{
         }.authorizeHttpRequests {
             // require init and toke generrate to by passs authentication
             it.requestMatchers(
-                "/api/v1/user/init",
+                "api/v1/user/init",
                 "api/v1/support/create",
-                "/api/v1/user/token/**",
-                "/api/v1/user/verify",
-                "/api/v1/user/create",
-                "/api/v1/user/hello",
-                "/api/v1/user/otp/verify",
-                "/api/v1/user/logout",
-                "/api/v1/user/otp/request",
-                "/api/sms/send",
+                "api/v1/user/token/**",
+                "api/v1/user/verify",
+                "api/v1/user/create",
+                "api/v1/user/hello",
+                "api/v1/user/otp/verify",
+                "api/v1/user/logout",
+                "api/v1/user/otp/request",
+                "api/sms/send",
                 "api/v1/waiver/upload",
                 "api/push/send",
                 "api/queues/**",
                 "api/test/cache/**",
                 "api/sms/status/**",
-                "/.well-known/apple-app-site-association", "/apple-app-site-association"
+                "ios/**"
                 ).permitAll()
 
             // everything else needs to be authenticated
