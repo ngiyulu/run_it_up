@@ -51,4 +51,7 @@ class AdminPageController {
 
     @GetMapping("/support/detail")
     fun supportDetail(@RequestParam id: String) = "support-detail" // same template, prefilled
+
+    @GetMapping("/push")
+    fun pushMetrics(): String = "push-dashboard"
 }

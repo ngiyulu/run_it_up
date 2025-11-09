@@ -12,4 +12,4 @@ class Phone(
     var phoneId: String,
     var userId:String,
     var type: PhoneType
-): com.example.runitup.mobile.model.BaseModel()
+): BaseModel()
