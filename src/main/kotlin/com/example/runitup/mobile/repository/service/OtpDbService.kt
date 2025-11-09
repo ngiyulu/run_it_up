@@ -47,7 +47,6 @@ class OtpDbService {
                 code = code,
                 phoneNumber = phone,
                 userId = userId,
-                created = Date.from(Instant.now())
             )
         )
     }

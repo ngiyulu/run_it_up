@@ -33,7 +33,7 @@ class PushNotificationRestController {
             badge = req.badge
         )
         val phones = phoneRepository.findAllByPhoneId(req.phoneId)
-        return pushService.sendToPhones(phones, notification)
+        return pushService.sendToPhonesAudited(phones, notification, "", null, "", null)
     }
 }
 
