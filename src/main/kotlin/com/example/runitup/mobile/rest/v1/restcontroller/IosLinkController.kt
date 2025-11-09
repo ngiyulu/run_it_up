@@ -9,7 +9,6 @@ class IosLinkController {
     // Catch-all for /ios/*
     @GetMapping("/ios/**")
     fun iosFallback(): String {
-        // This will return src/main/resources/static/ios-fallback.html
-        return "forward:/ios-fallback.html"
+        return "home"
     }
 }
