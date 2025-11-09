@@ -8,6 +8,7 @@ import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.service.BookingDbService
+import com.example.runitup.mobile.rest.v1.controllers.runsession.JoinSessionQueueModel
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
@@ -35,10 +36,10 @@ class RunSessionConfirmedConsumer(
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionConfirmedConsumer is running")
-        val jobData: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
+        val jobData: JobEnvelope<JoinSessionQueueModel> = objectMapper.readValue(rawBody) as JobEnvelope<JoinSessionQueueModel>
         val payload = jobData.payload
         withContext(Dispatchers.IO) {
-            val run = cacheManager.getRunSession(payload) ?: return@withContext
+            val run = cacheManager.getRunSession(payload.runSessionId) ?: return@withContext
             val runSessionId = run.id.orEmpty()
             if(run.status != RunStatus.PENDING){
                 logger.info("Run $payload already ${run.status}, skipping")
