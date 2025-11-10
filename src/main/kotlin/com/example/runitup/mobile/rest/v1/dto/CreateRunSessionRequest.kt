@@ -17,5 +17,6 @@ class CreateRunSessionRequest(
     var maxPlayer: Int,
     var title: String,
     var maxGuest: Int,
-    var createdBy:String?
+    var createdBy:String?,
+    var isAdmin:Boolean = true,
 )

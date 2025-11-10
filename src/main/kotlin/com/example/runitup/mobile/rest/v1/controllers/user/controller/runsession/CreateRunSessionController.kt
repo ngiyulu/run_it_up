@@ -2,12 +2,16 @@ package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsessio
 
 import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.config.AppConfig
+import com.example.runitup.mobile.constants.AppConstant.TRACE_ID
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.web.security.AdminPrincipal
@@ -15,6 +19,7 @@ import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateCon
 import model.messaging.Conversation
 import model.messaging.ConversationType
 import org.bson.types.ObjectId
+import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -25,8 +30,6 @@ import java.util.*
 class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
 
 
-    @Autowired
-    lateinit var adminUserRepository: AdminUserRepository
 
     @Autowired
     lateinit var gymRepository: GymRepository
@@ -81,6 +84,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             total = 0.0
             location = runGym.location
         }
+
         if(!paymentConfig.payment){
             run.amount = 0.0
         }
@@ -112,6 +116,20 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         messagingService.createConversation(
             CreateConversationModel(runSession.id.orEmpty(), conversation)
         ).block()
+        val reason = if(request.isAdmin){
+            "Admin created session"
+        } else{
+            "Admin created session from mobile app"
+        }
+        runSessionEventLogger.log(
+            sessionId = run.id.orEmpty(),
+            action = RunSessionAction.SESSION_CREATED,
+            actor = Actor(ActorType.ADMIN, adminId),
+            newStatus = "CREATED",
+            reason = reason,
+            correlationId = MDC.get(TRACE_ID) as? String,
+            idempotencyKey = "session:create:${run.id}"
+        )
 
         return  runSession
     }

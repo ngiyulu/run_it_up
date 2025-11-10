@@ -1,0 +1,17 @@
+package com.example.runitup.mobile.rest.v1.dto
+
+enum class RunSessionAction {
+    SESSION_CREATED,
+    SESSION_CONFIRMED,
+    SESSION_STARTED,
+    SESSION_COMPLETED,
+    SESSION_CANCELLED,
+
+    USER_JOINED,
+    USER_JOIN_WAITLIST,
+    USER_PROMOTED_FROM_WAITLIST,
+    USER_LEFT,
+    USER_KICKED_OUT,
+    UPDATE_GUEST,
+    BOOKING_REFUND
+}

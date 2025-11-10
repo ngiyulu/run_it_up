@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToCents
 import com.example.runitup.mobile.model.Booking
@@ -8,6 +9,9 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
@@ -15,6 +19,7 @@ import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.BookingUpdateService
 import com.example.runitup.mobile.service.payment.DeltaType
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -61,8 +66,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             signedUpUser.userId,
             request.sessionId,
             mutableListOf(BookingStatus.JOINED)
-        )
-            ?: throw ApiRequestException(text("join_error"))
+        ) ?: throw ApiRequestException(text("join_error"))
         val type = bookingUpdateService.deltaChange(auth.id.orEmpty(), request, booking)
 
         println("type = $type")
@@ -116,9 +120,28 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
                 }
             }
 
+            runSessionEventLogger.log(
+                sessionId = run.id.orEmpty(),
+                action = RunSessionAction.UPDATE_GUEST,
+                actor = Actor(ActorType.USER, user.id.orEmpty()),
+                newStatus = null,
+                reason = "Guest update new Total of Participants = ${request.getTotalParticipants()} old Total of Participants =${booking.partySize}, session is not free",
+                correlationId = MDC.get(AppConstant.TRACE_ID),
+                metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+            )
             updateBooking(booking, request, newRequestAmount)
             return runSessionService.updateRunSession(run)
         }
+
+        runSessionEventLogger.log(
+            sessionId = run.id.orEmpty(),
+            action = RunSessionAction.UPDATE_GUEST,
+            actor = Actor(ActorType.USER, user.id.orEmpty()),
+            newStatus = null,
+            reason = "Guest update new Total of Participants = ${request.getTotalParticipants()} old Total of Participants =${booking.partySize}, session is free",
+            correlationId = MDC.get(AppConstant.TRACE_ID),
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         updateBooking(booking, request, null)
         return  run
     }
@@ -130,6 +153,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             booking.currentTotalCents = it.convertToCents()
         }
         bookingRepository.save(booking)
+
     }
 
 

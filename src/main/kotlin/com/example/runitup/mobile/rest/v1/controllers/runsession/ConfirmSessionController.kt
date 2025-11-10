@@ -1,15 +1,20 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.myLogger
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -57,6 +62,15 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
                 bookingDbService.getBookingDetails(it)
             }.toMutableList()
         }
+        runSessionEventLogger.log(
+            sessionId = run.id.orEmpty(),
+            action = RunSessionAction.SESSION_CONFIRMED,
+            actor = Actor(ActorType.USER, savedUser.id),
+            newStatus = null,
+            reason = "Confirmation",
+            correlationId = MDC.get(AppConstant.TRACE_ID),
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         return  run
     }
 

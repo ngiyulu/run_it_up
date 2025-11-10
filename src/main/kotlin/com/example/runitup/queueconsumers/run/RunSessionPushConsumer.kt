@@ -34,7 +34,6 @@ class RunSessionPushConsumer(
     private val bookingRepository: BookingRepository
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_SESSION_PUSH_JOB, objectMapper) {
 
-
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionConfirmedConsumer is running")
@@ -94,7 +93,6 @@ class RunSessionPushConsumer(
         }?: run {
             logger.error("run.hostedBy parameter is null, runId = $runId")
         }
-
     }
 
     private fun  notifyUserBookingCancelled(bookingId:String){
@@ -114,7 +112,6 @@ class RunSessionPushConsumer(
         return  cacheManager.getUser(userId)?: throw ApiRequestException("user not found")
     }
 
-
     private fun getBooking(bookingId:String):Booking{
         val booking = bookingRepository.findById(bookingId)
         if(!booking.isPresent){
@@ -122,6 +119,4 @@ class RunSessionPushConsumer(
         }
         return  booking.get()
     }
-
-
 }

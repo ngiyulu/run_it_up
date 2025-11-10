@@ -2,6 +2,7 @@ package com.example.runitup.queueconsumers.run
 
 
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.JobEnvelope
@@ -10,8 +11,12 @@ import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.runsession.JoinSessionQueueModel
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
+import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.queueconsumers.BaseQueueConsumer
@@ -20,6 +25,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -27,9 +33,10 @@ import java.util.*
 class RunSessionConfirmedConsumer(
     queueService: LightSqsService,
     appScope: CoroutineScope,
-    private val trackerService: JobTrackerService,
+    trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val userRepository: UserRepository,
+    private val runSessionEventLogger: RunSessionEventLogger,
     private val bookingDbService: BookingDbService,
     private val cacheManager: MyCacheManager,
     private val runSessionService: RunSessionService,
@@ -67,7 +74,7 @@ class RunSessionConfirmedConsumer(
                     )
                     queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
                 }
-               complete(run)
+               complete(run, jobId)
                 logger.info("Run $runSessionId confirmed and notifications sent (${joinedCount})")
             }
             else{
@@ -78,12 +85,21 @@ class RunSessionConfirmedConsumer(
         }
     }
 
-    private fun complete(runSession: RunSession){
+    private fun complete(runSession: RunSession, jobId: String){
         val runSessionCreator = userRepository.findByLinkedAdmin(runSession.hostedBy.orEmpty())
         runSessionCreator?.let {
             runSesionPushNotificationService.runSessionConfirmed(it.id.orEmpty(), runSession)
         }
         runSession.status = RunStatus.CONFIRMED
+        runSessionEventLogger.log(
+            sessionId = runSession.id.orEmpty(),
+            action = RunSessionAction.SESSION_CONFIRMED,
+            actor = Actor(ActorType.SYSTEM, jobId),
+            newStatus = null,
+            reason = "System confirming session",
+            correlationId = null,
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         cacheManager.updateRunSession(runSession)
     }
 }

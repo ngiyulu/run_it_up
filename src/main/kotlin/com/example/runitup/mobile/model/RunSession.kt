@@ -18,7 +18,7 @@ import java.util.*
 @Document
 data class RunSession(
     @Id var id: String? = ObjectId().toString(),
-    var gym: com.example.runitup.mobile.model.Gym? = null,
+    var gym: Gym? = null,
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     var location: GeoJsonPoint?,
     val date: LocalDate,      // local calendar date at the venue
