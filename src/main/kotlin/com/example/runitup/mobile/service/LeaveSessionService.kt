@@ -116,7 +116,7 @@ class LeaveSessionService {
          val jobEnvelope = JobEnvelope(
              jobId = UUID.randomUUID().toString(),
              taskType = "Notification booking cancelled",
-             payload = PushJobModel(PushJobType.CANCEL_RUN, booking.id.orEmpty(), map
+             payload = PushJobModel(PushJobType.BOOKING_CANCELLED, booking.id.orEmpty(), map
              )
          )
          appScope.launch {
