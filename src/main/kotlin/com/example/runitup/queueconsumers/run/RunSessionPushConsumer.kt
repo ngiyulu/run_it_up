@@ -1,0 +1,127 @@
+package com.example.runitup.queueconsumers.run
+
+
+import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant.USER_ID
+import com.example.runitup.mobile.enum.RunStatus
+import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.queue.QueueNames
+import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.repository.UserRepository
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
+import com.example.runitup.mobile.service.JobTrackerService
+import com.example.runitup.mobile.service.LightSqsService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
+import com.example.runitup.queueconsumers.BaseQueueConsumer
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.springframework.stereotype.Component
+
+@Component
+class RunSessionPushConsumer(
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
+    private val trackerService: JobTrackerService,
+    private val objectMapper: ObjectMapper,
+    private val userRepository: UserRepository,
+    private val cacheManager: MyCacheManager,
+    private val runSessionPushNotificationService: RunSessionPushNotificationService,
+    private val bookingRepository: BookingRepository
+): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_SESSION_PUSH_JOB, objectMapper) {
+
+
+    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
+        // Fetch up to 5 messages from the "jobs" queue
+        logger.info("RunSessionConfirmedConsumer is running")
+        val jobData: JobEnvelope<PushJobModel> = objectMapper.readValue(rawBody) as JobEnvelope<PushJobModel>
+        val payload = jobData.payload
+        withContext(Dispatchers.IO) {
+            when(payload.type){
+                PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
+                PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
+                PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "")
+                PushJobType.BOOKING_CANCELLED -> notifyUserBookingCancelled(payload.dataId)
+            }
+        }
+    }
+
+    private fun notifyConfirmationRun(runId:String){
+        val run = getRunSession(runId)
+        if(run.status != RunStatus.CONFIRMED){
+            return
+        }
+        val booking = bookingRepository.findByRunSessionIdAndStatusIn(
+            runId,
+            mutableListOf(BookingStatus.JOINED)
+        )
+        booking.forEach {
+            runSessionPushNotificationService.runSessionConfirmed(it.userId, run)
+        }
+
+    }
+
+    private fun  notifyCancelledRun(runId:String){
+        val run = getRunSession(runId)
+        if(run.status != RunStatus.CANCELLED){
+            return
+        }
+        val booking = bookingRepository.findByRunSessionIdAndStatusIn(
+            runId,
+            mutableListOf(BookingStatus.JOINED)
+        )
+        val runSessionCreator = userRepository.findByLinkedAdmin(run.hostedBy.orEmpty())
+
+        runSessionPushNotificationService.runSessionCancelled(run, booking, runSessionCreator)
+    }
+
+
+    private fun  notifyUserJoined(runId:String, userId:String){
+        val run = getRunSession(runId)
+        if(run.status != RunStatus.CONFIRMED ||
+            run.status != RunStatus.PENDING ||
+            run.status != RunStatus.ONGOING){
+            return
+        }
+        logger.info("notifyUserJoined userId = $userId")
+        run.hostedBy?.let {
+            val user = getUser(userId)
+            runSessionPushNotificationService.userJoinedRunSession(it, user, run)
+        }?: run {
+            logger.error("run.hostedBy parameter is null, runId = $runId")
+        }
+
+    }
+
+    private fun  notifyUserBookingCancelled(bookingId:String){
+        val booking = getBooking(bookingId)
+        if(booking.status != BookingStatus.CANCELLED){
+            return
+        }
+        val run = getRunSession(booking.runSessionId)
+        runSessionPushNotificationService.runSessionBookingCancelled(booking.userId, run)
+    }
+
+    private fun getRunSession(runId:String):RunSession{
+        return  cacheManager.getRunSession(runId)?: throw ApiRequestException("run session not found")
+    }
+
+    private fun getUser(userId:String):User{
+        return  cacheManager.getUser(userId)?: throw ApiRequestException("user not found")
+    }
+
+
+    private fun getBooking(bookingId:String):Booking{
+        val booking = bookingRepository.findById(bookingId)
+        if(!booking.isPresent){
+            throw  ApiRequestException("booking not found")
+        }
+        return  booking.get()
+    }
+
+
+}

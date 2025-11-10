@@ -3,12 +3,13 @@ package com.example.runitup.mobile.service.push
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.constants.AppConstant.SessionId
 import com.example.runitup.mobile.constants.ScreenConstant
-import com.example.runitup.mobile.model.Phone
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
-import com.example.runitup.mobile.repository.service.PhoneDbService
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
+import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.PushService
+import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -26,14 +27,14 @@ import org.springframework.stereotype.Service
 class RunSessionPushNotificationService {
 
     @Autowired
-    lateinit var phoneRepository: PhoneDbService
-
+    lateinit var phoneService: PhoneService
     @Autowired
     lateinit var pushService: PushService
 
+    private val logger = myLogger()
     // ----- Public API -----
 
-    fun runSessionConfirmed(actorUserId: String, runSession: RunSession) {
+    fun runSessionConfirmed(adminUserId: String, runSession: RunSession) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -44,7 +45,11 @@ class RunSessionPushNotificationService {
             )
         )
 
-        val phones = getAllUsersPhones(runSession, actorUserId)
+        val phones = phoneService.getListOfPhone(runSession.bookingList
+            .map { it.userId }
+            .filter {it != adminUserId }
+        )
+
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -55,7 +60,7 @@ class RunSessionPushNotificationService {
         )
     }
 
-    fun runSessionCancelled(actorUserId: String, runSession: RunSession) {
+    fun runSessionCancelled(runSession: RunSession, booking:List<Booking>, runSessionCreator:User?, ) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -66,7 +71,11 @@ class RunSessionPushNotificationService {
             )
         )
 
-        val phones = getAllUsersPhones(runSession, actorUserId)
+        var phones = phoneService.getListOfPhone(booking.map { it.userId })
+        if(runSessionCreator != null){
+            logger.info("we have to filter out the admin oid admin userId = $runSessionCreator")
+            phones = phones.filter { it.userId != runSessionCreator.id }
+        }
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -89,7 +98,7 @@ class RunSessionPushNotificationService {
         )
 
         // Notify admins/host (whoever the UI expects via admin screen), not the user who just joined.
-        val phones = getPhoneByUser(adminUserId)
+        val phones = phoneService.getPhonesByUser(adminUserId)
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -111,7 +120,7 @@ class RunSessionPushNotificationService {
             )
         )
 
-        val phones = getPhoneByUser(targetUserId)
+        val phones = phoneService.getPhonesByUser(targetUserId)
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -124,15 +133,9 @@ class RunSessionPushNotificationService {
 
     // ----- Audience helpers -----
 
-    private fun getAllUsersPhones(runSession: RunSession, excludeUserId: String): List<Phone> {
-        val userIds = runSession.bookings
-            .map { it.userId }
-            .filter { it != excludeUserId }
-        return if (userIds.isEmpty()) emptyList() else phoneRepository.findAllByUserIdIn(userIds)
-    }
 
-    private fun getPhoneByUser(userId: String): List<Phone> =
-        phoneRepository.findAllByUserId(userId)
+
+
 
     // ----- Dedupe helpers -----
 

@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ProcessPaymentJob(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val bookingDbService: BookingDbService,

@@ -3,19 +3,27 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
+import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.web.security.AdminPrincipal
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 // admin decides to remove user
@@ -28,6 +36,12 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     lateinit var adminUserRepository: AdminUserRepository
     @Autowired
     lateinit var runService: RunSessionService
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
+
+    @Autowired
+    lateinit var queueService: LightSqsService
 
     @Autowired
     lateinit var bookingDbService: BookingDbService
@@ -70,7 +84,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         run.bookings = run.bookings.map {
             bookingDbService.getBookingDetails(it)
         }.toMutableList()
-        runSessionPushNotificationService.runSessionBookingCancelled(user.id.orEmpty(), run)
+
         return runService.updateRunSession(run)
     }
 }

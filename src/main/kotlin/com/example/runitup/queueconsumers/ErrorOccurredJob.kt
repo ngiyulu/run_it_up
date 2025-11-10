@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ErrorOccurredJob(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val smsService: ClickSendSmsService,

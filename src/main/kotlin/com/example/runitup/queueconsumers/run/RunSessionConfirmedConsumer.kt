@@ -7,11 +7,13 @@ import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
+import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.runsession.JoinSessionQueueModel
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.queueconsumers.BaseQueueConsumer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -23,13 +25,15 @@ import java.util.*
 
 @Component
 class RunSessionConfirmedConsumer(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
+    private val userRepository: UserRepository,
     private val bookingDbService: BookingDbService,
     private val cacheManager: MyCacheManager,
-    private val runSessionService: RunSessionService
+    private val runSessionService: RunSessionService,
+    private val runSesionPushNotificationService: RunSessionPushNotificationService
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CONFIRMATION_JOB, objectMapper) {
 
 
@@ -63,7 +67,7 @@ class RunSessionConfirmedConsumer(
                     )
                     queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
                 }
-               complete(booking, run)
+               complete(run)
                 logger.info("Run $runSessionId confirmed and notifications sent (${joinedCount})")
             }
             else{
@@ -74,8 +78,11 @@ class RunSessionConfirmedConsumer(
         }
     }
 
-    private fun complete(booking:List<Booking>, runSession: RunSession){
-        runSessionService.notifyUsers(booking, runSession)
+    private fun complete(runSession: RunSession){
+        val runSessionCreator = userRepository.findByLinkedAdmin(runSession.hostedBy.orEmpty())
+        runSessionCreator?.let {
+            runSesionPushNotificationService.runSessionConfirmed(it.id.orEmpty(), runSession)
+        }
         runSession.status = RunStatus.CONFIRMED
         cacheManager.updateRunSession(runSession)
     }
