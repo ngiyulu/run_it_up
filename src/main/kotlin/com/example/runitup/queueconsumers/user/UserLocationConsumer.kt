@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class UserLocationConsumer(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val userRepository: UserRepository

@@ -11,9 +11,7 @@ import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionResponse
-import com.example.runitup.mobile.rest.v1.dto.JoinRunSessionStatus
-import com.example.runitup.mobile.rest.v1.dto.RunUser
+import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
@@ -60,10 +58,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
     lateinit var appScope: CoroutineScope
 
     override fun execute(request: JoinSessionModel): JoinRunSessionResponse {
-        val run = cacheManager.getRunSession(request.sessionId)
-        if (run == null){
-            throw ApiRequestException(text("invalid_session_id"))
-        }
+        val run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
         // this mean the event is full
@@ -166,15 +161,13 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             // we have to trigger this event to confirm session if the number of participants have been reached
             queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
         }
-        run.hostedBy?.let { host->
-            // find the user linked to the admin that created this event
-            // technically it should only be one object but we are making it a list
-            // just to make it crash resistant
-            // if the admin user is the same as the user that created this session, filter him out
-            val users = userRepository.findByLinkedAdmin(host).filter { it.linkedAdmin != user.id }
-            users.forEach {
-                pushNotificationService.userJoinedRunSession(it.id.orEmpty(), user, run)
-            }
+        val jobEnvelope = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Notification new user joined run",
+            payload = PushJobModel(PushJobType.USER_JOINED, run.id.orEmpty())
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
         }
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)

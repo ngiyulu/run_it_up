@@ -10,6 +10,8 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -20,8 +22,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
+import java.util.*
 
 @Component
 class RunSessionCancelledConsumer(
@@ -52,8 +56,13 @@ class RunSessionCancelledConsumer(
                     cancelHold(run)
                 }
             }
-            run.bookingList.forEach {
-                runSessionPushNotificationService.runSessionCancelled(it.userId, run)
+            val jobEnvelope = JobEnvelope(
+                jobId = UUID.randomUUID().toString(),
+                taskType = "Notification users of a run session cancellation",
+                payload = PushJobModel(PushJobType.CANCEL_RUN, run.id.orEmpty())
+            )
+            appScope.launch {
+                queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
             }
         }
     }

@@ -10,6 +10,7 @@ object QueueNames {
     const val RUN_PROCESS_PAYMENT = "RUN_PROCESS_PAYMENT"
     const val PAYMENT_FAILED_JOB = "PAYMENT_FAILED_JOB"
     const val RUN_CANCELLED_JOB = "RUN_CANCELLED_JOB"
+    const val RUN_SESSION_PUSH_JOB =  "RUN_SESSION_PUSH_JOB"
 
 }
 

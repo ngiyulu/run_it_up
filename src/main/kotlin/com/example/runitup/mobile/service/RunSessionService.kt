@@ -2,14 +2,14 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.JobEnvelope
-import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
+import com.example.runitup.mobile.rest.v1.controllers.runsession.CoordinateUpdateModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
@@ -125,7 +125,14 @@ class RunSessionService(): BaseService(){
             queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
         }
         run.status = RunStatus.CONFIRMED
-        notifyUsers(bookingList, run)
+        val data = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Notification users of a run session confirmation",
+            payload = PushJobModel(PushJobType.CONFIRM_RUN, run.id.orEmpty())
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, data)
+        }
         return updateRunSession(run)
     }
 
@@ -146,11 +153,7 @@ class RunSessionService(): BaseService(){
         return StartRunSessionModel(StartRunSessionModelEnum.SUCCESS, updated)
     }
 
-    fun notifyUsers(booking:List<Booking>, session: RunSession){
-        booking.forEach {
-            runSessionPushNotificationService.runSessionConfirmed(it.userId, session)
-        }
-    }
+    
 
 }
 

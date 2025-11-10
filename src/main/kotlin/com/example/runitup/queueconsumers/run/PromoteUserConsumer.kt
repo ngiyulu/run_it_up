@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class PromoteUserConsumer(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    queueService: LightSqsService,
+    appScope: CoroutineScope,
     private val trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
     private val promotionService: PromotionService

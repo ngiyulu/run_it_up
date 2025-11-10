@@ -2,11 +2,14 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.service.BookingDbService
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.web.dto.Role
@@ -19,6 +22,7 @@ import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
+import kotlin.collections.HashMap
 
 @Service
 // user decides not to participate anymore
@@ -107,6 +111,17 @@ class LeaveSessionService {
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
          completeFlow(run)
+         val map = HashMap<String, String>()
+         map[AppConstant.USER_ID] = user.id.toString()
+         val jobEnvelope = JobEnvelope(
+             jobId = UUID.randomUUID().toString(),
+             taskType = "Notification booking cancelled",
+             payload = PushJobModel(PushJobType.CANCEL_RUN, booking.id.orEmpty(), map
+             )
+         )
+         appScope.launch {
+             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+         }
          return run
     }
 

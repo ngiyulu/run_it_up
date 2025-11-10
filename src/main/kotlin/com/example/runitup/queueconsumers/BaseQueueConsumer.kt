@@ -13,8 +13,8 @@ import org.slf4j.MDC
 import javax.annotation.PostConstruct
 
 abstract class BaseQueueConsumer(
-    private val queueService: LightSqsService,
-    private val appScope: CoroutineScope,
+    protected val queueService: LightSqsService,
+    protected val appScope: CoroutineScope,
     private val tracker: JobTrackerService,
     private val queueName: String,
     protected val om: ObjectMapper
