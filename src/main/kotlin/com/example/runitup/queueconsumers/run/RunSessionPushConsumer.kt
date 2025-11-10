@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
+import kotlin.math.log
 
 @Component
 class RunSessionPushConsumer(
@@ -36,10 +37,11 @@ class RunSessionPushConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-        logger.info("RunSessionConfirmedConsumer is running")
+        logger.info("RunSessionPushConsumer is running")
         val jobData: JobEnvelope<PushJobModel> = objectMapper.readValue(rawBody) as JobEnvelope<PushJobModel>
         val payload = jobData.payload
         withContext(Dispatchers.IO) {
+            logger.info("payload = $payload")
             when(payload.type){
                 PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)

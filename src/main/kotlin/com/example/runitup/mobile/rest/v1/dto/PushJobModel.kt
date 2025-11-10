@@ -1,6 +1,6 @@
 package com.example.runitup.mobile.rest.v1.dto
 
-class PushJobModel(
+data class PushJobModel(
     val type:PushJobType,
     val dataId:String,
     val metadata: HashMap<String, String> = HashMap()
