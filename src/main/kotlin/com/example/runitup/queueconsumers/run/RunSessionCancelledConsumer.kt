@@ -2,6 +2,7 @@ package com.example.runitup.queueconsumers.run
 
 
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.JobEnvelope
@@ -10,10 +11,10 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.rest.v1.dto.PushJobModel
-import com.example.runitup.mobile.rest.v1.dto.PushJobType
+import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
+import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.RefundService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
@@ -24,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -33,13 +35,16 @@ class RunSessionCancelledConsumer(
     appScope: CoroutineScope,
     trackerService: JobTrackerService,
     private val objectMapper: ObjectMapper,
+    private val runSessionEventLogger: RunSessionEventLogger,
     private val  bookingPricingAdjuster: BookingPricingAdjuster,
     private val bookingRepository: BookingRepository,
     private val paymentStateRepository: BookingPaymentStateRepository,
     private val refundService: RefundService,
     private val cacheManager: MyCacheManager,
-    private val runSessionPushNotificationService: RunSessionPushNotificationService,
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CANCELLED_JOB, objectMapper) {
+
+    // this job is run the clean up the session payments if it got cancelled by admin
+
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionCancelledConsumer is running")
@@ -50,10 +55,10 @@ class RunSessionCancelledConsumer(
             if(!run.isSessionFree()){
                 // this means payment were processed so we need a refund
                 if(run.statusBeforeCancel == RunStatus.ONGOING || run.statusBeforeCancel == RunStatus.CONFIRMED){
-                    refund(run)
+                    refund(run, jobId)
                 }
                 else if(run.status == RunStatus.PENDING){
-                    cancelHold(run)
+                    cancelPaymentHold(run, jobId)
                 }
             }
             val jobEnvelope = JobEnvelope(
@@ -67,7 +72,7 @@ class RunSessionCancelledConsumer(
         }
     }
 
-    private fun cancelHold(runSession: RunSession){
+    private fun cancelPaymentHold(runSession: RunSession, jobId: String){
         val bookingList = bookingRepository.findByRunSessionIdAndStatusIn(runSession.id.orEmpty(), mutableListOf(BookingStatus.JOINED))
         bookingList.forEach { b ->
             bookingPricingAdjuster.cancelAuthorizationAndUpdate(
@@ -78,9 +83,18 @@ class RunSessionCancelledConsumer(
                 b.paymentId.orEmpty()
             )
         }
+        runSessionEventLogger.log(
+            sessionId = runSession.id.orEmpty(),
+            action = RunSessionAction.SESSION_CONFIRMED,
+            actor = Actor(ActorType.SYSTEM, jobId),
+            newStatus = null,
+            reason = "System confirming session",
+            correlationId = null,
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
     }
 
-    private fun refund(runSession: RunSession){
+    private fun refund(runSession: RunSession, jobId: String){
         val bookingList = bookingRepository.findByRunSessionIdAndStatusIn(runSession.id.orEmpty(), mutableListOf(BookingStatus.JOINED))
         bookingList.forEach { b ->
             val paymentState = paymentStateRepository.findByBookingId(b.id.orEmpty())
@@ -97,6 +111,16 @@ class RunSessionCancelledConsumer(
             }
 
         }
+        runSessionEventLogger.log(
+            sessionId = runSession.id.orEmpty(),
+            action = RunSessionAction.SESSION_CONFIRMED,
+            actor = Actor(ActorType.SYSTEM, jobId),
+            newStatus = null,
+            reason = "System confirming session",
+            correlationId = null,
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
+
 
     }
 }

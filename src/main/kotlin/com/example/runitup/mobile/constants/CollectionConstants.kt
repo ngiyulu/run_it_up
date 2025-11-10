@@ -24,5 +24,6 @@ object CollectionConstants {
     const val PAYMENT_AUTHORIZATION = "payment_authorization"
     const val WAIVER_COLLECTION = "waiver"
     const val WAILIST_STEUP_STATE_COLLECTION = "waitlist_setup_state"
+    const val RUN_SESSION_EVENTS_COLLECTION  = "run_session_events"
 
 }

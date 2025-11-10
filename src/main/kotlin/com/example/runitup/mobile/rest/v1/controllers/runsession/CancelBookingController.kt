@@ -2,6 +2,7 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.common.repo.AdminUserRepository
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
@@ -9,8 +10,7 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.rest.v1.dto.PushJobModel
-import com.example.runitup.mobile.rest.v1.dto.PushJobType
+import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
@@ -20,6 +20,7 @@ import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.web.security.AdminPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -84,7 +85,15 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         run.bookings = run.bookings.map {
             bookingDbService.getBookingDetails(it)
         }.toMutableList()
-
+        runSessionEventLogger.log(
+            sessionId = run.id.orEmpty(),
+            action = RunSessionAction.BOOKING_REFUND,
+            actor = Actor(ActorType.ADMIN, admin?.id.orEmpty()),
+            newStatus = null,
+            reason = "Admin cancelled booking",
+            correlationId = MDC.get(AppConstant.TRACE_ID),
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         return runService.updateRunSession(run)
     }
 }

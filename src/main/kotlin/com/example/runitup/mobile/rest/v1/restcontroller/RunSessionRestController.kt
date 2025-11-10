@@ -139,6 +139,7 @@ class RunSessionRestController {
 
     @PostMapping("/create")
     fun create(@RequestBody model: CreateRunSessionRequest): RunSession {
+        model.isAdmin = false
         return createSessionController.execute(model)
     }
 

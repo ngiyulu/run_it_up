@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.crash
 
 
+import com.example.runitup.mobile.constants.AppConstant
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -22,8 +23,16 @@ Otherwise, it generates a new random UUID as the trace ID.
 class CorrelationIdFilter : OncePerRequestFilter() {
     override fun doFilterInternal(req: HttpServletRequest, res: HttpServletResponse, chain: FilterChain) {
         val traceId = req.getHeader("X-Trace-Id")?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
-        MDC.put("traceId", traceId)
+        MDC.put(AppConstant.TRACE_ID, traceId)
         res.setHeader("X-Trace-Id", traceId)
+
+        // ✅ capture the request source type (e.g., mobile, web, admin, etc.)
+        val sourceType = req.getHeader(AppConstant.SOURCE)?.lowercase() ?: "unknown"
+        MDC.put(AppConstant.SOURCE, sourceType)
+
+        // optional: echo it back for debugging or propagation
+        res.setHeader(AppConstant.SOURCE, sourceType)
+
         try { chain.doFilter(req, res) } finally { MDC.remove("traceId") }
     }
 }

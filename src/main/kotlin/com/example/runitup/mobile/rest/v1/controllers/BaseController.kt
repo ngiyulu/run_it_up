@@ -4,6 +4,7 @@ import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.TextService
 import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +20,9 @@ abstract class BaseController<R, P> {
 
     @Autowired
     protected lateinit var textService: TextService
+
+    @Autowired
+    protected lateinit var runSessionEventLogger: RunSessionEventLogger
 
     var TAG = this.javaClass.simpleName
 

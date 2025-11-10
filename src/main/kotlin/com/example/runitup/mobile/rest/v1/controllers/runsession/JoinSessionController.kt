@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
@@ -24,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import model.messaging.Participant
 import org.bson.types.ObjectId
+import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -169,6 +171,15 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
         }
+        runSessionEventLogger.log(
+            sessionId = run.id.orEmpty(),
+            action = RunSessionAction.USER_JOINED,
+            actor = Actor(ActorType.USER, user.id.orEmpty()),
+            newStatus = null,
+            reason = "Self-join",
+            correlationId = MDC.get(AppConstant.TRACE_ID) as? String,
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
     }
