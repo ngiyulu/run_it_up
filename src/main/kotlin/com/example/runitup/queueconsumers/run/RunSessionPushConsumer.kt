@@ -38,7 +38,6 @@ class RunSessionPushConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
-
         logger.info("RunSessionPushConsumer is running")
         val jobData: JobEnvelope<PushJobModel> = objectMapper.readValue(rawBody) as JobEnvelope<PushJobModel>
         val payload = jobData.payload
@@ -48,6 +47,7 @@ class RunSessionPushConsumer(
                 PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
                 PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "")
+                PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "")
                 PushJobType.BOOKING_CANCELLED -> notifyUserBookingCancelled(payload.dataId)
             }
         }
@@ -96,6 +96,30 @@ class RunSessionPushConsumer(
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
                 runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run)
+            }
+            else{
+                logger.info("user who joined is also the admin")
+            }
+
+        }?: run {
+            logger.error("run.hostedBy parameter is null, runId = $runId")
+        }
+    }
+
+
+    private fun  notifyUserBookingUpdated(runId:String, userId:String){
+        val run = getRunSession(runId)
+        if(run.status == RunStatus.CANCELLED ||
+            run.status == RunStatus.COMPLETED ||
+            run.status == RunStatus.PROCESSED){
+            return
+        }
+        logger.info("notifyUserBookingUpdated userId = $userId")
+        run.hostedBy?.let {
+            val user = getUser(userId)
+            val adminUser = getAdmin(it)
+            if(adminUser.id != userId){
+                runSessionPushNotificationService.userUpdatedBooking(adminUser.id.orEmpty(), user, run)
             }
             else{
                 logger.info("user who joined is also the admin")
