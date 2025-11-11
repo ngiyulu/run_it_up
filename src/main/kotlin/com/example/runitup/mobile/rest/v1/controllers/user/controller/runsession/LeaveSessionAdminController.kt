@@ -36,6 +36,7 @@ class LeaveSessionAdminController: BaseController<CancelSessionModel, RunSession
             correlationId = MDC.get(AppConstant.TRACE_ID),
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
-        return leaveSessionService.cancelBooking(user, request.sessionId, admin)
+        val (_, run) = leaveSessionService.cancelBooking(user, request.sessionId, admin)
+        return run
     }
 }

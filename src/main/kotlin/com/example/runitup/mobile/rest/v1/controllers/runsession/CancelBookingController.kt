@@ -47,11 +47,6 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     @Autowired
     lateinit var bookingDbService: BookingDbService
 
-    @Autowired
-    lateinit var runSessionPushNotificationService: RunSessionPushNotificationService
-
-
-
     override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
         val savedPrincipal = auth.principal
@@ -79,7 +74,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     }
 
     private fun complete(user: User, sessionId:String, admin: AdminUser?): RunSession{
-        val run = leaveSessionService.cancelBooking(user, sessionId, admin)
+        val (booking, run )= leaveSessionService.cancelBooking(user, sessionId, admin)
         run.updateStatus()
         // we need to return this for admin
         run.bookings = run.bookings.map {
@@ -94,6 +89,14 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             correlationId = MDC.get(AppConstant.TRACE_ID),
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
+        val jobEnvelope = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Notification booking cancelled by admin",
+            payload = PushJobModel(PushJobType.BOOKING_CANCELLED_BY_ADMIN, booking.id.orEmpty())
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+        }
         return runService.updateRunSession(run)
     }
 }
