@@ -1,4 +1,4 @@
-package com.example.runitup.mobile.config
+package com.example.runitup.mobile.config.db
 
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients

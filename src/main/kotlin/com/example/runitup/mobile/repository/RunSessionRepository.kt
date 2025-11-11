@@ -20,22 +20,22 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
     companion object {
         // $near + status + local-day range + exclude user
         const val QUERY_NEAR_EXCLUDE_DAY_RANGE = """
-        {
-          'location': {
-            '${'$'}near': {
-              '${'$'}geometry': { 'type': 'Point', 'coordinates': [ ?2, ?1 ] },
-              '${'$'}maxDistance': ?3
-            }
-          },
-          'status': { '${'$'}in': ?4 },
-          'date': { '${'$'}gte': ?5, '${'$'}lt': ?6 },
-          'bookingList': { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } },
-          'waitList':   { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } }
-        }
-        """
+{
+  'location': {
+    '${'$'}near': {
+      '${'$'}geometry': { 'type': 'Point', 'coordinates': [ ?2, ?1 ] },
+      '${'$'}maxDistance': ?3
+    }
+  },
+  'status': { '${'$'}in': ?4 },
+  'date': { '${'$'}gte': ?5, '${'$'}lt': ?6 },
+  'privateRun': false,
+  'bookingList': { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } },
+  'waitList':   { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } }
+}
+"""
     }
     fun findByStatus(status: RunStatus): List<RunSession>
-
 
     @Query("{id:'?0'}")
     fun findByIdentifier(identifier: String): RunSession?

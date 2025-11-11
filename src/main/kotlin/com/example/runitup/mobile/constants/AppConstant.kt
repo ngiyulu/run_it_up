@@ -6,6 +6,7 @@ object AppConstant {
     const val SCREEN = "SCREEN"
     const val SessionId = "sessionId"
     const val USER_ID = "USER_ID"
+    const val BOOKING_ID = "BOOKING_ID"
     const val TRACE_ID = "traceId"
     const val SOURCE = "SOURCE"
 

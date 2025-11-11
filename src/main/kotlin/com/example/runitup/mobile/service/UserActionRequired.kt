@@ -19,9 +19,9 @@ enum class ActionSource { SYSTEM, STRIPE_WEBHOOK, JOB, ADMIN }
 data class UserActionRequired(
     @Id val id: String? = null,
 
-    @Indexed val userId: String,
-    @Indexed val type: ActionType,
-    @Indexed val dedupeKey: String, // e.g., "PAYMENT_SCA:seti_123" or "PAYMENT_SCA:pi_123"
+    val userId: String,
+    val type: ActionType,
+    val dedupeKey: String, // e.g., "PAYMENT_SCA:seti_123" or "PAYMENT_SCA:pi_123"
 
     // UX
     var title: String,

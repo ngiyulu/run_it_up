@@ -11,8 +11,20 @@ import org.springframework.stereotype.Repository
 @Repository
 @Document(collection = CollectionConstants.WAIVER_COLLECTION)
 interface WaiverRepository : MongoRepository<Waiver, String> {
+
+    // find by user
     @Query("{userId:'?0'}")
     fun findByUserId(userId: String): Waiver?
 
+    // find all with specific status
     fun findWaiverByStatus(status: WaiverStatus): List<Waiver>
+
+    // paginated dashboard view (optional)
+    fun findAllByStatusOrderByCreatedAtDesc(
+        status: WaiverStatus,
+        pageable: org.springframework.data.domain.Pageable
+    ): org.springframework.data.domain.Page<Waiver>
+
+    // audit lookups
+    fun findAllByApprovedBy(adminId: String): List<Waiver>
 }

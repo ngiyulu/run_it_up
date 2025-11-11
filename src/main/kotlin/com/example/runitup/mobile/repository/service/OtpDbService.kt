@@ -2,6 +2,7 @@ package com.example.runitup.mobile.repository.service
 
 import com.example.runitup.mobile.model.Otp
 import com.example.runitup.mobile.repository.OtpRepository
+import com.example.runitup.mobile.service.NumberGenerator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -20,6 +21,9 @@ class OtpDbService {
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
 
+    @Autowired
+    lateinit var numberGenerator: NumberGenerator
+
 
     @Autowired
     lateinit var otpRepository: OtpRepository
@@ -37,10 +41,7 @@ class OtpDbService {
         val u = Update().set("isActive", false)
         mongoTemplate.updateFirst(q, u, Otp::class.java)
 
-        val code: String = ThreadLocalRandom.current()
-            .ints(4, 0, 10)
-            .mapToObj(java.lang.String::valueOf)
-            .collect(Collectors.joining())
+        val code = numberGenerator.generateCode(4)
 
         return  otpRepository.save(
             Otp(

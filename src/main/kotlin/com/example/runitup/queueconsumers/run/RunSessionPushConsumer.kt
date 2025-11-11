@@ -2,6 +2,7 @@ package com.example.runitup.queueconsumers.run
 
 
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.constants.AppConstant.USER_ID
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
@@ -44,8 +45,8 @@ class RunSessionPushConsumer(
             when(payload.type){
                 PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
-                PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "")
-                PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "")
+                PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
+                PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
                 PushJobType.BOOKING_CANCELLED_BY_ADMIN -> notifyUserBookingCancelledByAdmin(payload.dataId)
                 PushJobType.BOOKING_CANCELLED_BY_USER -> notifyUserBookingCancelledByUser(payload.dataId)
 
@@ -83,7 +84,7 @@ class RunSessionPushConsumer(
     }
 
 
-    private fun  notifyUserJoined(runId:String, userId:String){
+    private fun  notifyUserJoined(runId:String, userId:String, bookingId: String){
         val run = getRunSession(runId)
         if(run.status == RunStatus.CANCELLED ||
             run.status == RunStatus.COMPLETED ||
@@ -95,7 +96,7 @@ class RunSessionPushConsumer(
             val user = getUser(userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
-                runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run)
+                runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -107,7 +108,7 @@ class RunSessionPushConsumer(
     }
 
 
-    private fun  notifyUserBookingUpdated(runId:String, userId:String){
+    private fun  notifyUserBookingUpdated(runId:String, userId:String, bookingId:String){
         val run = getRunSession(runId)
         if(run.status == RunStatus.CANCELLED ||
             run.status == RunStatus.COMPLETED ||
@@ -119,7 +120,7 @@ class RunSessionPushConsumer(
             val user = getUser(userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
-                runSessionPushNotificationService.userUpdatedBooking(adminUser.id.orEmpty(), user, run)
+                runSessionPushNotificationService.userUpdatedBooking(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -136,7 +137,7 @@ class RunSessionPushConsumer(
             return
         }
         val run = getRunSession(booking.runSessionId)
-        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run)
+        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run, bookingId)
     }
 
     private fun  notifyUserBookingCancelledByUser(bookingId:String){
@@ -150,7 +151,7 @@ class RunSessionPushConsumer(
             val user = getUser(booking.userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != booking.userId){
-                runSessionPushNotificationService.runSessionBookingCancelledByUser(adminUser.id.orEmpty(), run,  user)
+                runSessionPushNotificationService.runSessionBookingCancelledByUser(adminUser.id.orEmpty(), run,  user, bookingId)
             }
             else{
                 logger.info("user who cancelled booking is also the admin")
@@ -158,7 +159,7 @@ class RunSessionPushConsumer(
         }?: run {
             logger.error("run.hostedBy parameter is null, runId = ${run.id.orEmpty()}")
         }
-        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run)
+        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run, bookingId)
     }
 
 

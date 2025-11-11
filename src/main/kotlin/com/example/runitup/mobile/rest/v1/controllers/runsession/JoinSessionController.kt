@@ -166,6 +166,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         }
         val map = HashMap<String, String>()
         map[AppConstant.USER_ID] = user.id.orEmpty()
+        map[AppConstant.BOOKING_ID] = booking.id.orEmpty()
         val jobEnvelope = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "Notification new user joined run",

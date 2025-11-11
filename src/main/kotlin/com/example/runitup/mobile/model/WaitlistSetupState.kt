@@ -6,13 +6,13 @@ import org.springframework.data.mongodb.core.index.Indexed
 data class WaitlistSetupState(
     @Id val id: String? = null,
 
-    @Indexed val bookingId: String,
-    @Indexed val sessionId: String,
-    @Indexed val userId: String,
-    @Indexed val customerId: String,
-    @Indexed val paymentMethodId: String,
+    val bookingId: String,
+    val sessionId: String,
+    val userId: String,
+    val customerId: String,
+    val paymentMethodId: String,
 
-    @Indexed(unique = true) val setupIntentId: String? = null,
+    val setupIntentId: String? = null,
 
     var status: SetupStatus = SetupStatus.UNKNOWN,
     var needsUserAction: Boolean = false,
