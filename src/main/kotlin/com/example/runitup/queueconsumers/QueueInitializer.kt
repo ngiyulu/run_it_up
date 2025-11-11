@@ -24,7 +24,12 @@ class QueueInitializer(
                 QueueNames.FIRST_SESSION_JOB,
                 QueueNames.LOCATION_JOB,
                 QueueNames.NEW_USER_JOB,
-                QueueNames.RUN_SESSION_PUSH_JOB
+                QueueNames.RUN_SESSION_PUSH_JOB,
+                QueueNames.RUN_CANCELLED_JOB,
+                QueueNames.RUN_PROCESS_PAYMENT,
+                QueueNames.RUN_CONFIRMATION_JOB,
+                QueueNames.PAYMENT_FAILED_JOB
+
             ).forEach { queue ->
                 queueService.createQueue(queue, 30, 5)
                 log.info("✅ Queue created: $queue and its DLQ")
