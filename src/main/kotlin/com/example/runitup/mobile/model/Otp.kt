@@ -12,6 +12,5 @@ data class Otp(
     var code: String,
     var userId: String?,
     var phoneNumber: String,
-    @Indexed(expireAfter = "0s", name = "otpCreatedAtIdx")
     val expiresAt: Instant = Instant.now().plus(10, ChronoUnit.MINUTES),
 ): BaseModel()

@@ -86,7 +86,7 @@ class RunSessionPushNotificationService {
         )
     }
 
-    fun userJoinedRunSession(adminUserId: String, user: User, runSession: RunSession) {
+    fun userJoinedRunSession(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -105,12 +105,12 @@ class RunSessionPushNotificationService {
             trigger = "RUN_SESSION_USER_JOINED",
             triggerRefId = sessionId,
             templateId = "run.user_joined",
-            dedupeKey = dedupeKeyUserScoped("run.user_joined", sessionId, user.id.orEmpty())
+            dedupeKey = dedupeKeyUserScoped("run.user_joined", sessionId, user.id.orEmpty(), bookingId)
         )
     }
 
 
-    fun userUpdatedBooking(adminUserId: String, user: User, runSession: RunSession) {
+    fun userUpdatedBooking(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -129,11 +129,11 @@ class RunSessionPushNotificationService {
             trigger = "RUN_SESSION_USER_JOINED",
             triggerRefId = sessionId,
             templateId = "run.user_joined",
-            dedupeKey = dedupeKeyUserScoped("run.user_joined", sessionId, user.id.orEmpty())
+            dedupeKey = dedupeKeyUserScoped("run.user_joined", sessionId, user.id.orEmpty(), bookingId)
         )
     }
 
-    fun runSessionBookingCancelledByAdmin(targetUserId: String, runSession: RunSession) {
+    fun runSessionBookingCancelledByAdmin(targetUserId: String, runSession: RunSession, bookingId:String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -151,13 +151,13 @@ class RunSessionPushNotificationService {
             trigger = "RUN_SESSION_BOOKING_CANCELLED",
             triggerRefId = sessionId,
             templateId = "run.booking_cancelled",
-            dedupeKey = dedupeKeyUserScoped("run.booking_cancelled", sessionId, targetUserId)
+            dedupeKey = dedupeKeyBookingScoped("run.booking_cancelled", sessionId, targetUserId, bookingId)
         )
     }
 
 
 
-    fun runSessionBookingCancelledByUser(adminUserId: String, runSession: RunSession, user: User) {
+    fun runSessionBookingCancelledByUser(adminUserId: String, runSession: RunSession, user: User, bookingId:String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -175,23 +175,28 @@ class RunSessionPushNotificationService {
             trigger = "RUN_SESSION_BOOKING_CANCELLED_BY_USER",
             triggerRefId = sessionId,
             templateId = "run.booking_cancelled_user",
-            dedupeKey = dedupeKeyUserScoped("run.booking_cancelled_user", sessionId, adminUserId)
+            dedupeKey = dedupeKeyUserScoped("run.booking_cancelled_user", sessionId, adminUserId, bookingId)
         )
     }
-
-    // ----- Audience helpers -----
-
-
-
-
-
-    // ----- Dedupe helpers -----
 
     private fun dedupeKeySessionVersion(templateId: String, sessionId: String, version: Int?): String {
         val v = version ?: 0
         return "$templateId:$sessionId:$v"
     }
 
-    private fun dedupeKeyUserScoped(templateId: String, sessionId: String, userId: String): String =
+    private fun dedupeKeyBookingScoped(
+        templateId: String,
+        sessionId: String,
+        userId: String,
+        bookingId: String?
+    ): String {
+        // fall back to user-scoped if you truly don't have a booking yet
+        return if (!bookingId.isNullOrBlank())
+            "$templateId:$sessionId:$userId:$bookingId"
+        else
+            "$templateId:$sessionId:$userId"
+    }
+
+    private fun dedupeKeyUserScoped(templateId: String, sessionId: String, userId: String, bookingId:String): String =
         "$templateId:$sessionId:$userId"
 }

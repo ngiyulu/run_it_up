@@ -1,5 +1,7 @@
 package com.example.runitup.mobile.model
 
+import java.time.Instant
+
 // model/PaymentFailureLog.kt
 data class PaymentFailureLog(
     val id: String? = null,
@@ -12,7 +14,7 @@ data class PaymentFailureLog(
     val declineCode: String?,
     val message: String?,
     val attempt: Int,                   // 1..N
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Instant = Instant.now(),
     val metadata: Map<String,String> = emptyMap()
 )
 

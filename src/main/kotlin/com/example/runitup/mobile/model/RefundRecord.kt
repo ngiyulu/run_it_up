@@ -2,19 +2,19 @@ package com.example.runitup.mobile.model
 
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
-import org.springframework.data.redis.core.index.Indexed
+import org.springframework.data.mongodb.core.index.Indexed
 import java.time.Instant
 
 data class RefundRecord(
     @Id var id: String? = ObjectId().toString(),
 
-    @Indexed var bookingId: String,
-    @Indexed var userId: String,
+    var bookingId: String,
+    var userId: String,
     var customerId: String,
     var currency: String,
 
     // Stripe linkage
-    @Indexed var paymentIntentId: String,
+    var paymentIntentId: String,
     var stripeRefundId: String? = null,
 
     // Money

@@ -24,8 +24,8 @@ data class PushDeliveryAttempt(
 // in PushDeliveryAttempt model
     val templateId: String?,   // e.g. "run.confirmed"
     val sessionId: String?,    // runSession.id (if applicable)
-    @Indexed val eventId: String,
-    @Indexed val userId: String,                // sender-side user
+    val eventId: String,
+    val userId: String,                // sender-side user
     val phoneId: String?,
     val tokenHash: String,                      // never store raw token; use SHA-256
     val phoneType: String,                      // "ANDROID" | "IOS"
@@ -39,8 +39,5 @@ data class PushDeliveryAttempt(
     val vendorMessageId: String?,               // FCM/APNs id if available
     val errorCode: String?,                     // standardize (e.g., "NotRegistered", "InvalidRegistration", "Unregistered", "DeviceTokenNotForTopic")
     val errorMessage: String?,                  // sanitized
-
-    // TTL (keep shorter for attempts)
-    @Indexed(expireAfter = "0s", name = "expiresAtIndex")
-    val expiresAt: Instant = Instant.now().plus(30, ChronoUnit.DAYS),
+    val expiresAt: Instant = Instant.now()
 )

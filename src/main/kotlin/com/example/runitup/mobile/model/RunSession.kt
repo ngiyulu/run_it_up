@@ -64,6 +64,7 @@ data class RunSession(
     var startedAt:Instant? = null,
     var startedBy:String? = null,
     var completedAt:Instant? = null,
+    var code: String? = null,
     var bookingPaymentState: BookingPaymentState? = null,
 ): BaseModel(){
 

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 @Document(collection = CollectionConstants.OTP_COLLECTION)
-interface OtpRepository : MongoRepository<com.example.runitup.mobile.model.Otp, String> {
+interface OtpRepository : MongoRepository<Otp, String> {
     @Query("{userId:'?0'}")
     fun findByUser(userId: String): Otp?
 

@@ -163,6 +163,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
         bookingRepository.save(booking)
         val map = HashMap<String, String>()
         map[AppConstant.USER_ID] = booking.userId
+        map[AppConstant.BOOKING_ID] = booking.id.orEmpty()
         val jobEnvelope = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "${user.getFullName()} updated booking",
