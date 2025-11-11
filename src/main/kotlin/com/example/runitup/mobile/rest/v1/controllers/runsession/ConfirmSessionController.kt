@@ -33,9 +33,6 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
-    @Autowired
-    lateinit var numberGenerator: NumberGenerator
-
     override fun execute(request: ConfirmSessionModel): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication
         val savedUser = auth.principal as UserPrincipal
@@ -56,11 +53,6 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         }
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
-        }
-        if(run.privateRun && run.code != null){
-            if(!numberGenerator.validateEncryptedCode(run.code!!, request.code)){
-                throw ApiRequestException(text("invalid_code"))
-            }
         }
         run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
         if(request.isAdmin){

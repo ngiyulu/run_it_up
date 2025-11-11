@@ -4,6 +4,7 @@ data class JoinSessionModel(
     val sessionId: String,
     val paymentMethodId:String?,
     // guest only include guest, to get the whole party size, it's guest +1
+    var code: String = "",
     val guest: Int){
 
     fun getTotalParticipants(): Int{

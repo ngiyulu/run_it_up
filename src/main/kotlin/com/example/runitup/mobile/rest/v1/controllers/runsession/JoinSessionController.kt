@@ -16,6 +16,7 @@ import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
+import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -48,7 +49,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
     lateinit var messagingService: MessagingService
 
     @Autowired
-    lateinit var pushNotificationService: RunSessionPushNotificationService
+    lateinit var numberGenerator: NumberGenerator
 
     @Autowired
     lateinit var queueService: LightSqsService
@@ -84,6 +85,11 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         }
         if(run.userHasBookingAlready(user.id.orEmpty())){
             return  JoinRunSessionResponse(JoinRunSessionStatus.ALREADY_BOOKED, run)
+        }
+        if(run.privateRun && run.code != null ){
+            if(!numberGenerator.validateEncryptedCode(run.code!!, request.code)){
+                throw ApiRequestException(text("invalid_code"))
+            }
         }
         val amount = request.getTotalParticipants() * run.amount
         val runUser = RunUser(
@@ -128,6 +134,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             booking.paymentId = holdingCharge.paymentIntentId
             booking.paymentMethodId = request.paymentMethodId
         }
+
         bookingRepository.save(booking)
         run.bookingList.add(
             RunSession.SessionRunBooking(
