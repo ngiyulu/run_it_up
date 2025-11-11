@@ -59,7 +59,7 @@ class LeaveSessionService {
     lateinit var queueService: LightSqsService
 
 
-     fun cancelBooking(user:User, sessionId:String, admin:AdminUser? = null): RunSession {
+     fun cancelBooking(user:User, sessionId:String, admin:AdminUser? = null): Pair<Booking, RunSession> {
          val locale = LocaleContextHolder.getLocale().toString()
          val run = cacheManager.getRunSession(sessionId)
              ?: throw ApiRequestException(textService.getText("invalid_session_id",locale ))
@@ -111,18 +111,7 @@ class LeaveSessionService {
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
          completeFlow(run)
-         val map = HashMap<String, String>()
-         map[AppConstant.USER_ID] = user.id.toString()
-         val jobEnvelope = JobEnvelope(
-             jobId = UUID.randomUUID().toString(),
-             taskType = "Notification booking cancelled",
-             payload = PushJobModel(PushJobType.BOOKING_CANCELLED, booking.id.orEmpty(), map
-             )
-         )
-         appScope.launch {
-             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
-         }
-         return run
+         return Pair(booking, run)
     }
 
     private fun cancelWaitListPayment(booking: Booking){

@@ -133,7 +133,7 @@ class RunSessionPushNotificationService {
         )
     }
 
-    fun runSessionBookingCancelled(targetUserId: String, runSession: RunSession) {
+    fun runSessionBookingCancelledByAdmin(targetUserId: String, runSession: RunSession) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
             title = runSession.title,
@@ -152,6 +152,30 @@ class RunSessionPushNotificationService {
             triggerRefId = sessionId,
             templateId = "run.booking_cancelled",
             dedupeKey = dedupeKeyUserScoped("run.booking_cancelled", sessionId, targetUserId)
+        )
+    }
+
+
+
+    fun runSessionBookingCancelledByUser(adminUserId: String, runSession: RunSession, user: User) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "${user.getFullName()} has cancelled booking",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        val phones = phoneService.getPhonesByUser(adminUserId)
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_BOOKING_CANCELLED_BY_USER",
+            triggerRefId = sessionId,
+            templateId = "run.booking_cancelled_user",
+            dedupeKey = dedupeKeyUserScoped("run.booking_cancelled_user", sessionId, adminUserId)
         )
     }
 

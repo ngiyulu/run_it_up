@@ -1,7 +1,6 @@
 package com.example.runitup.queueconsumers.run
 
 
-import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.constants.AppConstant.USER_ID
 import com.example.runitup.mobile.enum.RunStatus
@@ -22,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
-import kotlin.math.log
 
 @Component
 class RunSessionPushConsumer(
@@ -48,7 +46,9 @@ class RunSessionPushConsumer(
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
                 PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "")
                 PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "")
-                PushJobType.BOOKING_CANCELLED -> notifyUserBookingCancelled(payload.dataId)
+                PushJobType.BOOKING_CANCELLED_BY_ADMIN -> notifyUserBookingCancelledByAdmin(payload.dataId)
+                PushJobType.BOOKING_CANCELLED_BY_USER -> notifyUserBookingCancelledByAdmin(payload.dataId)
+
             }
         }
     }
@@ -130,14 +130,38 @@ class RunSessionPushConsumer(
         }
     }
 
-    private fun  notifyUserBookingCancelled(bookingId:String){
+    private fun  notifyUserBookingCancelledByAdmin(bookingId:String){
         val booking = getBooking(bookingId)
         if(booking.status != BookingStatus.CANCELLED){
             return
         }
         val run = getRunSession(booking.runSessionId)
-        runSessionPushNotificationService.runSessionBookingCancelled(booking.userId, run)
+        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run)
     }
+
+    private fun  notifyUserBookingCancelledByUser(bookingId:String){
+        val booking = getBooking(bookingId)
+        if(booking.status != BookingStatus.CANCELLED){
+            return
+        }
+        val run = getRunSession(booking.runSessionId)
+        logger.info("notifyUserBookingCancelledByUser userId = ${booking.user}")
+        run.hostedBy?.let {
+            val user = getUser(booking.userId)
+            val adminUser = getAdmin(it)
+            if(adminUser.id != booking.userId){
+                runSessionPushNotificationService.runSessionBookingCancelledByUser(adminUser.id.orEmpty(), run,  user)
+            }
+            else{
+                logger.info("user who cancelled booking is also the admin")
+            }
+        }?: run {
+            logger.error("run.hostedBy parameter is null, runId = ${run.id.orEmpty()}")
+        }
+        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run)
+    }
+
+
 
     private fun getRunSession(runId:String):RunSession{
         return  cacheManager.getRunSession(runId)?: throw ApiRequestException("run session not found")
