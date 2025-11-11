@@ -17,6 +17,17 @@ import java.util.*
 
 // ---------- Typed (new) ----------
 
+
+data class PeekMessage(
+    val id: String,
+    val receiveCount: Int,
+    val attributes: Map<String, String>,
+    val createdAtMs: Long?,     // if present in envelope
+    val taskType: String?,      // if present in envelope
+    val traceId: String?,       // if present in envelope
+    val visibilityDeadlineMs: Long? = null,  // inflight only (when it will reappear)
+    val dueAtMs: Long? = null,               // delayed only (when it will move to ready)
+)
 data class JobReceiveResponse<T>(
     val jobs: List<ReceivedJob<T>>
 )
@@ -55,6 +66,80 @@ data class QueueMessage(
     val delaySeconds: Int = 0,
     val receiveCount: Int = 0
 )
+
+/*
+defaultVisibility: This is the visibility timeout — how long (in seconds) a message stays invisible to other consumers after it’s received, before it’s automatically made visible again if not deleted.
+ */
+
+/*
+defaultWaitSeconds: This is the long-poll duration — how long the consumer (receiver) waits for a message if none are immediately available.
+Instead of returning instantly with “no messages,” the queue can wait a few seconds to see if new jobs arrive, reducing empty polling loops.
+ */
+
+/*
+defaultMaxReceiveCount: This is the retry limit — the maximum number of times a single message can be received before it’s sent to the Dead Letter Queue (DLQ).
+Every time a message is delivered to a consumer (and not deleted), its receiveCount increases.
+If it’s retried too many times (e.g. due to repeated crashes), it’s moved to a DLQ for manual review
+If defaultMaxReceiveCount = 5:
+
+The message can fail up to 5 times
+
+On the 6th attempt → automatically moved to DLQ
+ */
+
+
+/*
+scanMs: This is the interval (milliseconds) for the background maintenance loop that scans Redis and performs housekeeping tasks.
+The maintenanceOnce() coroutine periodically checks:
+
+If any delayed jobs are due → move them to the “ready” queue.
+
+If any inflight jobs (being processed) have expired → requeue them (because their visibility expired).
+ */
+
+/*
+dlqRetryIntervalMs: This sets the interval (in milliseconds) for how often the DLQ redrive process runs — that is, how frequently your system will scan all DLQs and move eligible messages back to their main queues for reprocessing.
+if dlqRetryIntervalMs = 300,000 ms = 5 minutes
+So by default, every 5 minutes, the system will:
+
+Look through all configured queues.
+
+Find their DLQs.
+
+Attempt to redrive (requeue) up to 50 jobs from each DLQ
+back into the main processing queue.
+ */
+
+/*
+states
+1. Ready
+List
+q:<queue>:ready
+Available for consumers to receive immediately
+
+
+
+2. Inflight
+ZSet (sorted set)
+q:<queue>:inflight
+Currently being processed by a worker; hidden from others
+
+
+3.
+Delayed
+ZSet
+q:<queue>:delayed
+Scheduled to become ready at a future time
+
+
+DLQ (Dead Letter Queue)
+List
+q:<queue>-dlq:dlq
+Failed too many times (maxReceiveCount exceeded)
+
+
+ */
+
 
 @Service
 class LightSqsService(
@@ -403,5 +488,74 @@ class LightSqsService(
             }
         }
         mapOf("queue" to name, "deletedKeys" to deleted, "deletedDlqKeys" to dlqDeleted)
+    }
+
+
+    private fun ensureQueueExists(queue: String) {
+        val cfgKey = RedisKeys.cfg(queue)
+        if (!redis.hasKey(cfgKey)) {
+            throw IllegalArgumentException("Queue '$queue' does not exist")
+        }
+    }
+    suspend fun peekReady(queue: String, limit: Long = 50): List<PeekMessage> = withContext(io) {
+        // Right end is the "oldest" in your flow; for peeking we can show newest first
+        ensureQueueExists(queue)
+        val ids = redis.opsForList().range(RedisKeys.ready(queue), 0, limit - 1) ?: emptyList()
+        ids.mapNotNull { id -> loadPeek(queue, id) }
+    }
+
+    suspend fun peekInflight(queue: String, limit: Long = 50): List<PeekMessage> = withContext(io) {
+        ensureQueueExists(queue)
+        val withScores = redis.opsForZSet()
+            .rangeWithScores(RedisKeys.inflight(queue), 0, limit - 1)
+            ?.toList()
+            ?: emptyList()
+        withScores.mapNotNull { tuple ->
+            val id = tuple.value as String
+            val deadlineMs = tuple.score?.toLong()
+            loadPeek(queue, id)?.copy(visibilityDeadlineMs = deadlineMs)
+        }
+    }
+
+    suspend fun peekDelayed(queue: String, limit: Long = 50): List<PeekMessage> = withContext(io) {
+        ensureQueueExists(queue)
+        val withScores = redis.opsForZSet()
+            .rangeWithScores(RedisKeys.delayed(queue), 0, limit - 1)
+            ?.toList()
+            ?: emptyList()
+        withScores.mapNotNull { tuple ->
+            val id = tuple.value as String
+            val dueAtMs = tuple.score?.toLong()
+            loadPeek(queue, id)?.copy(dueAtMs = dueAtMs)
+        }
+    }
+
+    suspend fun peekDlq(queue: String, limit: Long = 50): List<PeekMessage> = withContext(io) {
+        ensureQueueExists(queue)
+        val cfg = redis.opsForHash<String, String>().entries(RedisKeys.cfg(queue))
+        val dlq = cfg["dlqName"].takeUnless { it.isNullOrBlank() } ?: return@withContext emptyList()
+        val ids = redis.opsForList().range(RedisKeys.dlq(dlq), 0, limit - 1) ?: emptyList()
+        ids.mapNotNull { id -> loadPeek(dlq, id) } // note: messages live under the DLQ's namespace
+    }
+
+    /** Load QueueMessage and extract a small envelope preview without deserializing payload T. */
+    private fun loadPeek(ns: String, id: String): PeekMessage? {
+        val json = redis.opsForValue().get(RedisKeys.msg(ns, id)) ?: return null
+        val qm = om.readValue(json, QueueMessage::class.java)
+
+        // Try to pull a few top-level envelope fields for quick visibility
+        val envNode = om.readTree(qm.body)
+        val createdAtMs = envNode.get("createdAtMs")?.asLong()
+        val taskType = envNode.get("taskType")?.asText()
+        val traceId = envNode.get("traceId")?.asText()
+
+        return PeekMessage(
+            id = qm.id,
+            receiveCount = qm.receiveCount,
+            attributes = qm.attributes,
+            createdAtMs = createdAtMs,
+            taskType = taskType,
+            traceId = traceId
+        )
     }
 }

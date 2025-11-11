@@ -2,6 +2,7 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
+import kotlinx.coroutines.runBlocking
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -10,21 +11,21 @@ class QueueController(private val q: LightSqsService) {
 
     @PostMapping("/create")
    fun create(@RequestBody req: CreateQueueRequest) =
-        kotlinx.coroutines.runBlocking{
+        runBlocking{
             q.createQueue(req.name, req.visibilitySeconds, req.maxReceiveCount, "${req.name}-dlq").let { mapOf("ok" to true) }
         }
 
 
     @PostMapping("/{name}/messages")
     suspend fun send(@PathVariable name: String, @RequestBody req: SendMessageRequest) =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             mapOf("messageId" to q.sendMessage(name, req.body, req.attributes ?: emptyMap(), req.delaySeconds ?: 0))
         }
 
 
     @GetMapping("/{name}/messages")
     fun receive(@PathVariable name: String, query: ReceiveQuery) =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             q.receiveMessages(
                 ReceiveRequest(
                     queue = name,
@@ -38,13 +39,13 @@ class QueueController(private val q: LightSqsService) {
 
     @GetMapping("/list/stats")
     fun listQueuesWithStats() =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             q.listQueuesWithStats()
         }
 
     @DeleteMapping("/{name}/messages")
     fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             mapOf("deleted" to q.deleteMessage(name, req.receiptHandle))
         }
 
@@ -53,15 +54,31 @@ class QueueController(private val q: LightSqsService) {
     fun deleteQueue(
         @PathVariable name: String,
         @RequestParam(defaultValue = "true") includeDlq: Boolean) =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             q.deleteQueue(name, includeDlq)
         }
 
     @PostMapping("/{name}/visibility")
     fun changeVisibility(@PathVariable name: String, @RequestBody req: ChangeVisibilityRequest) =
-        kotlinx.coroutines.runBlocking {
+        runBlocking {
             mapOf("changed" to q.changeMessageVisibility(name, req.receiptHandle, req.visibilitySeconds))
         }
+
+    /** Peek items in a queue section without consuming them. */
+    @GetMapping("/{name}/peek")
+    fun peek(
+        @PathVariable name: String,
+        @RequestParam(defaultValue = "ready") section: String, // ready|inflight|delayed|dlq
+        @RequestParam(defaultValue = "50") limit: Long
+    ) = runBlocking {
+        when (section.lowercase()) {
+            "ready"    -> q.peekReady(name, limit)
+            "inflight" -> q.peekInflight(name, limit)
+            "delayed"  -> q.peekDelayed(name, limit)
+            "dlq"      -> q.peekDlq(name, limit)
+            else       -> error("Unknown section '$section'. Use ready|inflight|delayed|dlq.")
+        }
+    }
 
 }
 

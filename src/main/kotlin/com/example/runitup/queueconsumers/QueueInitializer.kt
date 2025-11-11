@@ -23,7 +23,8 @@ class QueueInitializer(
                 QueueNames.JOINED_RUN_JOB,
                 QueueNames.FIRST_SESSION_JOB,
                 QueueNames.LOCATION_JOB,
-                QueueNames.NEW_USER_JOB
+                QueueNames.NEW_USER_JOB,
+                QueueNames.RUN_SESSION_PUSH_JOB
             ).forEach { queue ->
                 queueService.createQueue(queue, 30, 5)
                 log.info("✅ Queue created: $queue and its DLQ")
