@@ -2,6 +2,7 @@ package com.example.runitup.mobile.model
 
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.enum.RunStatus
+import com.example.runitup.mobile.rest.v1.dto.EncryptedCodeModel
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
@@ -64,7 +65,7 @@ data class RunSession(
     var startedAt:Instant? = null,
     var startedBy:String? = null,
     var completedAt:Instant? = null,
-    var code: String? = null,
+    var code: EncryptedCodeModel? = null,
     var bookingPaymentState: BookingPaymentState? = null,
 ): BaseModel(){
 

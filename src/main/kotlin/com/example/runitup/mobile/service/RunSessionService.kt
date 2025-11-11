@@ -2,12 +2,14 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.model.Booking
+import com.example.runitup.mobile.model.BookingStatus
+import com.example.runitup.mobile.model.JobEnvelope
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
-import com.example.runitup.mobile.rest.v1.controllers.runsession.CoordinateUpdateModel
 import com.example.runitup.mobile.rest.v1.dto.PushJobModel
 import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel

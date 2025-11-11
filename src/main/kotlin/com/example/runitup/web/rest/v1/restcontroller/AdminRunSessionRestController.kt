@@ -1,28 +1,21 @@
 package com.example.runitup.web.rest.v1.restcontroller
 
 import com.example.runitup.mobile.cache.MyCacheManager
-import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.*
-import com.example.runitup.mobile.rest.v1.dto.Actor
-import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
-import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.payment.RefundResult
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
 import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.web.rest.v1.controller.CreateRefundController
 import com.example.runitup.web.rest.v1.controller.CreateRefundModel
-import com.example.runitup.web.security.AdminPrincipal
-import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -47,6 +40,9 @@ class AdminRunSessionRestController {
 
     @Autowired
     lateinit var runSessionController: GetUserRunSessionController
+
+    @Autowired
+    lateinit var generateRunSessionCode: GenerateRunSessionCode
 
     @Autowired
     protected lateinit var runSessionEventLogger: RunSessionEventLogger
@@ -130,5 +126,10 @@ class AdminRunSessionRestController {
     @PostMapping("/refund")
     fun createRefund(@RequestBody model: CreateRefundModel): RefundResult {
         return  createRefundController.execute(model)
+    }
+
+    @PostMapping("/code/generate")
+    fun createRefund(@RequestBody model: GenerateCodeModel): RunSession {
+        return generateRunSessionCode.execute(model)
     }
 }

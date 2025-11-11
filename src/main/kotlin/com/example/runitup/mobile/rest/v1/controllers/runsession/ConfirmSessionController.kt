@@ -12,8 +12,8 @@ import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.mobile.service.myLogger
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
@@ -32,6 +32,9 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
+
+    @Autowired
+    lateinit var numberGenerator: NumberGenerator
 
     override fun execute(request: ConfirmSessionModel): RunSession {
         val auth =  SecurityContextHolder.getContext().authentication
@@ -54,7 +57,11 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
-
+        if(run.privateRun && run.code != null){
+            if(!numberGenerator.validateEncryptedCode(run.code!!, request.code)){
+                throw ApiRequestException(text("invalid_code"))
+            }
+        }
         run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
         if(request.isAdmin){
             run.updateStatus()

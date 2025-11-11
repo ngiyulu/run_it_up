@@ -3,7 +3,6 @@ package com.example.runitup.mobile.service
 import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.model.Phone
 import com.example.runitup.mobile.repository.PhoneRepository
-import com.example.runitup.mobile.repository.service.PhoneDbService
 import com.example.runitup.mobile.rest.v1.dto.FirebaseTokenModel
 import constant.HeaderConstants
 import org.springframework.beans.factory.annotation.Autowired

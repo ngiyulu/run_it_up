@@ -1,7 +1,6 @@
 package com.example.runitup.mobile.model
 
 import org.springframework.data.annotation.Id
-import org.springframework.data.mongodb.core.index.Indexed
 
 data class WaitlistSetupState(
     @Id val id: String? = null,

@@ -30,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.util.*
-import kotlin.collections.HashMap
 
 @Service
 class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
