@@ -47,7 +47,7 @@ class RunSessionPushConsumer(
                 PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "")
                 PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "")
                 PushJobType.BOOKING_CANCELLED_BY_ADMIN -> notifyUserBookingCancelledByAdmin(payload.dataId)
-                PushJobType.BOOKING_CANCELLED_BY_USER -> notifyUserBookingCancelledByAdmin(payload.dataId)
+                PushJobType.BOOKING_CANCELLED_BY_USER -> notifyUserBookingCancelledByUser(payload.dataId)
 
             }
         }
