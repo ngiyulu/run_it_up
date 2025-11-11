@@ -1,0 +1,101 @@
+When a worker receives a message (via receiveJobBatch):
+Redis pops one ID from the ready list
+It immediately moves it to the inflight ZSET
+That message is now “in flight” — being processed by one worker — and will remain hidden from all other consumers until its visibility timeout expires (default 30s).
+
+If the worker fails to delete the message before visibility expires:
+The maintenanceOnce() job scans all inflight ZSETs every scanMs milliseconds (default 1000 ms = 1 second).
+
+It checks for inflight entries whose score (deadline) ≤ now.
+
+Those are expired inflight messages, so they’re requeued:
+
+The worker didn’t ack/delete the job in time, so the queue automatically returns it to ready for another worker to retry.
+
+
+If the same message is retried too many times (exceeds maxReceiveCount):
+
+Each time a worker receives it, receiveCount is incremented.
+
+
+If receiveCount > maxReceiveCount (default 5):
+
+It copies the message to the DLQ list and deletes it from the inflight ZSET and normal message store.
+
+
+This job failed repeatedly — stop retrying automatically and move it to a Dead Letter Queue for manual inspection.
+
+
+
+DElAY:
+
+if a message is published with a delay (e.g., delaySeconds = 30):
+
+It’s stored in the delayed ZSET with a “due time” as score.
+
+Every scanMs interval, maintenanceOnce() checks all delayed ZSETs:
+
+If any are due → move them into the ready list.
+
+Scheduled/delayed messages automatically become ready once their delay expires.
+
+
+
+   sendJob()                receiveJobBatch()
+  ┌──────────┐               ┌────────────┐
+  │  READY   │──────────────▶│  INFLIGHT  │───────────────┐
+  └──────────┘               └────────────┘               │
+        ▲                         │                      │
+        │                         │(timeout / crash)     │
+        │                         ▼                      │
+   ┌──────────┐               ┌────────────┐              │
+   │ DELAYED  │──────────────▶│  READY     │◀─────────────┘
+   └──────────┘               └────────────┘
+                                   │
+                                   │(exceeds maxReceiveCount)
+                                   ▼
+                              ┌────────────┐
+                              │    DLQ     │
+                              └────────────┘
+
+
+
+| Config                     | Controls                 | Default  | Description                                         |
+| -------------------------- | ------------------------ | -------- | --------------------------------------------------- |
+| `defaultVisibilitySeconds` | INFLIGHT → READY timeout | 30s      | How long a job stays inflight before reappearing    |
+| `defaultMaxReceiveCount`   | INFLIGHT → DLQ           | 5        | Max retries before moving to DLQ                    |
+| `scanMs`                   | maintenance frequency    | 1000 ms  | How often to requeue expired inflight / due delayed |
+| `delaySeconds` (per job)   | READY → DELAYED          | per send | Optional per-job delay when enqueuing               |
+
+
+
+
+| State    | “Layman’s meaning”              | Who touches it                    |
+| -------- | ------------------------------- | --------------------------------- |
+| READY    | Jobs waiting to be worked on    | Producer puts, consumer takes     |
+| INFLIGHT | Jobs being worked on (locked)   | Consumer processes                |
+| DELAYED  | Jobs scheduled for later        | Queue timer moves them            |
+| DLQ      | Jobs that failed too many times | Admin reviews or retries manually |
+
+
+
+
+
+
+| Time     | Action                                         | Queue state                        |
+| -------- | ---------------------------------------------- | ---------------------------------- |
+| 00:00    | Job `A` enqueued                               | `READY`                            |
+| 00:01    | Worker pulls it                                | `INFLIGHT (visibleUntil=00:01:31)` |
+| 00:02    | Worker crashes                                 | job not deleted                    |
+| 00:02:31 | Visibility expired → maintenance moves it back | `READY`                            |
+| 00:03    | Worker B gets it again (receiveCount=2)        | `INFLIGHT`                         |
+| ...      | After 5 failed tries                           | → `DLQ`                            |
+
+
+
+
+suspend fun deleteMessage(queue: String, receiptHandle: String): Boolean
+
+That’s the only place where a message is permanently deleted and the queue is told:
+
+✅ “This job was successfully processed — don’t redeliver it.”
