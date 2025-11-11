@@ -1,6 +1,7 @@
 package com.example.runitup.queueconsumers.run
 
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.constants.AppConstant.USER_ID
 import com.example.runitup.mobile.enum.RunStatus
@@ -37,6 +38,7 @@ class RunSessionPushConsumer(
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
         // Fetch up to 5 messages from the "jobs" queue
+
         logger.info("RunSessionPushConsumer is running")
         val jobData: JobEnvelope<PushJobModel> = objectMapper.readValue(rawBody) as JobEnvelope<PushJobModel>
         val payload = jobData.payload
@@ -83,15 +85,22 @@ class RunSessionPushConsumer(
 
     private fun  notifyUserJoined(runId:String, userId:String){
         val run = getRunSession(runId)
-        if(run.status != RunStatus.CONFIRMED ||
-            run.status != RunStatus.PENDING ||
-            run.status != RunStatus.ONGOING){
+        if(run.status == RunStatus.CANCELLED ||
+            run.status == RunStatus.COMPLETED ||
+            run.status == RunStatus.PROCESSED){
             return
         }
         logger.info("notifyUserJoined userId = $userId")
         run.hostedBy?.let {
-            val user = getUser(userId)
-            runSessionPushNotificationService.userJoinedRunSession(it, user, run)
+            if(run.hostedBy != userId){
+                val user = getUser(userId)
+                val adminUser = getAdmin(it)
+                runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run)
+            }
+            else{
+                logger.info("user who joined is also the admin")
+            }
+
         }?: run {
             logger.error("run.hostedBy parameter is null, runId = $runId")
         }
@@ -112,6 +121,10 @@ class RunSessionPushConsumer(
 
     private fun getUser(userId:String):User{
         return  cacheManager.getUser(userId)?: throw ApiRequestException("user not found")
+    }
+
+    private fun getAdmin(userId:String):User{
+        return  userRepository.findByLinkedAdmin(userId)?: throw ApiRequestException("user not found")
     }
 
     private fun getBooking(bookingId:String):Booking{

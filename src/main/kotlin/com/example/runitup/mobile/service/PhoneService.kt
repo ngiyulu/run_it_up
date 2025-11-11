@@ -38,7 +38,7 @@ class PhoneService: BaseService() {
             print("we found phone")
             print("old phone token = ${ph.token}")
             print("new phone token = ${token.token}")
-            if(ph.token != token.token){
+            if(ph.token != token.token || ph.userId != userId){
                 ph.token = token.token
                 ph.phoneId = token.phoneId
                 ph.userId = userId

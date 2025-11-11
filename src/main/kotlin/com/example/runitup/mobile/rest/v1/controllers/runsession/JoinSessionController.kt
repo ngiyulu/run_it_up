@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.util.*
+import kotlin.collections.HashMap
 
 @Service
 class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResponse>() {
@@ -163,10 +164,12 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             // we have to trigger this event to confirm session if the number of participants have been reached
             queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
         }
+        val map = HashMap<String, String>()
+        map[AppConstant.USER_ID] = user.id.orEmpty()
         val jobEnvelope = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "Notification new user joined run",
-            payload = PushJobModel(PushJobType.USER_JOINED, run.id.orEmpty())
+            payload = PushJobModel(PushJobType.USER_JOINED, run.id.orEmpty(), map)
         )
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
