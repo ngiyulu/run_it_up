@@ -57,7 +57,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         if(!request.overrideMinimum && run.bookings.size < run.minimumPlayer){
             throw ApiRequestException(text("min_player"))
         }
-        if(run.privateRun && run.code != null){
+        if(run.privateRun && run.code != null && !request.isAdmin){
             if(!numberGenerator.validateEncryptedCode(run.code!!, request.code)){
                 throw ApiRequestException(text("invalid_code"))
             }
