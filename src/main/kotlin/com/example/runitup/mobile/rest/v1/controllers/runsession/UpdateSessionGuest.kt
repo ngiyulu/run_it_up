@@ -3,26 +3,27 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToCents
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingPaymentStateRepository
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.rest.v1.dto.Actor
-import com.example.runitup.mobile.rest.v1.dto.ActorType
-import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
+import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.BookingUpdateService
 import com.example.runitup.mobile.service.payment.DeltaType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
@@ -32,6 +33,12 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
 
     @Autowired
     lateinit var runSessionService: RunSessionService
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
+
+    @Autowired
+    lateinit var queueService: LightSqsService
 
     @Autowired
     lateinit var bookingUpdateService: BookingUpdateService
@@ -129,7 +136,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
                 correlationId = MDC.get(AppConstant.TRACE_ID),
                 metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
             )
-            updateBooking(booking, request, newRequestAmount)
+            updateBooking(user, booking, request, newRequestAmount)
             return runSessionService.updateRunSession(run)
         }
 
@@ -142,22 +149,29 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             correlationId = MDC.get(AppConstant.TRACE_ID),
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
-        updateBooking(booking, request, null)
+        updateBooking(user, booking, request, null)
+
         return  run
     }
 
-    private fun updateBooking(booking: Booking, request: JoinSessionModel, newAmount:Double?){
+    private fun updateBooking(user: User, booking: Booking, request: JoinSessionModel, newAmount:Double?){
         booking.partySize = request.getTotalParticipants()
         newAmount?.let {
             booking.sessionAmount = it
             booking.currentTotalCents = it.convertToCents()
         }
         bookingRepository.save(booking)
+        val map = HashMap<String, String>()
+        map[AppConstant.USER_ID] = booking.userId
+        val jobEnvelope = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "${user.getFullName()} updated booking",
+            payload = PushJobModel(PushJobType.BOOKING_UPDATED, booking.runSessionId, map)
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+        }
 
     }
-
-
-
-
 
 }
