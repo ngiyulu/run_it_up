@@ -92,9 +92,9 @@ class RunSessionPushConsumer(
         }
         logger.info("notifyUserJoined userId = $userId")
         run.hostedBy?.let {
-            if(run.hostedBy != userId){
-                val user = getUser(userId)
-                val adminUser = getAdmin(it)
+            val user = getUser(userId)
+            val adminUser = getAdmin(it)
+            if(adminUser.id != userId){
                 runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run)
             }
             else{
