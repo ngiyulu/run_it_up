@@ -7,7 +7,6 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.payment.UpdateDefaultCardModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
-import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service

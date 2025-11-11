@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.Index
-import org.springframework.data.mongodb.core.index.GeospatialIndex
 
 @Configuration
 class GymIndexesConfig(private val mongoTemplate: MongoTemplate) {

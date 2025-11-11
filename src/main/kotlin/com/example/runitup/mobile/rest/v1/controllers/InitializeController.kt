@@ -7,7 +7,6 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.repository.UserActionRequiredRepository
 import com.example.runitup.mobile.repository.UserRepository
-import com.example.runitup.mobile.rest.v1.dto.GuideLine
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
 import com.example.runitup.mobile.security.JwtTokenService

@@ -6,10 +6,11 @@ package com.example.runitup.mobile.service
 import com.example.runitup.mobile.model.*
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.aggregation.*
+import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.aggregation.ConditionalOperators
+import org.springframework.data.mongodb.core.aggregation.MatchOperation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Service
-import java.time.Instant
 import kotlin.math.round
 
 @Service

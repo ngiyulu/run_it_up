@@ -17,7 +17,6 @@ import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.RefundService
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.queueconsumers.BaseQueueConsumer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

@@ -16,7 +16,6 @@ import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.example.runitup.web.security.AdminPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

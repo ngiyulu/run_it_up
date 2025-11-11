@@ -13,7 +13,6 @@ import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
-import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.BookingUpdateService
 import com.example.runitup.mobile.service.payment.DeltaType

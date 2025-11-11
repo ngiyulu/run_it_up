@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession
 
-import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.constants.AppConstant.TRACE_ID
 import com.example.runitup.mobile.enum.RunStatus
@@ -12,8 +11,8 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
+import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.http.MessagingService
-import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.web.security.AdminPrincipal
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import model.messaging.Conversation
@@ -39,6 +38,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
 
     @Autowired
     lateinit var paymentConfig: AppConfig
+
+    @Autowired
+    lateinit var numberGenerator: NumberGenerator
 
 
     override fun execute(request: CreateRunSessionRequest): RunSession {
@@ -83,6 +85,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             gym = runGym
             total = 0.0
             location = runGym.location
+        }
+        if(request.privateRun){
+            run.code = numberGenerator.encryptCode(5)
         }
 
         if(!paymentConfig.payment){

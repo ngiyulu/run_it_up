@@ -6,7 +6,6 @@ import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
-import com.example.runitup.mobile.service.myLogger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service

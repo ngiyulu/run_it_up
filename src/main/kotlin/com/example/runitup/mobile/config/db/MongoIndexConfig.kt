@@ -1,12 +1,12 @@
 package com.example.runitup.mobile.config.db
 
 import com.example.runitup.mobile.model.RunSession
+import jakarta.annotation.PostConstruct
 import org.bson.Document
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.CompoundIndexDefinition
-import jakarta.annotation.PostConstruct
 
 @Configuration
 class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {

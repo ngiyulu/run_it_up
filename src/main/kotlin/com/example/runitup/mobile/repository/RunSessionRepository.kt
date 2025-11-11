@@ -2,7 +2,6 @@ package com.example.runitup.mobile.repository
 
 import com.example.runitup.mobile.constants.CollectionConstants
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.RunSession
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

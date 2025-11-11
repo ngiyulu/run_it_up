@@ -4,7 +4,6 @@ package com.example.runitup.queueconsumers.run
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
-import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
