@@ -44,7 +44,7 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
         val jobEnvelope = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "Notification booking cancelled by user",
-            payload = PushJobModel(PushJobType.BOOKING_CANCELLED_BY_ADMIN, booking.id.orEmpty())
+            payload = PushJobModel(PushJobType.BOOKING_CANCELLED_BY_USER, booking.id.orEmpty())
         )
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
