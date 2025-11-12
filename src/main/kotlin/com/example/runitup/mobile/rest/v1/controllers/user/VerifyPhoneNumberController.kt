@@ -10,6 +10,7 @@ import com.example.runitup.mobile.rest.v1.dto.VerifyPhoneNumberResponse
 import com.example.runitup.mobile.security.JwtTokenService
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PhoneService
+import com.example.runitup.mobile.service.UserStatsService
 import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -30,6 +31,9 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
     lateinit var phoneService: PhoneService
 
 
+    @Autowired
+    lateinit var userStatsService: UserStatsService
+
 
     override fun execute(request: VerifyPhoneNumberControllerModel): VerifyPhoneNumberResponse {
         val enteredOtp = request.request.otp
@@ -38,7 +42,7 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
         if(otp.code == enteredOtp){
             // this means the user has to create a new account
             if(otp.userId == null){
-                return VerifyPhoneNumberResponse(true, null, null)
+                return VerifyPhoneNumberResponse(true, null, null, null)
             }
             // this means user already has an account
             val user: User = cacheManager.getUser(otp.userId.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
@@ -52,9 +56,9 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
             request.request.tokenModel?.let {
                 phoneService.createPhone(it, request.os, user.id.orEmpty())
             }
-            return VerifyPhoneNumberResponse(true, user, token)
+            return VerifyPhoneNumberResponse(true, user, token, userStatsService.getUserStats(user.id.orEmpty()))
         }
-        return VerifyPhoneNumberResponse(false, null, null)
+        return VerifyPhoneNumberResponse(false, null, null,  null)
     }
 
 
