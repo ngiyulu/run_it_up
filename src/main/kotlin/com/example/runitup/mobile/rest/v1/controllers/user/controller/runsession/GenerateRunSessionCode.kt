@@ -42,7 +42,7 @@ class GenerateRunSessionCode: BaseController<GenerateCodeModel, RunSession>() {
         run.code = code
         run.plain = numberGenerator.decryptEncryptedCode(code)
         cacheManager.updateRunSession(run)
-        run = runSessionService.getRunSession(run, run.id.orEmpty(), user.userId)
+        run = runSessionService.getRunSession(true, run, run.id.orEmpty(), user.userId)
         return run!!
     }
 }
