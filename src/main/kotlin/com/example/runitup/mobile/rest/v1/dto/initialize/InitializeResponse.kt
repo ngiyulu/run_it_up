@@ -17,5 +17,6 @@ class InitializeResponse(
     var supportEmail: String = "",
     var allowedPayment: Boolean = false,
     var guideLines: List<GuideLine>,
-    var userStats: UserStat? = null
+    var userStats: UserStat? = null,
+    var messagingEnabled:Boolean = false
 )
