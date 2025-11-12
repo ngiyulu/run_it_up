@@ -42,4 +42,8 @@ class TimeService {
         val diffMinutes = Duration.between(endInstant, now).toMinutes()
         return diffMinutes >= minMinutes
     }
+
+    fun minutesBetween(start: LocalTime, end: LocalTime): Long {
+        return Duration.between(start, end).toMinutes()
+    }
 }

@@ -7,6 +7,7 @@ import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.repository.UserActionRequiredRepository
 import com.example.runitup.mobile.repository.UserRepository
+import com.example.runitup.mobile.rest.v1.dto.UserStat
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
 import com.example.runitup.mobile.security.JwtTokenService
@@ -14,6 +15,7 @@ import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.SendGridService
+import com.example.runitup.mobile.service.UserStatsService
 import com.example.runitup.mobile.utility.GuideLineUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -37,7 +39,8 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var paymentService: PaymentService
 
     @Autowired
-    lateinit var emailService: SendGridService
+    lateinit var userStatsService: UserStatsService
+
 
     @Autowired
     lateinit var actionRequiredRepository: UserActionRequiredRepository
@@ -48,6 +51,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         val gyms = gymRepository.findAll()
         var user: User? = null
         var token:String? = null
+        var stats: UserStat? = null
         if(request.userId != null){
             val dbRes = userRepository.findById(request.userId)
             if(dbRes.isPresent){
@@ -55,6 +59,8 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 user.stripeId?.let { it ->
                     user.payments = paymentService.listOfCustomerCards(it)
                 }
+                stats = userStatsService.getUserStats(user.id.orEmpty())
+
                 //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
                 token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
             }
@@ -79,7 +85,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
 //            plainTextFallback = "Welcome!\n\nThanks for joining RunItUp.\nSign in: https://app.runitup.com/login"
 //        )
 
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList()).apply {
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
             }

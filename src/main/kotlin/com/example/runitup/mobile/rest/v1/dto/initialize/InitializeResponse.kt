@@ -2,6 +2,7 @@ package com.example.runitup.mobile.rest.v1.dto.initialize
 
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.rest.v1.dto.GuideLine
+import com.example.runitup.mobile.rest.v1.dto.UserStat
 import org.springframework.beans.factory.annotation.Value
 
 class InitializeResponse(
@@ -15,5 +16,6 @@ class InitializeResponse(
     @Value("\${email}")
     var supportEmail: String = "",
     var allowedPayment: Boolean = false,
-    var guideLines: List<GuideLine>
+    var guideLines: List<GuideLine>,
+    var userStats: UserStat? = null
 )
