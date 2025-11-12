@@ -43,7 +43,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     lateinit var actionRequiredRepository: UserActionRequiredRepository
 
     @Autowired
-    lateinit var paymentConfig: AppConfig
+    lateinit var appConfig: AppConfig
     override fun execute(request: InitializeRequest): InitializeResponse {
         val gyms = gymRepository.findAll()
         var user: User? = null
@@ -79,14 +79,12 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
 //            plainTextFallback = "Welcome!\n\nThanks for joining RunItUp.\nSign in: https://app.runitup.com/login"
 //        )
 
-
-
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", "", false, GuideLineUtil.provideGuideLineList()).apply {
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList()).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
-                this.allowedPayment = paymentConfig.paymentAndroid
+                this.allowedPayment = appConfig.paymentAndroid
             }
             else{
-                this.allowedPayment = paymentConfig.paymentIos
+                this.allowedPayment = appConfig.paymentIos
             }
         }
     }

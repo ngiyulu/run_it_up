@@ -11,6 +11,7 @@ class InitializeResponse(
     var allowGuest: Boolean,
     var maxGuest: Int,
     var waiverUrl: String = "https://google.com",
+    var deeplinkUrl:String = "",
     @Value("\${email}")
     var supportEmail: String = "",
     var allowedPayment: Boolean = false,
