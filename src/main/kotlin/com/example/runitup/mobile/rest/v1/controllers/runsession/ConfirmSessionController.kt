@@ -12,7 +12,6 @@ import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.security.UserPrincipal
-import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.RunSessionService
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired

@@ -71,6 +71,7 @@ class SecurityConfig{
                     "admin/users",
                     "admin/waiver",
                     "/admin/runsessions",
+                    "/admin/dev/deeplink",
                     "/admin/gyms/create",
                     "/admin/runsessions/create",
                     "admin/runsessions/edit/**",

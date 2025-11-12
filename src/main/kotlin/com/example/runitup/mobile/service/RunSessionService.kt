@@ -58,8 +58,7 @@ class RunSessionService(): BaseService(){
     lateinit var appScope: CoroutineScope
 
     @Autowired
-    lateinit var runSessionPushNotificationService: RunSessionPushNotificationService
-
+    lateinit var numberGenerator: NumberGenerator
 
 
     fun getBooking(runSessionId: String):List<Booking>{
@@ -67,6 +66,9 @@ class RunSessionService(): BaseService(){
     }
     fun getRunSession(runSessionId:String, userId:String? = null): RunSession?{
         val session  = cacheManager.getRunSession(runSessionId) ?: return  null
+        session.code?.let {
+            session.plain= numberGenerator.decryptEncryptedCode(it)
+        }
         val bookings = getBooking(runSessionId)
         session.bookings = bookings.toMutableList()
         if(userId != null){

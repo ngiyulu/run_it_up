@@ -1,7 +1,6 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.config.EncryptionConfig
-import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.rest.v1.dto.EncryptedCodeModel
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
@@ -20,11 +19,10 @@ class NumberGenerator(
 
     private val secureRandom = SecureRandom()
     fun generateCode(length: Long): String{
-        val code: String = ThreadLocalRandom.current()
+        return ThreadLocalRandom.current()
             .ints(length, 0, 10)
             .mapToObj(java.lang.String::valueOf)
             .collect(Collectors.joining())
-        return code
     }
 
     fun encryptCode(length: Long): EncryptedCodeModel {
@@ -83,6 +81,36 @@ class NumberGenerator(
             myLogger().error("validateEncryptedCode faield ${e.message.orEmpty()}")
             // Decryption failed — invalid key, tampered data, or mismatched code
             false
+        }
+    }
+
+    fun decryptEncryptedCode(
+        response: EncryptedCodeModel): String? {
+        return try {
+            // 1. Decode base64 fields
+            val iv = Base64.getDecoder().decode(response.iv)
+            val ciphertext = Base64.getDecoder().decode(response.ciphertext)
+            val tag = Base64.getDecoder().decode(response.tag)
+
+            // 2. Combine ciphertext + tag (needed by Cipher.doFinal)
+            val combined = ByteArray(ciphertext.size + tag.size)
+            System.arraycopy(ciphertext, 0, combined, 0, ciphertext.size)
+            System.arraycopy(tag, 0, combined, ciphertext.size, tag.size)
+
+            // 3. Prepare AES-GCM cipher
+            val keyBytes = Base64.getDecoder().decode(config.getKey())
+            val secretKey = SecretKeySpec(keyBytes, "AES")
+            val gcmSpec = GCMParameterSpec(128, iv)
+
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
+
+            // 4. Decrypt
+            val plainBytes = cipher.doFinal(combined)
+            String(plainBytes, Charsets.UTF_8)
+        } catch (e: Exception) {
+            // If any step fails (bad key, tampered data, etc.), return null
+            null
         }
     }
 }
