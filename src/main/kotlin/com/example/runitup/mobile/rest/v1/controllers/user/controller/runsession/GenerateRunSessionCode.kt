@@ -9,6 +9,7 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.service.NumberGenerator
+import com.example.runitup.mobile.service.RunSessionService
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -17,12 +18,15 @@ import org.springframework.stereotype.Service
 class GenerateRunSessionCode: BaseController<GenerateCodeModel, RunSession>() {
 
     @Autowired
+    lateinit var runSessionService: RunSessionService
+
+    @Autowired
     lateinit var numberGenerator: NumberGenerator
 
     override fun execute(request: GenerateCodeModel): RunSession {
         val user = getUser()
-        val run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
-        if(!run.privateRun){
+        var run: RunSession? = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
+        if(!run!!.privateRun){
             return  run
         }
         runSessionEventLogger.log(
@@ -37,7 +41,9 @@ class GenerateRunSessionCode: BaseController<GenerateCodeModel, RunSession>() {
         val code = numberGenerator.encryptCode(5)
         run.code = code
         run.plain = numberGenerator.decryptEncryptedCode(code)
-        return cacheManager.updateRunSession(run)
+        cacheManager.updateRunSession(run)
+        run = runSessionService.getRunSession(run, run.id.orEmpty(), user.userId)
+        return run!!
     }
 }
 

@@ -24,7 +24,7 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
 
 
     override fun execute(request: String): RunSession {
-        val run = runSessionService.getRunSession(request) ?: throw  ApiRequestException("not_found")
+        val run = runSessionService.getRunSession(null, request) ?: throw  ApiRequestException("not_found")
         run.updateStatus()
         run.bookings = run.bookings.map {
             bookingDbService.getBookingDetails(it)

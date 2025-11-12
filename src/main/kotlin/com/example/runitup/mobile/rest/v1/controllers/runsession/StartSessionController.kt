@@ -35,7 +35,7 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
         val auth = SecurityContextHolder.getContext().authentication
         val savedUser = auth.principal as UserPrincipal
         val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
-        var run =runSessionService.getRunSession(request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
+        var run =runSessionService.getRunSession(null, request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
 
         if(run.status == RunStatus.ONGOING){
             run.bookings = run.bookings.map {
