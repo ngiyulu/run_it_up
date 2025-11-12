@@ -99,7 +99,7 @@ class AdminRunSessionRestController {
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: String): RunSession? {
-        val runSession = runSessionService.getRunSession(null, id) ?: throw ApiRequestException("invalid_gym")
+        val runSession = runSessionService.getRunSession(true, null, id) ?: throw ApiRequestException("invalid_gym")
         runSession.host = cacheManager.getAdmin(runSession.hostedBy.orEmpty())
         return runSession
     }
@@ -118,7 +118,7 @@ class AdminRunSessionRestController {
     @PostMapping("/remove")
     fun leaveSession(@RequestBody model: CancelSessionModel): RunSession {
         var runSession= leaveSessionAdminController.execute(model)
-        runSession = runSessionService.getRunSession(runSession, runSession.id.orEmpty()) ?: throw ApiRequestException("invalid_gym")
+        runSession = runSessionService.getRunSession(true, runSession, runSession.id.orEmpty()) ?: throw ApiRequestException("invalid_gym")
         runSession.host = cacheManager.getAdmin(runSession.hostedBy.orEmpty())
         return runSession
     }
