@@ -1,6 +1,7 @@
 package com.example.runitup.web.rest.v1.restcontroller.dev
 
 import com.example.runitup.common.repo.AdminUserRepository
+import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.web.security.AdminJwtTokenService
 import com.example.runitup.web.security.AdminPrincipal
@@ -24,9 +25,21 @@ class DevRestController{
     @Autowired
     lateinit var adminUserRepository: AdminUserRepository
 
+    @Autowired
+    lateinit var appConfig: AppConfig
+
     @GetMapping("/auth/validate/{email}")
     fun generate(@PathVariable email: String): ResponseEntity<Map<String, Any>> {
         val admin = adminUserRepository.findByEmail(email)?: throw ApiRequestException("admin_not_found")
         return ResponseEntity.ok(mapOf("token" to adminJwtTokenProvider.generateToken(AdminPrincipal(admin))))
     }
+
+
+    @GetMapping("/deeplink/{runId}")
+    fun generateDeeplink(@PathVariable runId: String): DeepLink {
+       return DeepLink("${appConfig.baseUrl}/ios/run/${runId}")
+    }
+
 }
+
+data class DeepLink(val url:String)

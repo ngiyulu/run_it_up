@@ -12,4 +12,5 @@ class AppConfig {
     var paymentAndroid: Boolean = false
     var waiverUrl:String = ""
     var messaging:Boolean = false
+    var baseUrl: String = ""
 }

@@ -34,7 +34,9 @@ class GenerateRunSessionCode: BaseController<GenerateCodeModel, RunSession>() {
             correlationId = MDC.get(AppConstant.TRACE_ID),
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
-        run.code = numberGenerator.encryptCode(5)
+        val code = numberGenerator.encryptCode(5)
+        run.code = code
+        run.plain = numberGenerator.decryptEncryptedCode(code)
         return cacheManager.updateRunSession(run)
     }
 }

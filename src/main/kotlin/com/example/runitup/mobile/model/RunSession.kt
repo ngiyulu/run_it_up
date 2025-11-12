@@ -66,9 +66,9 @@ data class RunSession(
     var startedBy:String? = null,
     var completedAt:Instant? = null,
     var code: EncryptedCodeModel? = null,
+    var plain:String? = null,
     var bookingPaymentState: BookingPaymentState? = null,
 ): BaseModel(){
-
 
     fun isSessionFree(): Boolean{
         return amount == 0.0
@@ -159,7 +159,6 @@ data class RunSession(
             it.userId ==userId
         } != null
     }
-
 
 
     private fun bookingSize(): Int{
