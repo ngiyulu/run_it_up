@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.*
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -143,6 +144,7 @@ Failed too many times (maxReceiveCount exceeded)
 
 @Service
 class LightSqsService(
+    @Qualifier("queueRedisTemplate")
     private val redis: StringRedisTemplate,
     private val appScope: CoroutineScope,
     @Value("\${queue.defaultVisibilitySeconds:30}") private val defaultVisibility: Int,
