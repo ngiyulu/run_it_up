@@ -20,7 +20,6 @@ import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -63,7 +62,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
     override fun execute(request: JoinSessionModel): JoinRunSessionResponse {
         val run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
+        val user =getMyUser()
         // this mean the event is full
         if( user.stripeId == null || (run.isFree && request.paymentMethodId == null)){
             throw ApiRequestException(text("payment_error"))

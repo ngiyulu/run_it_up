@@ -1,18 +1,15 @@
 package com.example.runitup.mobile.security
 
+import com.example.runitup.mobile.model.User
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 class UserPrincipal(
-    val id: String?,
-    private val email: String,
-    val name: String,
-    val phoneNumber: String,
-    private val passwordValue: String
+   val user: User
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> = emptyList()
-    override fun getPassword(): String = passwordValue
-    override fun getUsername(): String = email
+    override fun getPassword(): String = ""
+    override fun getUsername(): String = user.email
     override fun isAccountNonExpired() = true
     override fun isAccountNonLocked() = true
     override fun isCredentialsNonExpired() = true

@@ -5,10 +5,8 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -26,8 +24,7 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
 
 
     override fun execute(request: String): RunSession {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException("user_not_found")
+        val user = getMyUser()
         val run = runSessionService.getRunSession(user .linkedAdmin != null, null, request) ?: throw  ApiRequestException("not_found")
         run.updateStatus()
         run.bookings = run.bookings.map {

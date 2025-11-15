@@ -37,7 +37,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
     override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
         var run: RunSession = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
+        val user =getMyUser()
         // this mean the event is full
         if (user.stripeId == null) {
             throw ApiRequestException(text("payment_error"))

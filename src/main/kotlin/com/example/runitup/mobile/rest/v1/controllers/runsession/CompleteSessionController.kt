@@ -10,10 +10,8 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import org.slf4j.MDC
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -24,7 +22,7 @@ class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>
     lateinit var bookingDbService: BookingDbService
 
     override fun execute(request: ConfirmSessionModel): RunSession {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
+        val user =getMyUser()
         var run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status != RunStatus.ONGOING){
             throw  ApiRequestException(text("invalid_session_cancel"))
@@ -34,7 +32,7 @@ class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_COMPLETED,
-            actor = Actor(ActorType.USER, auth.id),
+            actor = Actor(ActorType.USER, user.id),
             newStatus = null,
             reason = "Completion",
             correlationId = MDC.get(AppConstant.TRACE_ID),

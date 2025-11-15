@@ -1,6 +1,8 @@
 package com.example.runitup.mobile.rest.v1.controllers
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionEventLogger
 import com.example.runitup.mobile.service.TextService
@@ -36,12 +38,21 @@ abstract class BaseController<R, P> {
     fun getUser(): UserModel {
         val principal = SecurityContextHolder.getContext().authentication.principal
         if(principal is UserPrincipal){
-            val auth = principal
-            return UserModel(auth.id.orEmpty(), UserModelType.USER)
+            return UserModel(principal.user.id.orEmpty(), UserModelType.USER)
         }
         val auth = principal as AdminPrincipal
         return UserModel(auth.admin.id.orEmpty(), UserModelType.ADMIN)
 
+    }
+
+    fun getMyUser(): User {
+        val principal = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
+        return  principal.user
+    }
+
+    fun getMyAdmin(): AdminUser {
+        val principal = SecurityContextHolder.getContext().authentication.principal as AdminPrincipal
+        return  principal.admin
     }
 
 

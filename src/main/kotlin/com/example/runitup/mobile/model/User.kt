@@ -42,7 +42,9 @@ data class User(
     var coordinate: Coordinate? = null,
     var actions:List<UserActionRequired> = mutableListOf(),
     var linkedAdmin: String? = null,
-    var userType: UserType? = null
+    var userType: UserType? = null,
+    var updatedActivatedStatusAt:Instant? = null,
+    var updatedActivatedStatusBy:String? = null,
 ): BaseModel(){
 
     fun getFullName(): String{

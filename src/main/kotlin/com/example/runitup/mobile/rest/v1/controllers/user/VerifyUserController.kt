@@ -39,7 +39,7 @@ class VerifyUserController: BaseController<Pair<String, VerifyUserRequest>, Veri
         }
 
         user.waiverSigned = true
-        val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
+        val token = jwtService.generateToken(UserPrincipal(user))
         otpDbService.generateOtp(user.id, userRequest.phone)
         user.stripeId?.let { it ->
             user.payments = paymentService.listOfCustomerCards(it)

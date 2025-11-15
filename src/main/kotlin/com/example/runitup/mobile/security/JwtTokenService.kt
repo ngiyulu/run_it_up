@@ -33,7 +33,7 @@ class JwtTokenService {
         val now = ZonedDateTime.now(ZoneOffset.UTC)
         val expiry = now.plusMonths(accessTtlMonths)
         return Jwts.builder()
-            .setSubject((userDetails as UserPrincipal).id)
+            .setSubject((userDetails as UserPrincipal).user.id)
             .setIssuedAt(Date.from(now.toInstant()))
             .setExpiration(Date.from(expiry.toInstant())) // <-- 2 months by default
             .signWith(key)
@@ -44,7 +44,7 @@ class JwtTokenService {
     fun generateTokenWithExpiry(userDetails: UserDetails, expiry: ZonedDateTime): String {
         val now = ZonedDateTime.now(ZoneOffset.UTC)
         return Jwts.builder()
-            .setSubject((userDetails as UserPrincipal).id)
+            .setSubject((userDetails as UserPrincipal).user.id)
             .setIssuedAt(Date.from(now.toInstant()))
             .setExpiration(Date.from(expiry.toInstant()))
             .signWith(key)

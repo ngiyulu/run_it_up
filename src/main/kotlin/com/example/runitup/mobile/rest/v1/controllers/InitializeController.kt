@@ -2,6 +2,7 @@ package com.example.runitup.mobile.rest.v1.controllers
 
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.PhoneType
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.repository.GymRepository
@@ -14,10 +15,10 @@ import com.example.runitup.mobile.security.JwtTokenService
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.PhoneService
-import com.example.runitup.mobile.service.SendGridService
 import com.example.runitup.mobile.service.UserStatsService
 import com.example.runitup.mobile.utility.GuideLineUtil
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -55,14 +56,17 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         if(request.userId != null){
             val dbRes = userRepository.findById(request.userId)
             if(dbRes.isPresent){
-                user = dbRes.get()
+                user = getMyUser()
+                if(!user.isActive){
+                    throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
+                }
                 user.stripeId?.let { it ->
                     user.payments = paymentService.listOfCustomerCards(it)
                 }
                 stats = userStatsService.getUserStats(user.id.orEmpty())
 
                 //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
-                token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
+                token = jwtService.generateToken(UserPrincipal(user))
             }
             if(request.tokenModel != null){
                 phoneService.createPhone(request.tokenModel, request.os, request.userId)

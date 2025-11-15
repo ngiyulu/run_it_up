@@ -57,7 +57,7 @@ class ApplicationConfiguration {
         return UserDetailsService { username: String ->
             println("userDetailsService: $username")
             val user = cache.getUser(username) ?: throw UsernameNotFoundException("User not found")
-            UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber,user.auth,)
+            UserPrincipal(user)
         }
     }
 
@@ -67,7 +67,7 @@ class ApplicationConfiguration {
         return UserDetailsService { username: String ->
             println("userDetailsService: $username")
             val user = cache.getUser(username) ?: throw UsernameNotFoundException("User not found")
-            UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber,user.auth,)
+            UserPrincipal(user)
         }
     }
 

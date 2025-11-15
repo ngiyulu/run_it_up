@@ -15,7 +15,7 @@ class GenerateTokenController: BaseController<String, Token>() {
     lateinit var jwtService: JwtTokenService
     override fun execute(request: String): Token {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
-        return Token(jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth)))
+        return Token(jwtService.generateToken(UserPrincipal(user)))
     }
 
 }

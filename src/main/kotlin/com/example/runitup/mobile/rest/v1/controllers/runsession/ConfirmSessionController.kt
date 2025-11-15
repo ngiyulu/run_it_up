@@ -11,11 +11,9 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -33,9 +31,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
     lateinit var bookingRepository: BookingRepository
 
     override fun execute(request: ConfirmSessionModel): RunSession {
-        val auth =  SecurityContextHolder.getContext().authentication
-        val savedUser = auth.principal as UserPrincipal
-        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
+        val user = getMyUser()
         var run =runSessionService.getRunSession(request.isAdmin, null, request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status == RunStatus.CONFIRMED){
             run.bookings = run.bookings.map {
@@ -63,7 +59,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_CONFIRMED,
-            actor = Actor(ActorType.USER, savedUser.id),
+            actor = Actor(ActorType.USER, user.id),
             newStatus = null,
             reason = "Confirmation",
             correlationId = MDC.get(AppConstant.TRACE_ID),
