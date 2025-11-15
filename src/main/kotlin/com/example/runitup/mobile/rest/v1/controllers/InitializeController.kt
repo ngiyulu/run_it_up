@@ -54,20 +54,17 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         var token:String? = null
         var stats: UserStat? = null
         if(request.userId != null){
-            val dbRes = userRepository.findById(request.userId)
-            if(dbRes.isPresent){
-                user = getMyUser()
-                if(!user.isActive){
-                    throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
-                }
-                user.stripeId?.let { it ->
-                    user.payments = paymentService.listOfCustomerCards(it)
-                }
-                stats = userStatsService.getUserStats(user.id.orEmpty())
-
-                //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
-                token = jwtService.generateToken(UserPrincipal(user))
+            user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
+            if(!user.isActive){
+                throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
             }
+            user.stripeId?.let {
+                user.payments = paymentService.listOfCustomerCards(it)
+            }
+            stats = userStatsService.getUserStats(user.id.orEmpty())
+
+            //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
+            token = jwtService.generateToken(UserPrincipal(user))
             if(request.tokenModel != null){
                 phoneService.createPhone(request.tokenModel, request.os, request.userId)
             }
