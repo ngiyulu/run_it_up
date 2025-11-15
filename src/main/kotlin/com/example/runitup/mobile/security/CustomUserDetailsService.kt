@@ -26,7 +26,7 @@ class CustomUserDetailsService(
             print("user not found, authentication failed")
             throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
         }
-        if(user.isActive){
+        if(!user.isActive){
             throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
         }
         return UserPrincipal(user)
