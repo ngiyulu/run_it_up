@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -32,20 +33,43 @@ class CacheConfig {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 
-    @Bean
-    fun redisConnectionFactory(props: AppRedisProperties): LettuceConnectionFactory {
+    // --- CACHE Redis (for Spring @Cacheable) ---
+    @Bean("cacheRedisConnectionFactory")
+    @Primary
+    fun cacheRedisConnectionFactory(props: CacheRedisProperties): LettuceConnectionFactory {
         val conf = RedisStandaloneConfiguration().apply {
             hostName = props.host
             port = props.port
             username = props.username
-            password = RedisPassword.of(props.password)
+            if (!props.password.isNullOrBlank()) {
+                password = RedisPassword.of(props.password)
+            }
+            database = props.database       // e.g. 0 for dev
         }
         return LettuceConnectionFactory(conf)
     }
 
+    // --- QUEUE Redis (for LightSqsService) ---
+    @Bean("queueRedisConnectionFactory")
+    fun queueRedisConnectionFactory(props: QueueRedisProperties): LettuceConnectionFactory {
+        val conf = RedisStandaloneConfiguration().apply {
+            hostName = props.host
+            port = props.port
+            username = props.username
+            if (!props.password.isNullOrBlank()) {
+                password = RedisPassword.of(props.password)
+            }
+            database = props.database       // can also be 0 in dev, different in prod
+        }
+        return LettuceConnectionFactory(conf)
+    }
+
+    // --- CacheManager uses CACHE Redis ---
     @Bean
-    fun cacheManager(cf: RedisConnectionFactory, objectMapper: ObjectMapper): RedisCacheManager {
-        // Use the same, properly-configured ObjectMapper for Redis values
+    fun cacheManager(
+        @Qualifier("cacheRedisConnectionFactory") cf: RedisConnectionFactory,
+        objectMapper: ObjectMapper
+    ): RedisCacheManager {
         val valueSerializer = GenericJackson2JsonRedisSerializer(objectMapper)
 
         val config = RedisCacheConfiguration.defaultCacheConfig()
@@ -63,7 +87,9 @@ class CacheConfig {
             .build()
     }
 
-    @Bean
-    fun redisTemplate(cf: RedisConnectionFactory): StringRedisTemplate =
-        StringRedisTemplate(cf)
+    // --- StringRedisTemplate for QUEUE Redis ---
+    @Bean("queueRedisTemplate")
+    fun queueRedisTemplate(
+        @Qualifier("queueRedisConnectionFactory") cf: RedisConnectionFactory
+    ): StringRedisTemplate = StringRedisTemplate(cf)
 }
