@@ -13,6 +13,7 @@ import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.UserStatsService
 import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -46,10 +47,13 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
             }
             // this means user already has an account
             val user: User = cacheManager.getUser(otp.userId.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
-            val token = jwtService.generateToken(UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth))
+            val token = jwtService.generateToken(UserPrincipal(user))
             otpDbService.disableOtp(otp)
             val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId)
             println("age = $age")
+            if(!user.isActive){
+                throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
+            }
             if(!user.waiverSigned){
                 user.waiverSigned = age >= 18
             }

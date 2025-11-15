@@ -1,7 +1,8 @@
 package com.example.runitup.mobile.security
 
 
-import com.example.runitup.mobile.repository.UserRepository
+import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.service.TextService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class CustomUserDetailsService(
-    private val userRepository: UserRepository
+    private val cacheManager: MyCacheManager
 ) : UserDetailsService {
 
     @Autowired
@@ -20,12 +21,15 @@ class CustomUserDetailsService(
 
     override fun loadUserByUsername(userId:String): UserDetails {
         print("loadUserByUsername userId = $userId")
-        val userDb = userRepository.findById(userId)
-            if(!userDb.isPresent) {
-                print("user not found, authentication failed")
-                throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
-            }
-        val user = userDb.get()
-        return UserPrincipal(user.id.toString(), user.email, user.getFullName(), user.phoneNumber, user.auth)
+        val user = cacheManager.getUser(userId)
+        if(user == null){
+            print("user not found, authentication failed")
+            throw UsernameNotFoundException(textService.getText("user_not_found", LocaleContextHolder.getLocale().toString()))
+        }
+        if(user.isActive){
+            throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
+        }
+        return UserPrincipal(user)
+
     }
 }

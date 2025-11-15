@@ -8,12 +8,10 @@ import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.SessionListModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.ZoneOffset
 import java.util.*
@@ -30,14 +28,14 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     @Autowired
     lateinit var appScope: CoroutineScope
     override fun execute(request: SessionListModel): List<RunSession> {
-        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
+        val user = getMyUser()
         val radius = 20.0
         val startUtc = request.date.atStartOfDay(ZoneOffset.UTC).toInstant()
         val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
         val maxDistanceMeters = radius * 1609.344 // 32186.88
         val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING)
         val page = runSessionRepository.findJoinableRunsExcludingUserNearOnLocalDay(
-            userId = auth.id.orEmpty(),
+            userId = user.id.orEmpty(),
             lat = request.latitude,
             lng = request.longitude,
             maxDistanceMeters = maxDistanceMeters,
@@ -49,13 +47,13 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         val data = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "User location update",
-            payload = CoordinateUpdateModel(auth.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
+            payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
         )
         appScope.launch {
             queueService.sendJob(QueueNames.LOCATION_JOB, data)
         }
         val content = page.content.map {
-            it.updateStatus(auth.id.orEmpty())
+            it.updateStatus(user.id.orEmpty())
             it
         }
         return  content

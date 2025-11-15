@@ -12,14 +12,12 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
@@ -40,8 +38,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
     lateinit var appScope: CoroutineScope
 
     override fun execute(request: CancelSessionModel): RunSession {
-        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-
+        val user =getMyUser()
         var run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         if(!run.isDeletable()){
             throw  ApiRequestException(text("invalid_session_cancel"))
@@ -65,7 +62,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_CANCELLED,
-            actor = Actor(ActorType.USER, auth.id),
+            actor = Actor(ActorType.USER, user.id),
             newStatus = null,
             reason = "Cancellation",
             correlationId = MDC.get(AppConstant.TRACE_ID),

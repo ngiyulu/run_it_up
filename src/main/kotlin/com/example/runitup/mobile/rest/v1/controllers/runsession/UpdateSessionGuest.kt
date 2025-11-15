@@ -10,7 +10,6 @@ import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
@@ -20,7 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -50,9 +48,8 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
 
 
     override fun execute(request: JoinSessionModel): RunSession {
-        val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
-        val user = cacheManager.getUser(auth.id.orEmpty()) ?: throw ApiRequestException(text("user_not_found"))
-        val run = runSessionService.getRunSession(user.linkedAdmin != null, null, request.sessionId, auth.id) ?: throw ApiRequestException(text("invalid_session_id"))
+        val user = getMyUser()
+        val run = runSessionService.getRunSession(user.linkedAdmin != null, null, request.sessionId, user.id) ?: throw ApiRequestException(text("invalid_session_id"))
         if (run.atFullCapacity()) {
             //TODO: later we can find a way to add the guest to the waitlist
             throw ApiRequestException(text("full_capacity"))
@@ -72,7 +69,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             request.sessionId,
             mutableListOf(BookingStatus.JOINED)
         ) ?: throw ApiRequestException(text("join_error"))
-        val type = bookingUpdateService.deltaChange(auth.id.orEmpty(), request, booking)
+        val type = bookingUpdateService.deltaChange(user.id.orEmpty(), request, booking)
 
         println("type = $type")
         if (type == DeltaType.SAME) {

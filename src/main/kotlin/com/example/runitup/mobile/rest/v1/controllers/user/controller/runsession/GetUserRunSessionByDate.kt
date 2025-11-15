@@ -7,10 +7,8 @@ import com.example.runitup.mobile.model.UserType
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
-import com.example.runitup.mobile.security.UserPrincipal
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -26,9 +24,7 @@ class GetUserRunSessionByDate: BaseController<GetUserRunSessionByDateModel, List
     lateinit var runSessionRepository: RunSessionRepository
 
     override fun execute(request: GetUserRunSessionByDateModel): List<RunSession> {
-        val auth = SecurityContextHolder.getContext().authentication
-        val savedUser = auth.principal as UserPrincipal
-        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
+        val user = getMyUser()
         val startUtc = request.date.atStartOfDay(ZoneOffset.UTC).toInstant()
         if(user.userType == null){
             throw ApiRequestException("not_authorized")

@@ -10,12 +10,10 @@ import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.StartRunSessionModelEnum
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 
 @Service
@@ -32,9 +30,7 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
     lateinit var runSessionService: RunSessionService
 
     override fun execute(request: StartSessionModel): RunSession {
-        val auth = SecurityContextHolder.getContext().authentication
-        val savedUser = auth.principal as UserPrincipal
-        val user = cacheManager.getUser(savedUser.id.toString()) ?: throw ApiRequestException(text("user_not_found"))
+        val user = getMyUser()
         var run =runSessionService.getRunSession(user.linkedAdmin != null, null, request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
 
         if(run.status == RunStatus.ONGOING){

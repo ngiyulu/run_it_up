@@ -59,7 +59,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             }
             return complete(user, request.sessionId, admin.get())
         }
-        val adminUser = cacheManager.getUser((savedPrincipal as UserPrincipal).id.orEmpty()) ?: throw ApiRequestException("user_not_found")
+        val adminUser = cacheManager.getUser((savedPrincipal as UserPrincipal).user.id.orEmpty()) ?: throw ApiRequestException("user_not_found")
         if(adminUser.linkedAdmin == null){
             logger.error("admin is not found from app flow")
             throw ApiRequestException("not_authorized")

@@ -7,6 +7,8 @@ import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.user.CreateUserAdminController
 import com.example.runitup.mobile.rest.v1.dto.CreateUserRequest
 import com.example.runitup.mobile.service.TextService
+import com.example.runitup.web.rest.v1.controller.ActivateUserController
+import com.example.runitup.web.rest.v1.controller.ActivateUserModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
 import org.springframework.context.i18n.LocaleContextHolder
@@ -29,6 +31,9 @@ class AdminUserRestController {
     lateinit var userRepository: UserRepository
 
     @Autowired
+    lateinit var activateUserController: ActivateUserController
+
+    @Autowired
     lateinit var textService: TextService
 
     @GetMapping("/retrieve/{id}")
@@ -48,6 +53,12 @@ class AdminUserRestController {
         @RequestHeader("X-Timezone", required = true) tzHeader: String,
     ): User {
         return createUserAdminController.execute(Pair(tzHeader,model))
+    }
+
+    @PostMapping("/activate")
+    fun activateUser(
+        @RequestBody model: ActivateUserModel): User {
+        return activateUserController.execute(model)
     }
 
     @GetMapping("/list")

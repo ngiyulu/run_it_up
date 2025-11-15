@@ -14,7 +14,6 @@ import com.example.runitup.mobile.rest.v1.dto.PushJobModel
 import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.rest.v1.dto.session.StartSessionModel
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
