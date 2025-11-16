@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import java.util.*
 
 @Service
@@ -68,11 +69,18 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         if (localStartTime.isAfter(localEndTime)) {
             throw ApiRequestException("time_invalid")
         }
+        // 2) Compute startAtUtc based on the gym's time zone
+        val zone = ZoneId.of(runGym.zoneid) // e.g. "America/Chicago"
+        val startAtUtc = localDate
+            .atTime(localStartTime)
+            .atZone(zone)
+            .toInstant()
         val run = RunSession(
             id = ObjectId().toString(),
             gym = runGym,
             location = runGym.location,
             date = localDate,
+            //is a proper UTC Instant, consistent across local laptop and server.
             startTime = localStartTime,
             endTime = localEndTime,
             zoneId = runGym.zoneid,
@@ -87,6 +95,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             maxPlayer = request.maxPlayer,
             description = request.description,
             duration = 0,
+            startAtUtc = startAtUtc
             ).apply {
             createdAt = Instant.now()
             status = RunStatus.PENDING
@@ -116,6 +125,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         }
 
         val runSession = cacheManager.updateRunSession(run)
+
         val conversation =   Conversation(UUID.randomUUID().toString(),
             ConversationType.GROUP,
             "",
