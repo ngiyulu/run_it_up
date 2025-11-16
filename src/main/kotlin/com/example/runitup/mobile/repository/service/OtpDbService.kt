@@ -33,7 +33,10 @@ class OtpDbService {
     }
 
     fun generateOtp(userId: String?, phone: String): Otp {
-        val q = Query(Criteria.where("phoneNumber").`is`(phone))
+        val q = Query(
+            Criteria.where("phoneNumber").`is`(phone)
+                .and("isActive").`is`(true)
+        )
         val u = Update().set("isActive", false)
         mongoTemplate.updateFirst(q, u, Otp::class.java)
 

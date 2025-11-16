@@ -4,8 +4,12 @@ import com.example.runitup.mobile.model.Otp
 import jakarta.annotation.PostConstruct
 import org.bson.Document
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.CompoundIndexDefinition
+import org.springframework.data.mongodb.core.index.Index
+import org.springframework.data.mongodb.core.index.PartialIndexFilter
+import org.springframework.data.mongodb.core.query.Criteria
 
 @Configuration
 class OtpIndexesConfig(private val mongoTemplate: MongoTemplate) {
@@ -35,9 +39,11 @@ class OtpIndexesConfig(private val mongoTemplate: MongoTemplate) {
 
         // 4️⃣ Optional: enforce single active OTP per phone
         idx.createIndex(
-            CompoundIndexDefinition(Document(mapOf("phoneNumber" to 1, "isActive" to 1)))
+            Index()
+                .on("phoneNumber", Sort.Direction.ASC)
                 .named("unique_active_phone_idx")
                 .unique()
+                .partial(PartialIndexFilter.of(Criteria.where("isActive").`is`(true)))
         )
     }
 }
