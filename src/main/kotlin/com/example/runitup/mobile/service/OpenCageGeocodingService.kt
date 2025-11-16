@@ -11,8 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.util.UriComponentsBuilder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 interface GeocodingService {
     fun geocode(address: String): GeocodeResult
@@ -20,7 +18,6 @@ interface GeocodingService {
 
 @Service
 class OpenCageGeocodingService(
-
     @Value("\${geocoding.opencage.base-url}") private val baseUrl: String,
     @Value("\${geocoding.opencage.api-key}") private val apiKey: String
 ) : GeocodingService {
@@ -30,6 +27,7 @@ class OpenCageGeocodingService(
     @Autowired
     @Qualifier("geocode")
     lateinit var webClient: WebClient
+
     override fun geocode(address: String): GeocodeResult {
         if (address.isBlank()) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "address must not be blank")
@@ -37,11 +35,12 @@ class OpenCageGeocodingService(
 
         val uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
             .path("/geocode/v1/json")
-            .queryParam("q", URLEncoder.encode(address, StandardCharsets.UTF_8))
+            .queryParam("q", address)           // raw address with spaces is OK
             .queryParam("key", apiKey)
             .queryParam("limit", 1)
-            .queryParam("no_annotations", 1)
-            .build(true) // keep encoding
+            .queryParam("no_annotations", 0)    // so we get timezone info
+            .build()
+            .encode()                           // <-- THIS encodes spaces, commas, etc.
             .toUriString()
 
         val response = webClient.get()
@@ -49,34 +48,47 @@ class OpenCageGeocodingService(
             .retrieve()
             .onStatus({ it.is4xxClientError }) {
                 it.bodyToMono<String>().map { body ->
-                    logger.error( "Geocoding request failed address = $address, body =$body")
-                    ResponseStatusException(HttpStatus.BAD_REQUEST, "Geocoding request failed: $body")
-
+                    logger.error("Geocoding request failed address = {}, body = {}", address, body)
+                    ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Geocoding request failed: $body"
+                    )
                 }
             }
             .onStatus({ it.is5xxServerError }) {
                 it.bodyToMono<String>().map { body ->
-                    logger.error(  "Geocoding service unavailable address = $address body= $body")
-                    ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Geocoding service unavailable: $body")
+                    logger.error("Geocoding service unavailable address = {}, body = {}", address, body)
+                    ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Geocoding service unavailable: $body"
+                    )
                 }
             }
             .bodyToMono<OpenCageResponse>()
             .block()
-            ?: run{
-                logger.error(  "Empty geocoding response address = $address")
-                throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Empty geocoding response")
+            ?: run {
+                logger.error("Empty geocoding response address = {}", address)
+                throw ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Empty geocoding response"
+                )
             }
 
         val first = response.results.firstOrNull()
-            ?: run{
-                logger.error(  "No results for the provided address")
-                throw ResponseStatusException(HttpStatus.NOT_FOUND, "No results for the provided address")
+            ?: run {
+                logger.error("No results for the provided address = {}", address)
+                throw ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No results for the provided address"
+                )
             }
+
 
         return GeocodeResult(
             latitude = first.geometry.lat,
             longitude = first.geometry.lng,
-            formattedAddress = first.formatted ?: address
+            formattedAddress = first.formatted ?: address,
+            annotations = first.annotations
         )
     }
 }

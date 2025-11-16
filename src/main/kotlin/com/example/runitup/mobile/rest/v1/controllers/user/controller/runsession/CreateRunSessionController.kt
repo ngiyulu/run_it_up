@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.*
 
 @Service
@@ -48,9 +50,6 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         if(!gymDb.isPresent){
             throw ApiRequestException("invalid_gym")
         }
-        if(request.startTime.isAfter(request.endTime)){
-            throw ApiRequestException("time_invalid")
-        }
         var adminId = request.createdBy
         try {
             val auth =  SecurityContextHolder.getContext().authentication
@@ -60,14 +59,23 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             logger.error("create run session, mobile app exception expected $e")
         }
         val runGym = gymDb.get()
+
+        // 1) Parse the request date/time *as local values* in the given zone
+        val localDate = LocalDate.parse(request.date)                    // "2025-11-17"
+        val localStartTime = LocalTime.parse(request.startTime)          // "12:45"
+        val localEndTime = LocalTime.parse(request.endTime)              // "14:45"
+
+        if (localStartTime.isAfter(localEndTime)) {
+            throw ApiRequestException("time_invalid")
+        }
         val run = RunSession(
             id = ObjectId().toString(),
             gym = runGym,
             location = runGym.location,
-            date = request.date,
-            startTime = request.startTime,
-            endTime = request.endTime,
-            zoneId = request.zoneId,
+            date = localDate,
+            startTime = localStartTime,
+            endTime = localEndTime,
+            zoneId = runGym.zoneid,
             hostedBy = adminId,
             allowGuest = request.allowGuest,
             notes = request.notes,
