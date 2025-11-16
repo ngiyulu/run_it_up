@@ -23,12 +23,12 @@ class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {
                 "location" to "2dsphere",
                 "privateRun" to 1,
                 "status" to 1,
-                "date" to 1,
-                "startTime" to 1
+                "startAtUtc" to 1       // 👈 use this instead of date + startTime
             )
         )
 
-        val indexDefinition = CompoundIndexDefinition(indexDoc).named("loc_priv_status_date_time_idx")
+        val indexDefinition = CompoundIndexDefinition(indexDoc)
+            .named("loc_priv_status_startAtUtc_idx")
         // --- New date index ---
         val dateIndexDoc = Document(mapOf("date" to 1))
         indexOps.createIndex(CompoundIndexDefinition(dateIndexDoc).named("date_idx"))

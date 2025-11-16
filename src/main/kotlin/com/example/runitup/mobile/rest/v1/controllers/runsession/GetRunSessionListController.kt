@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.*
 
@@ -30,8 +31,9 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     override fun execute(request: SessionListModel): List<RunSession> {
         val user = getMyUser()
         val radius = 20.0
-        val startUtc = request.date.atStartOfDay(ZoneOffset.UTC).toInstant()
-        val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
+        val userZone = request.zoneId // 👈 from client (device timezone)
+        val startUtc = request.date.atStartOfDay(userZone).toInstant()
+        val endUtc = request.date.plusDays(1)?.atStartOfDay(userZone)?.toInstant()
         val maxDistanceMeters = radius * 1609.344 // 32186.88
         val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING)
         val page = runSessionRepository.findJoinableRunsExcludingUserNearOnLocalDay(

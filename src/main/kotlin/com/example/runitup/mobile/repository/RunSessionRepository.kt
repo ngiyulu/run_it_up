@@ -17,7 +17,7 @@ import java.util.*
 interface RunSessionRepository : MongoRepository<RunSession, String> {
 
     companion object {
-        // $near + status + local-day range + exclude user
+        // $near + status + UTC startAtUtc range + exclude user
         const val QUERY_NEAR_EXCLUDE_DAY_RANGE = """
 {
   'location': {
@@ -27,7 +27,7 @@ interface RunSessionRepository : MongoRepository<RunSession, String> {
     }
   },
   'status': { '${'$'}in': ?4 },
-  'date': { '${'$'}gte': ?5, '${'$'}lt': ?6 },
+  'startAtUtc': { '${'$'}gte': ?5, '${'$'}lt': ?6 },
   'privateRun': false,
   'bookingList': { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } },
   'waitList':   { '${'$'}not': { '${'$'}elemMatch': { 'userId': ?0 } } }
