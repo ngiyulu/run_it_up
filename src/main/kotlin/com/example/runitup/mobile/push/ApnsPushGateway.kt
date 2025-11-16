@@ -21,8 +21,6 @@ import java.util.*
 class ApnsPushGateway(
     // NEW: base64 content of the .p8 file (no quotes/newlines if possible)
     @Value("\${push.apns.keyBase64:}") private val keyBase64: String?,
-    // Optional fallback for file path if base64 not provided
-    @Value("\${push.apns.keyPath:}") private val keyResource: Resource?,
     @Value("\${push.apns.keyId}") private val keyId: String,
     @Value("\${push.apns.teamId}") private val teamId: String,
     @Value("\${push.apns.bundleId}") private val bundleId: String,
@@ -49,14 +47,7 @@ class ApnsPushGateway(
                 ApnsSigningKey.loadFromInputStream(input, teamId, keyId)
             }
         }
-
-        // Fallback to file resource
-        requireNotNull(keyResource) {
-            "Either 'push.apns.keyPathBase64' or 'push.apns.keyPath' must be provided"
-        }
-        return keyResource.inputStream.use { input ->
-            ApnsSigningKey.loadFromInputStream(input, teamId, keyId)
-        }
+        throw Exception("firebasebase key is missing")
     }
 
     override fun sendToTokens(tokens: List<String>, notif: PushNotification): PushResult {
