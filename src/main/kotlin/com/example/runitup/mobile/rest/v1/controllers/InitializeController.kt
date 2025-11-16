@@ -54,24 +54,36 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         var token:String? = null
         var stats: UserStat? = null
         if(request.userId != null){
-            user = cacheManager.getUser(request.userId) ?: throw ApiRequestException("user_not_found")
-            if(!user.isActive){
-                throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
+            user = cacheManager.getUser(request.userId)
+            if(user?.isActive  == false){
+                user = null
             }
-            user.stripeId?.let {
-                user.payments = paymentService.listOfCustomerCards(it)
+            user?.let {
+                user.stripeId?.let {
+                    user.payments = paymentService.listOfCustomerCards(it)
+                }
+                stats = userStatsService.getUserStats(user.id.orEmpty())
+                //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
+                token = jwtService.generateToken(UserPrincipal(user))
             }
-            stats = userStatsService.getUserStats(user.id.orEmpty())
-
-            //user.actions = actionRequiredRepository.findByUserIdAndStatusInOrderByPriorityAscCreatedAtAsc(user.id.orEmpty(), listOf(ActionStatus.PENDING))
-            token = jwtService.generateToken(UserPrincipal(user))
             if(request.tokenModel != null){
                 phoneService.createPhone(request.tokenModel, request.os, request.userId)
             }
-
-
         }
-//        emailService.sendEmailHtml(
+
+        sendEmail()
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, appConfig.messaging).apply {
+            if(request.os.convertToPhoneType() == PhoneType.ANDROID){
+                this.allowedPayment = appConfig.paymentAndroid
+            }
+            else{
+                this.allowedPayment = appConfig.paymentIos
+            }
+        }
+    }
+
+    fun sendEmail(){
+        //        emailService.sendEmailHtml(
 //            to = "cngiyulu@hotmail.com",
 //            subject = "Welcome to RunItUp 🏀",
 //            html = """
@@ -85,14 +97,5 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
 //    """.trimIndent(),
 //            plainTextFallback = "Welcome!\n\nThanks for joining RunItUp.\nSign in: https://app.runitup.com/login"
 //        )
-
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, appConfig.messaging).apply {
-            if(request.os.convertToPhoneType() == PhoneType.ANDROID){
-                this.allowedPayment = appConfig.paymentAndroid
-            }
-            else{
-                this.allowedPayment = appConfig.paymentIos
-            }
-        }
     }
 }
