@@ -8,6 +8,7 @@ class Gym (
     var line1: String,
     var line2: String,
     var location: GeoJsonPoint?,
+    var zoneid:String,
     var image:String?,
     var fee: Double,
     var phoneNumber: String?,

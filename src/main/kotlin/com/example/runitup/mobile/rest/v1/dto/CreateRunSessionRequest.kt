@@ -4,10 +4,9 @@ import java.time.LocalTime
 
 class CreateRunSessionRequest(
     val gymId:String,
-    val date: LocalDate,
-    var startTime: LocalTime,      // local time at the venue
-    var endTime: LocalTime,      // local time at the venue
-    val zoneId: String,       // IANA zone, e.g. "America/Chicago"
+    val date: String,
+    var startTime: String,      // local time at the venue
+    var endTime: String,      // local time at the venue
     var allowGuest: Boolean,
     var notes:String,
     var privateRun : Boolean,
