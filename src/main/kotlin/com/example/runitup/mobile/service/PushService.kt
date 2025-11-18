@@ -21,7 +21,6 @@ import java.time.Instant
 class PushService(
     @Autowired @Qualifier(fcmPushGateway) private val fcm: PushGateway,
     @Autowired @Qualifier(apnsPushGateway) private val apns: PushGateway,
-    @Value("\${push.useApnsDirect}") var useApnsDirect: Boolean = true,
     @Autowired private val eventRepo: PushNotificationEventRepository,
     @Autowired private val attemptRepo: PushDeliveryAttemptRepository
 ) {
@@ -113,8 +112,8 @@ class PushService(
 
         // iOS
         if (iosPhones.isNotEmpty()) {
-            val gateway = if (useApnsDirect) apns else fcm
-            val vendor = if (useApnsDirect) PushVendor.APNS else PushVendor.FCM
+            val gateway = apns
+            val vendor = PushVendor.APNS
             val r = gateway.sendToTokens(iosPhones.map { it.token }, notif)
             requested += r.requested; success += r.success; failed += r.failed
             invalid += r.invalidTokens; errors += r.errors
