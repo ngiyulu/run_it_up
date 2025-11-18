@@ -37,10 +37,14 @@ class PhoneService: BaseService() {
             print("we found phone")
             print("old phone token = ${ph.token}")
             print("new phone token = ${token.token}")
+            if(token.type == HeaderConstants.IOS_TYPE){
+                phoneType = PhoneType.IOS
+            }
             if(ph.token != token.token || ph.userId != userId){
                 ph.token = token.token
                 ph.phoneId = token.phoneId
                 ph.userId = userId
+                ph.type = phoneType
                 print("update phone")
                 phoneRepository.save(ph)
             }
