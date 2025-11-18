@@ -82,7 +82,7 @@ class UserRestController {
 
     @PostMapping("/init")
     fun init(@RequestBody model: InitializeRequest,
-             @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE,
+             @RequestHeader("X-Source-Type") type:String = HeaderConstants.ANDROID_TYPE,
              @RequestHeader("X-OS-Version", required = true) phoneOs: String): InitializeResponse {
         model.tokenModel?.type = type
         model.os = phoneOs
@@ -115,7 +115,7 @@ class UserRestController {
         @RequestHeader("X-Timezone", required = true) tzHeader: String,
         @RequestHeader("model") phoneModel: String = "",
         @RequestHeader("X-OS-Version", required = true) phoneOs: String,
-        @RequestHeader(HeaderConstants.TYPE) type:String = HeaderConstants.ANDROID_TYPE): VerifyPhoneNumberResponse {
+        @RequestHeader("X-Source-Type") type:String = HeaderConstants.ANDROID_TYPE): VerifyPhoneNumberResponse {
         model.tokenModel?.type = type
 
         return userControllersProvider.verifyPhoneNumController.execute(VerifyPhoneNumberController.VerifyPhoneNumberControllerModel(tzHeader, model, phoneOs, phoneModel))
