@@ -21,7 +21,7 @@ import java.time.Instant
 class PushService(
     @Autowired @Qualifier(fcmPushGateway) private val fcm: PushGateway,
     @Autowired @Qualifier(apnsPushGateway) private val apns: PushGateway,
-    @Value("\${push.useApnsDirect}") var useApnsDirect: Boolean = false,
+    @Value("\${push.useApnsDirect}") var useApnsDirect: Boolean = true,
     @Autowired private val eventRepo: PushNotificationEventRepository,
     @Autowired private val attemptRepo: PushDeliveryAttemptRepository
 ) {
