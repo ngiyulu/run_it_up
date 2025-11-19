@@ -7,7 +7,6 @@ import com.example.runitup.mobile.rest.v1.dto.CreateGymRequest
 import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.service.ImageService
 import com.example.runitup.mobile.service.OpenCageGeocodingService
-import com.google.protobuf.Api
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -48,7 +47,7 @@ class CreateGymController: BaseGymController() {
             notes = data.notes,
             description = data.description,
             zipCode = ad?.zip.orEmpty(),
-            zoneid = ""
+            zoneId = ""
         )
         val address = gym.getAddress()
         val geoCodeData = geocodingService.geocode(address)
@@ -57,7 +56,7 @@ class CreateGymController: BaseGymController() {
             throw  ApiRequestException("error processing address")
         }
         gym.location = GeoJsonPoint(geoCodeData.longitude, geoCodeData.latitude)
-        gym.zoneid = geoCodeData.annotations.timezone.name
+        gym.zoneId = geoCodeData.annotations.timezone.name
         gym.createdAt = Instant.now()
 
         // i need to figure out how to get the long and lat of the gym

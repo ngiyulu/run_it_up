@@ -69,8 +69,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         if (localStartTime.isAfter(localEndTime)) {
             throw ApiRequestException("time_invalid")
         }
+        print("timezone = ${runGym.zoneId}")
         // 2) Compute startAtUtc based on the gym's time zone
-        val zone = ZoneId.of(runGym.zoneid) // e.g. "America/Chicago"
+        val zone = ZoneId.of(runGym.zoneId) // e.g. "America/Chicago"
         val startAtUtc = localDate
             .atTime(localStartTime)
             .atZone(zone)
@@ -83,7 +84,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             //is a proper UTC Instant, consistent across local laptop and server.
             startTime = localStartTime,
             endTime = localEndTime,
-            zoneId = runGym.zoneid,
+            zoneId = runGym.zoneId,
             hostedBy = adminId,
             allowGuest = request.allowGuest,
             notes = request.notes,
