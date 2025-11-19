@@ -22,6 +22,8 @@ interface BookingRepository : MongoRepository<Booking, String> {
     fun findByUserIdAndStatusIn(userId: String,
                                 status: MutableCollection<BookingStatus>): List<Booking>
 
+    fun findByDate(date:String): List<Booking>
+
     fun findByUserIdAndRunSessionIdAndStatusIn(userId: String,
                                                runSessionId: String,
                                                status: MutableCollection<BookingStatus>): Booking?

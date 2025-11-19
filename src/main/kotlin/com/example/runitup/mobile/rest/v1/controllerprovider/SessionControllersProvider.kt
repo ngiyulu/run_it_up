@@ -15,6 +15,9 @@ class SessionControllersProvider {
     lateinit var getRunSessionController: GetRunSessionController
 
     @Autowired
+    lateinit var runHistoryByDateController: RunHistoryByDateController
+
+    @Autowired
     lateinit var getRunSessionListController: GetRunSessionListController
 
     @Autowired

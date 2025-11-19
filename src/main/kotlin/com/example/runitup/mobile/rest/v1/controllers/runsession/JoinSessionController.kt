@@ -29,6 +29,8 @@ import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Service
@@ -100,6 +102,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             0,
             request.guest
         )
+        val zonedDateTime = run.date.atStartOfDay(ZoneId.of(run.zoneId))
+        val formatter = DateTimeFormatter.ofPattern(AppConstant.DATE_FORMAT)
+        val dateString = zonedDateTime.format(formatter)
         val booking = Booking(
             ObjectId().toString(),
             request.getTotalParticipants(),
@@ -115,7 +120,8 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             0,
             joinedAtFromWaitList = null,
             currentTotalCents = amount.convertToCents(),
-            customerId = user.stripeId
+            customerId = user.stripeId,
+            date = dateString
         )
         if(!run.isSessionFree()){
             val holdingCharge = bookingPricingAdjuster.createPrimaryHoldWithChange(

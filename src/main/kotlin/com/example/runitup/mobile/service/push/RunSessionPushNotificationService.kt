@@ -24,12 +24,9 @@ import org.springframework.stereotype.Service
  *      - user scoped:    "<templateId>:<sessionId>:<userId>"
  */
 @Service
-class RunSessionPushNotificationService {
-
-    @Autowired
-    lateinit var phoneService: PhoneService
-    @Autowired
-    lateinit var pushService: PushService
+class RunSessionPushNotificationService(
+    private val phoneService: PhoneService,
+    private val pushService: PushService) {
 
     private val logger = myLogger()
     // ----- Public API -----

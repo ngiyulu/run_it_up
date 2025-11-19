@@ -63,6 +63,11 @@ class RunSessionRestController {
         return sessionControllersProvider.getRunSessionController.execute(id)
     }
 
+    @GetMapping("/history/{date}")
+    fun getHistory(@PathVariable date:String): List<RunSession> {
+        return sessionControllersProvider.runHistoryByDateController.execute(date)
+    }
+
     @GetMapping("/retrieve/details/{id}")
     fun getSessionDetails(@PathVariable id:String): RunSession {
         return getRunSessionDetailController.execute(id)

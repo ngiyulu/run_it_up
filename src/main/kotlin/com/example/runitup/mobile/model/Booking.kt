@@ -33,6 +33,7 @@ class Booking (
     var paymentAuthorization: List<PaymentAuthorization> = emptyList(),
     var bookingPaymentState: BookingPaymentState? = null,
     var completedAt:Instant? = null,
+    var date:String
 ): BaseModel(){
 
     fun getNumOfGuest(): Int{

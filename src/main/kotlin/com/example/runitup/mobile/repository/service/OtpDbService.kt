@@ -25,10 +25,6 @@ class OtpDbService {
     lateinit var otpRepository: OtpRepository
 
     fun getOtp(phoneNumber: String): Otp?{
-//        val query = Query()
-//            .addCriteria(Criteria.where("phoneNumber").`is`(phoneNumber))
-//            .addCriteria(Criteria.where("isActive").`is`(true))
-//        return mongoTemplate.findOne(query, Otp::class.java)
         return otpRepository.findByPhoneNumberAndIsActive(phoneNumber,true)
     }
 

@@ -1,44 +1,46 @@
-// src/test/kotlin/com/example/runitup/mobile/service/PromotionServiceTest.kt
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.cache.MyCacheManager
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
+import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
+import com.example.runitup.mobile.service.payment.PrimaryHoldResult
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.util.*
 
 class PromotionServiceTest {
 
-    private val sessionRepo = mockk<RunSessionRepository>()
     private val bookingRepo = mockk<BookingRepository>(relaxed = true)
     private val waitlistSetupRepo = mockk<WaitlistSetupStateRepository>()
+    private val bookingDbService = mockk<BookingDbService>()
     private val adjuster = mockk<BookingPricingAdjuster>()
     private val cacheManager = mockk<MyCacheManager>()
     private val sessionService = mockk<RunSessionService>(relaxed = true)
-    private val pushSvc = mockk<PaymentPushNotificationService>(relaxed = true)
+    private val paymentPushNotificationService = mockk<PaymentPushNotificationService>(relaxed = true)
 
     private lateinit var service: PromotionService
 
     @BeforeEach
     fun setup() {
-        service = PromotionService(bookingRepo, waitlistSetupRepo,
-            adjuster, cacheManager, sessionService, pushSvc
+        service = PromotionService(
+            bookingRepo = bookingRepo,
+            waitlistSetupRepo = waitlistSetupRepo,
+            adjuster = adjuster,
+            bookingDbService = bookingDbService,
+            cacheManager = cacheManager,
+            sessionService = sessionService,
+            paymentPushNotificationService = paymentPushNotificationService
         )
+
+        // Avoid ClassCastException for save()
+        every { bookingRepo.save(any<Booking>()) } answers { firstArg() }
     }
 
     @AfterEach
@@ -47,210 +49,346 @@ class PromotionServiceTest {
         unmockkAll()
     }
 
-    // ---------- Helpers ----------
-    private fun sessionWith(
-        id: String = "s1",
-        amount: Double = 0.0, // free by default
-        waitUsers: MutableList<RunUser> = mutableListOf(),
-        maxPlayers: Int = 10
-    ): RunSession {
-        return RunSession(
-            id = id,
-            gym = null,
-            location = null,
-            date = LocalDate.now(),
-            startTime = LocalTime.NOON,
-            endTime = LocalTime.NOON.plusHours(2),
-            zoneId = "America/Chicago",
-            startAtUtc = null,
-            hostedBy = null,
-            host = null,
-            allowGuest = true,
-            duration = 2,
-            notes = "",
-            privateRun = false,
-            description = "",
-            amount = amount,
-            total = 0.0,
-            maxPlayer = maxPlayers,
-            title = "Run",
-            bookings = mutableListOf(),
-            waitList = waitUsers,
-            players = mutableListOf(),
-            maxGuest = 2,
-            isFree = amount == 0.0,
-            isFull = false
-        )
-    }
-
-    private fun booking(
-        id: String = "b1",
-        userId: String = "u1",
-        status: BookingStatus = BookingStatus.WAITLISTED,
-        paymentMethodId: String? = null,
-        totalCents: Long = 1500
-    ) = Booking(
-        id = id,
-        runSessionId = "s1",
-        userId = userId,
-        status = status,
-        paymentMethodId = paymentMethodId,
-        currentTotalCents = totalCents,
-        joinedAtFromWaitList = Instant.now(),
-        sessionAmount = 0.0,
-        total = 0.0,
-        user = RunUser()
-    )
-
-    private fun user(
-        id: String = "u1",
-        stripeId: String? = "cus_123"
-    ) = User(
-        id = id, firstName = "F", lastName = "L",
-        stripeId = stripeId
-    )
-
-    // ---------- Tests ----------
-
+    // ---------------------------------------------------------
+    // 1) Session missing
+    // ---------------------------------------------------------
     @Test
-    fun `returns not found when session is missing`() {
-        every { sessionRepo.findById("missing") } returns Optional.empty()
+    fun `session not found`() {
+        every { cacheManager.getRunSession("sess-1") } returns null
 
-        val res = service.promoteNextWaitlistedUser("missing")
+        val result = service.promoteNextWaitlistedUser("sess-1")
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).contains("Session not found")
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("Session not found: sess-1")
+
+        verify(exactly = 1) { cacheManager.getRunSession("sess-1") }
         verify(exactly = 0) { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn(any(), any(), any()) }
     }
 
+    // ---------------------------------------------------------
+    // 2) Empty waitlist
+    // ---------------------------------------------------------
     @Test
-    fun `returns message when waitlist empty`() {
-        val session = sessionWith(id = "s1", waitUsers = mutableListOf())
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
+    fun `empty waitlist`() {
+        val session = mockk<RunSession>()
+        every { session.waitList } returns mutableListOf()
+        every { cacheManager.getRunSession("sess-2") } returns session
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        val result = service.promoteNextWaitlistedUser("sess-2")
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).isEqualTo("No available spots right now.")
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("No available spots right now.")
+
+        verify(exactly = 1) { cacheManager.getRunSession("sess-2") }
+        verify(exactly = 0) { bookingRepo.save(any()) }
     }
 
+    // ---------------------------------------------------------
+    // 3) Candidate has no booking
+    // ---------------------------------------------------------
     @Test
-    fun `booking not found for first waitlisted user`() {
-        val session = sessionWith(id = "s1", waitUsers = mutableListOf(RunUser(userId = "u1")))
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
+    fun `candidate has no booking`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-1"
+
+        val session = mockk<RunSession>()
+        every { session.waitList } returns mutableListOf(runUser)
+        every { cacheManager.getRunSession("sess-3") } returns session
+
         every {
-            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any())
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-1", "sess-3", any())
         } returns null
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        val result = service.promoteNextWaitlistedUser("sess-3")
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).isEqualTo("Booking not found")
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("No promotable candidate at this time (all locked or invalid).")
+
+        verify(exactly = 1) {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-1", "sess-3", any())
+        }
+        verify(exactly = 0) { bookingRepo.save(any()) }
     }
 
+    // ---------------------------------------------------------
+    // 4) Booking cannot be locked
+    // ---------------------------------------------------------
     @Test
-    fun `user not in cache`() {
-        val session = sessionWith(id = "s1", waitUsers = mutableListOf(RunUser(userId = "u1")))
-        val bk = booking(userId = "u1", paymentMethodId = "pm_x")
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
-        every { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any()) } returns bk
-        every { cacheManager.getUser("u1") } returns null
+    fun `booking cannot be locked`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-2"
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        val session = mockk<RunSession>()
+        every { session.waitList } returns mutableListOf(runUser)
+        every { cacheManager.getRunSession("sess-4") } returns session
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).isEqualTo("I couldn't find user")
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-1"
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-2", "sess-4", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-1", any()) } returns 0 // cannot lock
+
+        val result = service.promoteNextWaitlistedUser("sess-4")
+
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("No promotable candidate at this time (all locked or invalid).")
+
+        verify(exactly = 1) { bookingDbService.tryLock("b-1", any()) }
+        verify(exactly = 0) { bookingRepo.save(any()) }
     }
 
+    // ---------------------------------------------------------
+    // 5) User not found
+    // ---------------------------------------------------------
     @Test
-    fun `user has null stripeId`() {
-        val session = sessionWith(id = "s1", waitUsers = mutableListOf(RunUser(userId = "u1")))
-        val bk = booking(userId = "u1", paymentMethodId = "pm_x")
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
-        every { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any()) } returns bk
-        every { cacheManager.getUser("u1") } returns user(stripeId = null)
+    fun `user not found`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-3"
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        val session = mockk<RunSession>()
+        every { session.waitList } returns mutableListOf(runUser)
+        every { cacheManager.getRunSession("sess-5") } returns session
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).isEqualTo("Stripe id is null")
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-2"
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-3", "sess-5", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-2", any()) } returns 1
+        every { cacheManager.getUser("u-3") } returns null
+
+        val result = service.promoteNextWaitlistedUser("sess-5")
+
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("I couldn't find user")
+
+        verify(exactly = 1) { cacheManager.getUser("u-3") }
+        verify(exactly = 0) { bookingRepo.save(any()) }
     }
 
+    // ---------------------------------------------------------
+    // 6) Missing Stripe ID → unlock
+    // ---------------------------------------------------------
     @Test
-    fun `not free - missing payment method returns early with message`() {
-        val session = sessionWith(id = "s1", amount = 10.0, waitUsers = mutableListOf(RunUser(userId = "u1")))
-        val bk = booking(userId = "u1", paymentMethodId = null) // missing PM
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
-        every { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any()) } returns bk
-        every { bookingRepo.save(any()) } answers { firstArg() } // save lock
-        every { cacheManager.getUser("u1") } returns user(stripeId = "cus_123")
+    fun `missing stripeId`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-4"
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        val session = mockk<RunSession>()
+        every { session.waitList } returns mutableListOf(runUser)
+        every { cacheManager.getRunSession("sess-6") } returns session
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.message).contains("No saved payment method")
-        // booking should have been locked before the check
-        assertThat(bk.isLocked).isTrue()
-        verify { bookingRepo.save(bk) } // lock save
-        // no calls beyond this
-        verify(exactly = 0) { waitlistSetupRepo.findByBookingIdAndPaymentMethodId(any(), any()) }
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-3"
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-4", "sess-6", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-3", any()) } returns 1
+
+        val user = mockk<User>()
+        every { user.id } returns "u-4"
+        every { user.stripeId } returns null
+
+        every { cacheManager.getUser("u-4") } returns user
+
+        val result = service.promoteNextWaitlistedUser("sess-6")
+
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("Stripe id is null")
+
+        verify(exactly = 1) { bookingRepo.save(booking) }
     }
 
+    // ---------------------------------------------------------
+    // 7) Free session → success
+    // ---------------------------------------------------------
     @Test
-    fun `not free - setup missing or not succeeded reverts booking and notifies`() {
-        val session = sessionWith(id = "s1", amount = 10.0, waitUsers = mutableListOf(RunUser(userId = "u1")))
-        val bk = booking(id = "b1", userId = "u1", paymentMethodId = "pm_x")
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
-        every { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any()) } returns bk
-        every { bookingRepo.save(any()) } answers { firstArg() }
-        every { cacheManager.getUser("u1") } returns user(id = "u1", stripeId = "cus_123")
+    fun `free session promotes successfully`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-5"
 
-        // Simulate: setup not found or not SUCCEEDED
-        every { waitlistSetupRepo.findByBookingIdAndPaymentMethodId(any(), any()) } returns null
-        every { pushSvc.notifyPaymentActionRequired("u1", any()) } just Runs
+        val session = mockk<RunSession>()
+        every { session.id } returns "sess-7"
+        every { session.waitList } returns mutableListOf(runUser)
+        every { session.isSessionFree() } returns true
 
-        val res = service.promoteNextWaitlistedUser("s1")
+        every { cacheManager.getRunSession("sess-7") } returns session
 
-        assertThat(res.ok).isFalse()
-        assertThat(res.requiresAction).isTrue()
-        assertThat(bk.status).isEqualTo(BookingStatus.WAITLISTED)
-        assertThat(bk.isLocked).isFalse()
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-4"
+        every { booking.userId } returns "u-5"
 
-        // Ensure revert and notify happened
-        verify(atLeast = 2) { bookingRepo.save(bk) }  // once for lock, once for revert
-        verify(exactly = 1) { pushSvc.notifyPaymentActionRequired("u1", any()) }
-        // No adjuster call since setup not ready
-        verify(exactly = 0) { adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any()) }
-    }
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-5", "sess-7", any())
+        } returns booking
 
-    @Test
-    fun `free session - booking promoted, waitlist pruned, session updated`() {
-        val ru = RunUser(userId = "u1")
-        val session = sessionWith(id = "s1", amount = 0.0, waitUsers = mutableListOf(ru))
-        val bk = booking(id = "b1", userId = "u1", paymentMethodId = null)
+        every { bookingDbService.tryLock("b-4", any()) } returns 1
 
-        every { sessionRepo.findById("s1") } returns Optional.of(session)
-        every { bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u1", "s1", any()) } returns bk
-        every { bookingRepo.save(any()) } answers { firstArg() }
-        every { cacheManager.getUser("u1") } returns user(id = "u1", stripeId = "cus_123") // stripeId irrelevant for free
+        val user = mockk<User>()
+        every { user.id } returns "u-5"
+        every { user.stripeId } returns "cus_123"
+        every { cacheManager.getUser("u-5") } returns user
 
-        // Act
-        val res = service.promoteNextWaitlistedUser("s1")
+        val result = service.promoteNextWaitlistedUser("sess-7")
 
-        // Assert result
-        assertThat(res.ok).isTrue()
-        assertThat(res.paymentIntentId).isNull()
+        assertThat(result.ok).isTrue()
+        assertThat(result.message).isEqualTo("User promoted (free session).")
 
-        // booking state updated
-        assertThat(bk.status).isEqualTo(BookingStatus.JOINED)
-        assertThat(bk.isLocked).isFalse()
-        assertThat(bk.promotedAt).isNotNull()
-
-        // session waitlist updated & persisted
-        assertThat(session.waitList.any { it.userId == "u1" }).isFalse()
         verify(exactly = 1) { sessionService.updateRunSession(session) }
-
-        // no adjuster invoked on free sessions
+        verify(exactly = 1) { bookingRepo.save(booking) }
         verify(exactly = 0) { adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    // ---------------------------------------------------------
+    // 8) Paid session - no paymentMethod
+    // ---------------------------------------------------------
+    @Test
+    fun `paid session with no payment method`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-6"
+
+        val session = mockk<RunSession>()
+        every { session.id } returns "sess-8"
+        every { session.waitList } returns mutableListOf(runUser)
+        every { session.isSessionFree() } returns false
+
+        every { cacheManager.getRunSession("sess-8") } returns session
+
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-5"
+        every { booking.userId } returns "u-6"
+        every { booking.paymentMethodId } returns null
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-6", "sess-8", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-5", any()) } returns 1
+
+        val user = mockk<User>()
+        every { user.id } returns "u-6"
+        every { user.stripeId } returns "cus_456"
+        every { cacheManager.getUser("u-6") } returns user
+
+        val result = service.promoteNextWaitlistedUser("sess-8")
+
+        assertThat(result.ok).isFalse()
+        assertThat(result.message).isEqualTo("No saved payment method for waitlist candidate.")
+
+        verify(exactly = 1) { bookingRepo.save(booking) }
+        verify(exactly = 0) { adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    // ---------------------------------------------------------
+    // 9) Paid session - setup requires SCA action
+    // ---------------------------------------------------------
+    @Test
+    fun `paid session setup requires action`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-7"
+
+        val session = mockk<RunSession>()
+        every { session.id } returns "sess-9"
+        every { session.waitList } returns mutableListOf(runUser)
+        every { session.isSessionFree() } returns false
+        every { cacheManager.getRunSession("sess-9") } returns session
+
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-6"
+        every { booking.userId } returns "u-7"
+        every { booking.paymentMethodId } returns "pm_ABC"
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-7", "sess-9", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-6", any()) } returns 1
+
+        val user = mockk<User>()
+        every { user.id } returns "u-7"
+        every { user.stripeId } returns "cus_789"
+        every { cacheManager.getUser("u-7") } returns user
+
+        val setup = mockk<WaitlistSetupState>()
+        every { setup.status } returns SetupStatus.REQUIRES_ACTION
+        every { setup.setupIntentId } returns "si_22"
+
+        every {
+            waitlistSetupRepo.findByBookingIdAndPaymentMethodId("u-7", "pm_ABC")
+        } returns setup
+
+        val result = service.promoteNextWaitlistedUser("sess-9")
+
+        assertThat(result.ok).isFalse()
+        assertThat(result.requiresAction).isTrue()
+
+        verify(exactly = 1) { paymentPushNotificationService.notifyPaymentActionRequired("u-7", "si_22") }
+        verify(exactly = 1) { bookingRepo.save(booking) }
+        verify(exactly = 0) { adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any()) }
+    }
+
+    // ---------------------------------------------------------
+    // 10) Paid session - successful hold creation
+    // ---------------------------------------------------------
+    @Test
+    fun `paid session hold created successfully`() {
+        val runUser = mockk<RunUser>()
+        every { runUser.userId } returns "u-8"
+
+        val session = mockk<RunSession>()
+        every { session.id } returns "sess-10"
+        every { session.waitList } returns mutableListOf(runUser)
+        every { session.isSessionFree() } returns false
+        every { cacheManager.getRunSession("sess-10") } returns session
+
+        val booking = mockk<Booking>(relaxed = true)
+        every { booking.id } returns "b-7"
+        every { booking.userId } returns "u-8"
+        every { booking.paymentMethodId } returns "pm_456"
+        every { booking.currentTotalCents } returns 2000L
+
+        every {
+            bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-8", "sess-10", any())
+        } returns booking
+
+        every { bookingDbService.tryLock("b-7", any()) } returns 1
+
+        val user = mockk<User>()
+        every { user.id } returns "u-8"
+        every { user.stripeId } returns "cus_999"
+        every { cacheManager.getUser("u-8") } returns user
+
+        val setup = mockk<WaitlistSetupState>()
+        every { setup.status } returns SetupStatus.SUCCEEDED
+        every {
+            waitlistSetupRepo.findByBookingIdAndPaymentMethodId("u-8", "pm_456")
+        } returns setup
+
+        every {
+            adjuster.createPrimaryHoldWithChange(
+                "b-7", "u-8", "cus_999", "usd", 2000L, "pm_456", "SYSTEM_WAITLIST_PROMOTION"
+            )
+        } returns PrimaryHoldResult(true, paymentIntentId = "pi_123")
+
+        val result = service.promoteNextWaitlistedUser("sess-10")
+
+        assertThat(result.ok).isTrue()
+        assertThat(result.message).contains("authorized")
+        assertThat(result.paymentIntentId).isEqualTo("pi_123")
+
+        verify(exactly = 1) { sessionService.updateRunSession(session) }
+        verify(exactly = 1) { bookingRepo.save(booking) }
+        verify(exactly = 1) {
+            adjuster.createPrimaryHoldWithChange(
+                "b-7", "u-8", "cus_999", "usd", 2000L, "pm_456", "SYSTEM_WAITLIST_PROMOTION"
+            )
+        }
     }
 }
