@@ -10,14 +10,22 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
+import org.springframework.web.servlet.view.RedirectView
 
-@RestControllerAdvice
+@ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
 class GlobalExceptionHandler {
 
     private val logger = myLogger()
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(ex: NoResourceFoundException): RedirectView {
+        return RedirectView("/")
+    }
+
     @ExceptionHandler(Throwable::class)
     fun handleThrowable(ex: Throwable, req: HttpServletRequest): ResponseEntity<ProblemDetail> {
         val traceId = MDC.get("traceId")
@@ -31,4 +39,6 @@ class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem)
     }
+
+
 }
