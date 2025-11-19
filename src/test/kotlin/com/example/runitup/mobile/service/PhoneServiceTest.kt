@@ -19,9 +19,7 @@ class PhoneServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = PhoneService().apply {
-            this.phoneRepository = repo
-        }
+        service = PhoneService(repo)
     }
 
     @AfterEach
@@ -102,18 +100,17 @@ class PhoneServiceTest {
         val res = service.createPhone(
             token = FirebaseTokenModel(token = "same-token", phoneId = "pid-3", type = "ANDROID"),
             os = "Android 15 (ignored)",
-            userId = "u-ignored"
+            userId = "u-3"   // 👈 match existing userId
         )
 
         verify(exactly = 1) { repo.findByPhoneId("pid-3") }
-        verify(exactly = 0) { repo.save(any<Phone>()) } // no update/save
+        verify(exactly = 0) { repo.save(any<Phone>()) } // ensure no update
 
-        // Should return the same existing instance
         assertThat(res).isSameAs(existing)
         assertThat(res.token).isEqualTo("same-token")
         assertThat(res.phoneId).isEqualTo("pid-3")
+        assertThat(res.userId).isEqualTo("u-3")
     }
-
     @Test
     fun `createPhone - when phone exists and token changes, updates token and saves`() {
         val existing = Phone(

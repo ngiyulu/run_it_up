@@ -9,10 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class PhoneService: BaseService() {
+class PhoneService(private var phoneRepository: PhoneRepository): BaseService() {
 
-    @Autowired
-    lateinit var phoneRepository: PhoneRepository
     fun createPhone(token: FirebaseTokenModel, os:String, userId: String): com.example.runitup.mobile.model.Phone {
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID

@@ -2,10 +2,14 @@
 
 package com.example.runitup.mobile.service.http
 
+import ServiceResult
+import com.example.runitup.mobile.config.AppConfig
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateParticipantModel
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.DeleteParticipantFromConversationModel
+import io.mockk.every
+import io.mockk.mockk
 import model.messaging.Conversation
 import model.messaging.MessagingUser
 import model.messaging.Participant
@@ -20,6 +24,7 @@ class MessagingServiceTest {
 
     private lateinit var server: MockWebServer
     private lateinit var svc: MessagingService
+    private lateinit var appConfig: AppConfig
 
     private val om = jacksonObjectMapper()
 
@@ -32,8 +37,14 @@ class MessagingServiceTest {
             .baseUrl(server.url("/").toString().removeSuffix("/"))
             .build()
 
+        // Mock AppConfig so we can control the `messaging` flag
+        appConfig = mockk(relaxed = true)
+        // Default: messaging on so HTTP calls flow through
+        every { appConfig.messaging } returns true
+
         svc = MessagingService()
         injectClient(svc, webClient)
+        injectAppConfig(svc, appConfig)
     }
 
     @AfterAll
@@ -46,7 +57,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createUser: 200 -> ok with body")
     fun createUser_ok() {
-        // Return only the fields we assert on
+        every { appConfig.messaging } returns true
+
         val body = mapOf(
             "id" to "u1",
             "firstName" to "Jane",
@@ -76,6 +88,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createUser: 502 -> err with mapped body")
     fun createUser_error() {
+        every { appConfig.messaging } returns true
+
         server.enqueue(
             MockResponse()
                 .setResponseCode(502)
@@ -103,7 +117,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createConversation: 200 -> ok with body")
     fun createConversation_ok() {
-        // Minimal JSON the service can map to Conversation (or via ObjectMapper) for the fields we assert
+        every { appConfig.messaging } returns true
+
         val convoJson = mapOf("id" to "c1", "title" to "Run #1")
         server.enqueue(
             MockResponse()
@@ -112,7 +127,7 @@ class MessagingServiceTest {
                 .setBody(om.writeValueAsString(convoJson))
         )
 
-        val convo = Conversation(id = "c1", title = "Run #1") // used only for request payload shape
+        val convo = Conversation(id = "c1", title = "Run #1")
         val req = CreateConversationModel(runSessionId = "rs1", conversation = convo)
 
         StepVerifier.create(svc.createConversation(req))
@@ -128,6 +143,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createConversation: 500 -> err maps status/body")
     fun createConversation_error() {
+        every { appConfig.messaging } returns true
+
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -155,7 +172,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createParticipant: 200 -> ok with body")
     fun createParticipant_ok() {
-        // Return a minimal participant JSON with the field we assert
+        every { appConfig.messaging } returns true
+
         val participantJson = mapOf("userId" to "u1")
         server.enqueue(
             MockResponse()
@@ -164,7 +182,7 @@ class MessagingServiceTest {
                 .setBody(om.writeValueAsString(participantJson))
         )
 
-        val participant = Participant() // request payload can be minimal
+        val participant = Participant()
         val req = CreateParticipantModel(
             conversationId = "c1",
             participantDoc = participant,
@@ -183,6 +201,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("createParticipant: 404 -> err maps status/body")
     fun createParticipant_error() {
+        every { appConfig.messaging } returns true
+
         server.enqueue(
             MockResponse()
                 .setResponseCode(404)
@@ -210,7 +230,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("removeParticipant: 200 -> ok(Unit)")
     fun removeParticipant_ok() {
-        // Return a minimal JSON body so any bodyToMono(...) succeeds
+        every { appConfig.messaging } returns true
+
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -226,7 +247,8 @@ class MessagingServiceTest {
         StepVerifier.create(svc.removeParticipant(req))
             .assertNext { res ->
                 Assertions.assertTrue(res.ok)
-                Assertions.assertNotNull(res.data) // Unit or any non-null placeholder
+                // disable() uses data = null, but here we expect an actual call so data can be Unit
+                Assertions.assertNotNull(res.data)
                 Assertions.assertNull(res.error)
             }
             .verifyComplete()
@@ -235,6 +257,8 @@ class MessagingServiceTest {
     @Test
     @DisplayName("removeParticipant: 500 -> err maps status/body")
     fun removeParticipant_error() {
+        every { appConfig.messaging } returns true
+
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -256,11 +280,36 @@ class MessagingServiceTest {
             .verifyComplete()
     }
 
+    // ---------- messaging disabled → ServiceResult.disable() ----------
+
+    @Test
+    @DisplayName("createUser: messaging disabled -> ServiceResult_disable()")
+    fun createUser_messagingDisabled_returnsDisable() {
+        every { appConfig.messaging } returns false
+
+        val req = MessagingUser(id = "uDisabled", firstName = "A", lastName = "B", email = "a@b.com")
+
+        StepVerifier.create(svc.createUser(req))
+            .assertNext { res ->
+                // ServiceResult.disable() => ok = true, data = null, error = null
+                Assertions.assertTrue(res.ok)
+                Assertions.assertNull(res.data)
+                Assertions.assertNull(res.error)
+            }
+            .verifyComplete()
+    }
+
     // ---------- helpers ----------
 
     private fun injectClient(target: MessagingService, webClient: WebClient) {
         val f = MessagingService::class.java.getDeclaredField("client")
         f.isAccessible = true
         f.set(target, webClient)
+    }
+
+    private fun injectAppConfig(target: MessagingService, cfg: AppConfig) {
+        val f = MessagingService::class.java.getDeclaredField("appConfig")
+        f.isAccessible = true
+        f.set(target, cfg)
     }
 }
