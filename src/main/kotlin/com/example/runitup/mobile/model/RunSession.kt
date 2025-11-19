@@ -61,7 +61,7 @@ data class RunSession(
     var statusBeforeCancel: RunStatus = RunStatus.PENDING,
     // show remove button on the web portal
     var showRemoveButton: Boolean = true,
-    var cancelledAt:Instant? = null,
+    var cancellation: Cancellation? = null,
     var startedAt:Instant? = null,
     var startedBy:String? = null,
     var completedAt:Instant? = null,
@@ -183,4 +183,6 @@ data class RunSession(
 
     }
     class SessionRunBooking(var bookingId:String, var userId: String, var partySize:Int)
+
+    class Cancellation(val canceledBy:String,val cancelledAt:Instant, val reason:String)
 }

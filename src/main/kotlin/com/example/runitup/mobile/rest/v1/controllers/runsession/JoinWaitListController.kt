@@ -19,6 +19,8 @@ import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Service
 class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResponse>() {
@@ -54,6 +56,9 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             0,
             guest = 0
         )
+        val zonedDateTime = run.date.atStartOfDay(ZoneId.of(run.zoneId))
+        val formatter = DateTimeFormatter.ofPattern(AppConstant.DATE_FORMAT)
+        val dateString = zonedDateTime.format(formatter)
         val booking = Booking(
             ObjectId().toString(),
             1,
@@ -67,7 +72,8 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             null,
             joinedAtFromWaitList = null,
             status = BookingStatus.WAITLISTED,
-            customerId = user.stripeId
+            customerId = user.stripeId,
+            date = dateString
         )
         //user can only join the waitlist if the run is at full capacity
         if (run.atFullCapacity()) {

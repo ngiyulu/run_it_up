@@ -46,7 +46,8 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
         // this is so we remeber what the status was for cancelling job
         run.statusBeforeCancel = run.status
         run.status = RunStatus.CANCELLED
-        run.cancelledAt = Instant.now()
+
+        run.cancellation = RunSession.Cancellation(user.id.orEmpty(), Instant.now(),  request.reason)
         val job = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "RAW_STRING",
