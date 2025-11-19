@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
 class PageController {
-    @GetMapping("/terms-and-conditions") fun termsAndConditions() = "terms-and-conditions"
-    @GetMapping("/privacy") fun privacy() = "privacy"
-    @GetMapping("/support") fun support() = "support"
+    @GetMapping("/main/terms-and-conditions") fun termsAndConditions() = "terms-and-conditions"
+    @GetMapping("/main/privacy") fun privacy() = "privacy"
+    @GetMapping("/main/support") fun support() = "support"
     @GetMapping("/") fun home() = "home"
-    @GetMapping("/refund") fun refund() = "refund"
+    @GetMapping("/main/refund") fun refund() = "refund"
 }
