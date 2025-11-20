@@ -97,7 +97,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             description = request.description,
             duration = 0,
             startAtUtc = startAtUtc
-            ).apply {
+        ).apply {
             createdAt = Instant.now()
             status = RunStatus.PENDING
             gym = runGym
