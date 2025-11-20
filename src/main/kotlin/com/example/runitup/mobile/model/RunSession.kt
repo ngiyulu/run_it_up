@@ -4,6 +4,7 @@ import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.rest.v1.dto.EncryptedCodeModel
 import com.example.runitup.mobile.rest.v1.dto.RunUser
+import com.example.runitup.web.dto.Role
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
@@ -27,6 +28,7 @@ data class RunSession(
     var endTime: LocalTime,      // local time at the venue
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
     val startAtUtc: Instant? = null, // optional cache
+    //AdminUser Id
     var hostedBy: String?,
     var host:AdminUser? = null,
     var allowGuest: Boolean,
@@ -67,7 +69,8 @@ data class RunSession(
     var completedAt:Instant? = null,
     var code: EncryptedCodeModel? = null,
     var plain:String? = null,
-    var bookingPaymentState: BookingPaymentState? = null,
+    var adminStatus: AdminStatus = AdminStatus.OTHER,
+    var bookingPaymentState: BookingPaymentState? = null
 ): BaseModel(){
 
     fun isSessionFree(): Boolean{
@@ -79,6 +82,7 @@ data class RunSession(
     }
     fun updateStatus(userId: String){
         isFree = isSessionFree()
+
         isFull = bookings.size == maxPlayer
         buttonStatus = if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE
@@ -111,6 +115,18 @@ data class RunSession(
             .find { it.userId == userId }
 
         return  findUser != null
+    }
+
+    fun updateAdmin(adminUser: AdminUser){
+        if(adminUser.role == Role.SUPER_ADMIN){
+            adminStatus = AdminStatus.SUPER_ADMIN
+        }
+        else if(hostedBy == adminUser.id){
+            adminStatus = AdminStatus.MINE
+        }
+        else{
+            adminStatus = AdminStatus.OTHER
+        }
     }
 
     fun getBooking(userId: String): SessionRunBooking? {
@@ -181,6 +197,10 @@ data class RunSession(
     enum class UserButtonStatus{
         WAITLISTED, PARTICIPANT, NONE
 
+    }
+
+    enum class AdminStatus{
+        MINE, OTHER, SUPER_ADMIN
     }
     class SessionRunBooking(var bookingId:String, var userId: String, var partySize:Int)
 

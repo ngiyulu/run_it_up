@@ -25,8 +25,13 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
 
     override fun execute(request: String): RunSession {
         val user = getMyUser()
-        val run = runSessionService.getRunSession(user .linkedAdmin != null, null, request) ?: throw  ApiRequestException("not_found")
+        if(user.linkedAdmin == null){
+            throw ApiRequestException(text("admin_not_found"))
+        }
+        val admin = cacheManager.getAdmin(user.linkedAdmin.orEmpty()) ?: throw ApiRequestException(text("admin_not_found"))
+        val run = runSessionService.getRunSession(user.linkedAdmin != null, null, request) ?: throw  ApiRequestException("not_found")
         run.updateStatus()
+        run.updateAdmin(admin)
         run.bookings = run.bookings.map {
             bookingDbService.getBookingDetails(it)
         }.toMutableList()
