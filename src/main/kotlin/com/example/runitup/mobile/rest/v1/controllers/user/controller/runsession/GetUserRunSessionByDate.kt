@@ -37,13 +37,13 @@ class GetUserRunSessionByDate: BaseController<GetUserRunSessionByDateModel, List
             val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
             return runSessionRepository.findAllByDate(Date.from(startUtc), Date.from(endUtc), request.page).content.map {
                 it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
-                it.updateAdmin(admin)
+                it.adminStatus = RunSession.AdminStatus.SUPER_ADMIN
                 it
             }
         }
-        return runSessionRepository.findAllByDateAndHostedBy(Date.from(startUtc), user.id.orEmpty(), request.page).content.map {
+        return runSessionRepository.findAllByDateAndHostedBy(Date.from(startUtc), admin.id.orEmpty(), request.page).content.map {
             it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
-            it.adminStatus = RunSession.AdminStatus.SUPER_ADMIN
+            it.updateAdmin(admin)
             it
 
         }
