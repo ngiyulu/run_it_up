@@ -16,7 +16,7 @@ class RunHistoryByDateController: BaseController<String, List<RunSession>>() {
     override fun execute(request: String): List<RunSession> {
         val user = cacheManager.getUser(request) ?: throw ApiRequestException(text("user_not_found"))
         if(user.linkedAdmin == null){
-            throw ApiRequestException(text("admin_not_found"))
+            throw ApiRequestException(text("unauthorized_user"))
         }
         val admin = cacheManager.getAdmin(user.linkedAdmin.orEmpty()) ?: throw ApiRequestException(text("admin_not_found"))
         val session = mutableListOf<RunSession>()

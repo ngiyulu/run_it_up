@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.constants.AppConstant.TRACE_ID
 import com.example.runitup.mobile.enum.RunStatus
@@ -7,6 +8,7 @@ import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.rest.v1.controllers.UserModelType
 import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
@@ -51,13 +53,19 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         if(!gymDb.isPresent){
             throw ApiRequestException("invalid_gym")
         }
-        var adminId = request.createdBy
-        try {
-            val auth =  SecurityContextHolder.getContext().authentication
-            val savedAdmin = auth.principal as AdminPrincipal
-            adminId = savedAdmin.admin.id
-        }catch (e: Exception){
-            logger.error("create run session, mobile app exception expected $e")
+        var host = ""
+        val user = getUser()
+        val admin: AdminUser
+        if(user.type == UserModelType.ADMIN){
+            host = user.userId
+            admin = user.adminUser!!
+        }
+        else{
+            var localUser= user.user!!
+            if(localUser.linkedAdmin == null){
+                throw ApiRequestException(text("unauthorized_user"))
+            }
+            admin = cacheManager.getAdmin(localUser.linkedAdmin.orEmpty()) ?: throw ApiRequestException(text("admin_not_found"))
         }
         val runGym = gymDb.get()
 
@@ -85,7 +93,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             startTime = localStartTime,
             endTime = localEndTime,
             zoneId = runGym.zoneId,
-            hostedBy = adminId,
+            hostedBy = host,
             allowGuest = request.allowGuest,
             notes = request.notes,
             privateRun = request.privateRun,
@@ -148,7 +156,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_CREATED,
-            actor = Actor(ActorType.ADMIN, adminId),
+            actor = Actor(ActorType.ADMIN, admin.id.orEmpty()),
             newStatus = "CREATED",
             reason = reason,
             correlationId = MDC.get(TRACE_ID) as? String,
