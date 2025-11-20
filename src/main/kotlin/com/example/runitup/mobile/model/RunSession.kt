@@ -118,14 +118,16 @@ data class RunSession(
     }
 
     fun updateAdmin(adminUser: AdminUser){
-        if(adminUser.role == Role.SUPER_ADMIN){
-            adminStatus = AdminStatus.SUPER_ADMIN
-        }
-        else if(hostedBy == adminUser.id){
-            adminStatus = AdminStatus.MINE
-        }
-        else{
-            adminStatus = AdminStatus.OTHER
+        adminStatus = if(adminUser.role == Role.SUPER_ADMIN){
+            if(hostedBy == adminUser.id){
+                AdminStatus.SUPER_ADMIN_MINE
+            } else{
+                AdminStatus.SUPER_ADMIN
+            }
+        } else if(hostedBy == adminUser.id){
+            AdminStatus.MINE
+        } else{
+            AdminStatus.OTHER
         }
     }
 
@@ -200,7 +202,7 @@ data class RunSession(
     }
 
     enum class AdminStatus{
-        MINE, OTHER, SUPER_ADMIN
+        MINE, OTHER, SUPER_ADMIN, SUPER_ADMIN_MINE
     }
     class SessionRunBooking(var bookingId:String, var userId: String, var partySize:Int)
 
