@@ -82,7 +82,6 @@ class RunSessionRestController {
     @GetMapping("/list")
     fun getSessionList( @RequestParam(required = true) long: Double,
                         @RequestParam(required = true) lat: Double,
-                        @RequestParam("date")
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate,
                         @RequestParam(defaultValue = "0") page: Int,
                         @RequestParam(defaultValue = "25") size: Int,
