@@ -61,11 +61,12 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             admin = user.adminUser!!
         }
         else{
-            var localUser= user.user!!
+            val localUser= user.user!!
             if(localUser.linkedAdmin == null){
                 throw ApiRequestException(text("unauthorized_user"))
             }
             admin = cacheManager.getAdmin(localUser.linkedAdmin.orEmpty()) ?: throw ApiRequestException(text("admin_not_found"))
+            host = admin.id.orEmpty()
         }
         val runGym = gymDb.get()
 
