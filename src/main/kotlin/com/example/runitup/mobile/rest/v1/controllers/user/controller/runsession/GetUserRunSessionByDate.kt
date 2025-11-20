@@ -29,16 +29,23 @@ class GetUserRunSessionByDate: BaseController<GetUserRunSessionByDateModel, List
         if(user.userType == null){
             throw ApiRequestException("not_authorized")
         }
-        if(user.userType == UserType.ADMIN){
+        if(user.linkedAdmin == null){
+            throw ApiRequestException("not_authorized")
+        }
+        val admin = cacheManager.getAdmin(user.linkedAdmin.orEmpty())?: throw ApiRequestException("admin_not_found")
+        if(user.userType == UserType.SUPER_ADMIN){
             val endUtc = request.date.plusDays(1)?.atStartOfDay(ZoneOffset.UTC)?.toInstant()
             return runSessionRepository.findAllByDate(Date.from(startUtc), Date.from(endUtc), request.page).content.map {
                 it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
+                it.updateAdmin(admin)
                 it
             }
         }
         return runSessionRepository.findAllByDateAndHostedBy(Date.from(startUtc), user.id.orEmpty(), request.page).content.map {
             it.host = cacheManager.getAdmin(it.hostedBy.orEmpty())
+            it.adminStatus = RunSession.AdminStatus.SUPER_ADMIN
             it
+
         }
     }
 
