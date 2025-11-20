@@ -38,10 +38,10 @@ abstract class BaseController<R, P> {
     fun getUser(): UserModel {
         val principal = SecurityContextHolder.getContext().authentication.principal
         if(principal is UserPrincipal){
-            return UserModel(principal.user.id.orEmpty(), UserModelType.USER)
+            return UserModel(principal.user.id.orEmpty(), UserModelType.USER, null, principal.user)
         }
         val auth = principal as AdminPrincipal
-        return UserModel(auth.admin.id.orEmpty(), UserModelType.ADMIN)
+        return UserModel(auth.admin.id.orEmpty(), UserModelType.ADMIN, auth.admin, null)
 
     }
 
@@ -65,7 +65,7 @@ abstract class BaseController<R, P> {
 
 
 }
-data class UserModel(val userId:String, val type: UserModelType)
+data class UserModel(val userId:String, val type: UserModelType, val adminUser: AdminUser?, val user:User?)
 enum class UserModelType{
     ADMIN, USER
 }

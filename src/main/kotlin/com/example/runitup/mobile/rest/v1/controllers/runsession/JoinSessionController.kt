@@ -63,7 +63,6 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
 
     override fun execute(request: JoinSessionModel): JoinRunSessionResponse {
         val run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
-        val auth =  SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user =getMyUser()
         // this mean the event is full
         if( user.stripeId == null || (run.isFree && request.paymentMethodId == null)){
