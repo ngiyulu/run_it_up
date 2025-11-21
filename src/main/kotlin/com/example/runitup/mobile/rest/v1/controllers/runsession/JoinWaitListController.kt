@@ -37,7 +37,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
 
 
     override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
-        var run: RunSession = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
+        val run: RunSession = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user =getMyUser()
         // this mean the event is full
@@ -94,23 +94,20 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
                 else if(setupState.status  != SetupStatus.SUCCEEDED){
                     throw  ApiRequestException("payment_error")
                 }
-                run.waitList.add(runUser)
-                run.updateTotal()
-                val updatedRun = runSessionService.updateRunSession(run)
                 booking.setupIntentId = setupState.setupIntentId
+                val updatedRun = updateRun(run, booking, runUser)
                 runSessionEventLogger.log(
                     sessionId = run.id.orEmpty(),
                     action = RunSessionAction.USER_JOIN_WAITLIST,
-                    actor = Actor(ActorType.USER, user.id.orEmpty()),
+                    actor = Actor(ActorType.USER, auth.user.id.orEmpty()),
                     newStatus = null,
                     reason = "Self-join, paid run",
                     correlationId = MDC.get(AppConstant.TRACE_ID),
                     metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
                 )
-                bookingRepository.save(booking)
                 return JoinWaitListResponse(true, null, updatedRun, false)
             }
-
+            val updatedRun = updateRun(run, booking, runUser)
             runSessionEventLogger.log(
                 sessionId = run.id.orEmpty(),
                 action = RunSessionAction.USER_JOIN_WAITLIST,
@@ -122,10 +119,18 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             )
             bookingRepository.save(booking)
             // this means the user tried to join the waitlist and the run is free
-            return JoinWaitListResponse(false, null, run, false)
+            return JoinWaitListResponse(false, null, updatedRun, false)
 
         }
         // tried to join a wailist when the runsession is not ful
         return JoinWaitListResponse(true, null, run, false, refresh = true)
+    }
+
+    fun updateRun(run: RunSession, booking:Booking, runUser: RunUser): RunSession{
+        run.waitList.add(runUser)
+        run.updateTotal()
+        val updatedRun = runSessionService.updateRunSession(run)
+        bookingRepository.save(booking)
+        return  updatedRun
     }
 }
