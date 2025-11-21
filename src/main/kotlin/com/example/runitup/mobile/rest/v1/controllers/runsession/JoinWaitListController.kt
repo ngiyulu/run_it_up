@@ -119,7 +119,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             )
             bookingRepository.save(booking)
             // this means the user tried to join the waitlist and the run is free
-            return JoinWaitListResponse(false, null, updatedRun, false)
+            return JoinWaitListResponse(true, null, updatedRun, false)
 
         }
         // tried to join a wailist when the runsession is not ful
