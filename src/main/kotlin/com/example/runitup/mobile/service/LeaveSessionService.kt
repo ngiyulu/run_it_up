@@ -54,6 +54,8 @@ class LeaveSessionService {
     @Autowired
     lateinit var queueService: LightSqsService
 
+    private val logger = myLogger()
+
 
      fun cancelBooking(user:User, sessionId:String, admin:AdminUser? = null): Pair<Booking, RunSession> {
          val locale = LocaleContextHolder.getLocale().toString()
@@ -100,13 +102,14 @@ class LeaveSessionService {
          run.waitList.removeAll {
              it.userId == user.id.orEmpty()
          }
-
+         val status = booking.status
+         logger.info("booking status = $status")
          booking.status =  BookingStatus.CANCELLED
          booking.cancelledAt = Instant.now()
          booking.cancelledBy = admin?.id
          bookingDbService.bookingRepository.save(booking)
          messagingService.removeParticipant(DeleteParticipantFromConversationModel(user.id.orEmpty(), run.id.orEmpty())).block()
-         completeFlow(run)
+         completeFlow(status, run)
          return Pair(booking, run)
     }
 
@@ -114,17 +117,22 @@ class LeaveSessionService {
         waitListPaymentService.cancelWaitlistSetupIntent(booking.setupIntentId.orEmpty())
     }
 
-    private fun completeFlow(runSession: RunSession){
-        val job = JobEnvelope(
-            jobId = UUID.randomUUID().toString(),
-            taskType = "RAW_STRING",
-            payload = runSession.id.orEmpty(),
-            traceId = UUID.randomUUID().toString(),
-            createdAtMs = Instant.now()
-        )
-        // trigger this job so we can check if there someone else on the waitlist that can get promoted
-        appScope.launch {
-            queueService.sendJob(QueueNames.WAIT_LIST_JOB, job)
+    private fun completeFlow(bookingStatus: BookingStatus, runSession: RunSession){
+        // only check waitlist if the user leaving was a participant
+        // else they were in the wailist so we don't need to check
+        if(bookingStatus == BookingStatus.JOINED){
+            val job = JobEnvelope(
+                jobId = UUID.randomUUID().toString(),
+                taskType = "RAW_STRING",
+                payload = runSession.id.orEmpty(),
+                traceId = UUID.randomUUID().toString(),
+                createdAtMs = Instant.now()
+            )
+            // trigger this job so we can check if there someone else on the waitlist that can get promoted
+            appScope.launch {
+                queueService.sendJob(QueueNames.WAIT_LIST_JOB, job)
+            }
+
         }
 
     }
