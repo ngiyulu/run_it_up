@@ -159,32 +159,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             mutedUntil = null,
             unreadCount = 0
         )
-        val data = JobEnvelope(
-            jobId = UUID.randomUUID().toString(),
-            taskType = "Joined run",
-            payload = JoinSessionQueueModel(user.id.toString(), run.id.orEmpty()),
-        )
-        appScope.launch {
-            // this event is to send a text message to user to let them know they have joined
-            // the run successfully
-            // if the session is already confirmed, we don't need to confirm again
-            if(run.status == RunStatus.PENDING){
-                queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
-            }
-            // we have to trigger this event to confirm session if the number of participants have been reached
-            queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
-        }
-        val map = HashMap<String, String>()
-        map[AppConstant.USER_ID] = user.id.orEmpty()
-        map[AppConstant.BOOKING_ID] = booking.id.orEmpty()
-        val jobEnvelope = JobEnvelope(
-            jobId = UUID.randomUUID().toString(),
-            taskType = "Notification new user joined run",
-            payload = PushJobModel(PushJobType.USER_JOINED, run.id.orEmpty(), map)
-        )
-        appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
-        }
+
+
+        updateQueue(run, user.id.orEmpty(), booking.id.orEmpty())
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.USER_JOINED,
@@ -196,6 +173,39 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         )
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)
+    }
+
+
+    fun updateQueue(runSession: RunSession, userId: String, bookingId:String){
+        val map = HashMap<String, String>()
+        map[AppConstant.USER_ID] = userId
+        map[AppConstant.BOOKING_ID] = bookingId
+        val jobEnvelope = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Notification new user joined run",
+            payload = PushJobModel(PushJobType.USER_JOINED, runSession.id.orEmpty(), map)
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+        }
+
+        val data = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Joined run",
+            payload = JoinSessionQueueModel(userId, runSession.id.orEmpty()),
+        )
+        appScope.launch {
+            // this event is to send a text message to user to let them know they have joined
+            // the run successfully
+            // if the session is already confirmed, we don't need to confirm again
+            queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
+            if(runSession.status == RunStatus.PENDING){
+                // we have to trigger this event to confirm session if the number of participants have been reached
+                queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
+            }
+
+        }
+
     }
 }
 
