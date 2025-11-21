@@ -18,5 +18,5 @@ class InitializeResponse(
     var allowedPayment: Boolean = false,
     var guideLines: List<GuideLine>,
     var userStats: UserStat? = null,
-    var messagingEnabled:Boolean = false
+    var messagingEnabled:Boolean = false,
 )

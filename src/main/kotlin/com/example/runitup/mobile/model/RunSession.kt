@@ -110,7 +110,7 @@ data class RunSession(
         leaveSessionUpdateAllowed = isPendingOrConfirmed
     }
 
-    fun isParticiPant(userId: String): Boolean{
+    private fun isParticiPant(userId: String): Boolean{
         val findUser = bookingList
             .find { it.userId == userId }
 
