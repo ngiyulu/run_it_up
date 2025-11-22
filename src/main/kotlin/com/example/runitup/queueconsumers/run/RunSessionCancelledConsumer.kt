@@ -44,7 +44,7 @@ class RunSessionCancelledConsumer(
 
     // this job is run the clean up the session payments if it got cancelled by admin
 
-    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
+    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionCancelledConsumer is running")
         val data: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
