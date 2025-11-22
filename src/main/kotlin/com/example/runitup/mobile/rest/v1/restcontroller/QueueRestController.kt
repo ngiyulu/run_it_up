@@ -7,11 +7,13 @@ import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
 import kotlinx.coroutines.runBlocking
+import org.springframework.context.annotation.Profile
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
 @RequestMapping("/api/queues")
+@Profile(value = ["dev", "local"]) // ✅ active for both dev and local profiles
 class QueueController(private val q: LightSqsService) {
 
     @PostMapping("/create")
@@ -74,6 +76,14 @@ class QueueController(private val q: LightSqsService) {
         @RequestParam(defaultValue = "true") includeDlq: Boolean) =
         runBlocking {
             q.deleteQueue(name, includeDlq)
+        }
+
+    @DeleteMapping("/clear/{name}")
+    fun clearQueue(
+        @PathVariable name: String,
+        @RequestParam(defaultValue = "true") includeDlq: Boolean) =
+        runBlocking {
+            q.clearQueue(name, includeDlq)
         }
 
     @PostMapping("/{name}/visibility")

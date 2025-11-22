@@ -175,8 +175,14 @@ class PromotionService(
 
     private fun finishPromotionSuccess(runSession: RunSession, userId: String, booking: Booking) {
         runSession.waitList.removeAll { it.userId == userId }
+        runSession.bookingList.add(
+            RunSession.SessionRunBooking(
+                booking.id.toString(),
+                userId,
+                booking.partySize
+            )
+        )
         sessionService.updateRunSession(runSession)
-
         booking.status = BookingStatus.JOINED
         booking.promotedAt = Instant.now()
         booking.isLocked = false

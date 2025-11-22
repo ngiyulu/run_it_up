@@ -33,6 +33,14 @@ data class JobReceiveResponse<T>(
     val jobs: List<ReceivedJob<T>>
 )
 
+data class ClearQueueResult(
+    val queue: String,
+    val deletedMainKeys: Long,
+    val dlqName: String?,
+    val deletedDlqKeys: Long
+)
+
+
 data class ReceivedJob<T>(
     val messageId: String,
     val envelope: JobEnvelope<T>,
@@ -557,4 +565,48 @@ class LightSqsService(
             traceId = traceId
         )
     }
+
+
+    suspend fun clearQueue(name: String, includeDlq: Boolean = false): ClearQueueResult = withContext(io) {
+        ensureQueueExists(name)
+
+        var deletedMain = 0L
+
+        // Delete message bodies and receipt handles
+        deletedMain += deleteByPattern("q:$name:msg:*")
+        deletedMain += deleteByPattern("q:$name:receipt:*")
+
+        // Delete structural keys for the queue
+        redis.delete(RedisKeys.ready(name))
+        redis.delete(RedisKeys.inflight(name))
+        redis.delete(RedisKeys.delayed(name))
+
+        var deletedDlq = 0L
+        var dlqName: String? = null
+
+        if (includeDlq) {
+            val cfg = redis.opsForHash<String, String>().entries(RedisKeys.cfg(name))
+            dlqName = cfg["dlqName"].takeUnless { it.isNullOrBlank() }
+
+            if (dlqName != null) {
+                deletedDlq += deleteByPattern("q:$dlqName:msg:*")
+                deletedDlq += deleteByPattern("q:$dlqName:receipt:*")
+
+                redis.delete(RedisKeys.dlq(dlqName))
+                redis.delete(RedisKeys.ready(dlqName))
+                redis.delete(RedisKeys.inflight(dlqName))
+                redis.delete(RedisKeys.delayed(dlqName))
+            }
+        }
+
+        ClearQueueResult(
+            queue = name,
+            deletedMainKeys = deletedMain,
+            dlqName = dlqName,
+            deletedDlqKeys = deletedDlq
+        )
+    }
+
+
+
 }
