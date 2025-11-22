@@ -43,7 +43,7 @@ class RunSessionConfirmedConsumer(
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_CONFIRMATION_JOB, objectMapper) {
 
 
-    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
+    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionConfirmedConsumer is running")
         val jobData: JobEnvelope<JoinSessionQueueModel> = objectMapper.readValue(rawBody) as JobEnvelope<JoinSessionQueueModel>

@@ -83,7 +83,7 @@ abstract class BaseQueueConsumer(
 
                     try {
                         // Let subclass do actual work
-                        processOne(msg.body, taskType, jobId, traceId)
+                        processOne(msg.body, taskType, jobId, traceId, msg.receiptHandle)
 
                         // Ack on success
                         queueService.deleteMessage(queueName, msg.receiptHandle)
@@ -105,7 +105,8 @@ abstract class BaseQueueConsumer(
         rawBody: String,
         taskType: String,
         jobId: String,
-        traceId: String?
+        traceId: String?,
+        receiptHandle:String
     )
 
     fun logClass(){

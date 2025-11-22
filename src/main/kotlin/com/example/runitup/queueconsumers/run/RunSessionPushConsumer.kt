@@ -35,7 +35,7 @@ class RunSessionPushConsumer(
     private val bookingRepository: BookingRepository
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_SESSION_PUSH_JOB, objectMapper) {
 
-    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
+    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionPushConsumer is running")
         val jobData: JobEnvelope<PushJobModel> = objectMapper.readValue(rawBody) as JobEnvelope<PushJobModel>

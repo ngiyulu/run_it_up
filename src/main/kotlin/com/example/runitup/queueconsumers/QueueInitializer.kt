@@ -19,23 +19,24 @@ class QueueInitializer(
 
         runBlocking {
             listOf(
-                QueueNames.WAIT_LIST_JOB,
-                QueueNames.JOINED_RUN_JOB,
-                QueueNames.FIRST_SESSION_JOB,
-                QueueNames.LOCATION_JOB,
-                QueueNames.NEW_USER_JOB,
-                QueueNames.RUN_SESSION_PUSH_JOB,
-                QueueNames.RUN_CANCELLED_JOB,
-                QueueNames.RUN_PROCESS_PAYMENT,
-                QueueNames.RUN_CONFIRMATION_JOB,
-                QueueNames.PAYMENT_FAILED_JOB
+                QueueInitializerModel(QueueNames.WAIT_LIST_JOB,  visibilitySeconds = 300),
+                QueueInitializerModel(QueueNames.JOINED_RUN_JOB),
+                QueueInitializerModel(QueueNames.FIRST_SESSION_JOB),
+                QueueInitializerModel(QueueNames.LOCATION_JOB),
+                QueueInitializerModel(QueueNames.NEW_USER_JOB),
+                QueueInitializerModel(QueueNames.RUN_SESSION_PUSH_JOB),
+                QueueInitializerModel(QueueNames.RUN_CANCELLED_JOB),
+                QueueInitializerModel(QueueNames.RUN_PROCESS_PAYMENT),
+                QueueInitializerModel(QueueNames.RUN_CONFIRMATION_JOB, visibilitySeconds = 300),
+                QueueInitializerModel(QueueNames.PAYMENT_FAILED_JOB)
 
             ).forEach { queue ->
-                queueService.createQueue(queue, 30, 5)
+                queueService.createQueue(queue.queue, 30, 5)
                 log.info("✅ Queue created: $queue and its DLQ")
             }
         }
-
         log.info("All queues initialized successfully.")
     }
 }
+
+data class QueueInitializerModel(val queue: String, val visibilitySeconds: Int = 30)

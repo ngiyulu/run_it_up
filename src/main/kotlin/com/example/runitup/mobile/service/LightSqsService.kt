@@ -246,7 +246,12 @@ class LightSqsService(
             }
 
             val msgKey = RedisKeys.msg(req.queue, msgId)
-            val json = withContext(io) { redis.opsForValue().get(msgKey) } ?: continue
+            val json = withContext(io) { redis.opsForValue().get(msgKey) }
+            if (json == null) {
+                // body missing — requeue id so it isn't lost
+                redis.opsForList().leftPush(RedisKeys.ready(req.queue), msgId)
+                continue
+            }
             val qm = om.readValue(json, QueueMessage::class.java)
 
             val updated = qm.copy(receiveCount = qm.receiveCount + 1)

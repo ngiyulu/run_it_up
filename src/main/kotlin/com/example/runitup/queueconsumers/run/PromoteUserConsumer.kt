@@ -29,15 +29,15 @@ class PromoteUserConsumer(
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.WAIT_LIST_JOB, objectMapper) {
 
 
-    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?) {
+    override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("PromoteUserConsumer, is running")
         val env: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
-//        queueService.changeMessageVisibility(
-//            QueueNames.WAIT_LIST_JOB,
-//            jobId,
-//            120   // give the worker 2 minutes
-//        )
+        queueService.changeMessageVisibility(
+            QueueNames.WAIT_LIST_JOB,
+            receiptHandle,
+            120   // give the worker 2 minutes
+        )
         logger.info(env.toString())
         runSessionEventLogger.log(
             sessionId = env.jobId,
