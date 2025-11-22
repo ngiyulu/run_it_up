@@ -130,6 +130,31 @@ class RunSessionPushNotificationService(
     }
 
 
+
+    fun notifyAdminUserPromotion(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "${user.getFullName()} has been promoted from waitlist",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        // Notify admins/host (whoever the UI expects via admin screen), not the user who just joined.
+        val phones = phoneService.getPhonesByUser(adminUserId)
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_USER_JOINED_WAITLIST",
+            triggerRefId = sessionId,
+            templateId = "run.user_joined_waitlist",
+            dedupeKey = dedupeKeyUserScoped("run.user_joined_waitlist", sessionId, user.id.orEmpty(), bookingId)
+        )
+    }
+
+
     fun userUpdatedBooking(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
@@ -158,6 +183,29 @@ class RunSessionPushNotificationService(
         val notif = PushNotification(
             title = runSession.title,
             body = "You have been removed from the run session",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        val phones = phoneService.getPhonesByUser(targetUserId)
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_BOOKING_CANCELLED",
+            triggerRefId = sessionId,
+            templateId = "run.booking_cancelled",
+            dedupeKey = dedupeKeyBookingScoped("run.booking_cancelled", sessionId, targetUserId, bookingId)
+        )
+    }
+
+
+    fun runSessionBookingPromoted(targetUserId: String, runSession: RunSession, bookingId:String) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "You have been added to the run",
             data = mapOf(
                 AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
                 SessionId to sessionId

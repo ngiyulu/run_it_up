@@ -7,6 +7,7 @@ import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -18,6 +19,7 @@ class PromotionService(
     private  val bookingDbService: BookingDbService,
     private val cacheManager: MyCacheManager,
     private val sessionService: RunSessionService,
+    private val runSessionPushNotificationService: RunSessionPushNotificationService,
     private val paymentPushNotificationService: PaymentPushNotificationService
 ) {
     val logger = myLogger()
@@ -63,7 +65,7 @@ class PromotionService(
 
                 // If session is free (no payment required), just promote
                 if (session.isSessionFree()) {
-                    finishPromotionSuccess(session, user.id.orEmpty(), booking)
+                    finishPromotionSuccess(session, user, booking)
                     return PromotionResult(
                         ok = true,
                         message = "User promoted (free session).",
@@ -119,7 +121,7 @@ class PromotionService(
                     continue
                 }
 
-                finishPromotionSuccess(session, user.id.orEmpty(), booking)
+                finishPromotionSuccess(session, user, booking)
                 return PromotionResult(
                     ok = true,
                     message = "User promoted and primary hold authorized.",
@@ -173,12 +175,12 @@ class PromotionService(
         bookingRepo.save(booking)
     }
 
-    private fun finishPromotionSuccess(runSession: RunSession, userId: String, booking: Booking) {
-        runSession.waitList.removeAll { it.userId == userId }
+    private fun finishPromotionSuccess(runSession: RunSession, user: User, booking: Booking) {
+        runSession.waitList.removeAll { it.userId == user.id.orEmpty() }
         runSession.bookingList.add(
             RunSession.SessionRunBooking(
                 booking.id.toString(),
-                userId,
+                user.id.orEmpty(),
                 booking.partySize
             )
         )
@@ -187,6 +189,8 @@ class PromotionService(
         booking.promotedAt = Instant.now()
         booking.isLocked = false
         bookingRepo.save(booking)
+        runSessionPushNotificationService.notifyAdminUserPromotion(runSession.hostedBy.orEmpty(), user, runSession, booking.id.orEmpty())
+        runSessionPushNotificationService.runSessionBookingPromoted(user.id.orEmpty(), runSession, booking.id.orEmpty())
         // TODO: add text message and email
     }
 }
