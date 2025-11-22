@@ -74,7 +74,7 @@ class BookingDbService: BaseService() {
         return result.modifiedCount.toInt() // 1 if lock succeeded, 0 if already locked
     }
 
-    fun getBookingList(runSessionId:String): List<Booking>{
+    fun getJoinedBookingList(runSessionId:String): List<Booking>{
         return bookingRepository.findByRunSessionIdAndStatusIn(
             runSessionId,
             mutableListOf(BookingStatus.JOINED)

@@ -47,6 +47,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
         val run: RunSession = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         val auth = SecurityContextHolder.getContext().authentication.principal as UserPrincipal
         val user =getMyUser()
+        logger.info("join waitlist request = $request")
         // this mean the event is full
         if (user.stripeId == null) {
             throw ApiRequestException(text("payment_error"))
@@ -83,8 +84,11 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             date = dateString
         )
         //user can only join the waitlist if the run is at full capacity
+        // or it's not full capacity but there is someone on the waitlist
+        // this can happen a user leaves and this call is made before the job is a chance to promote
+        //someone from the waitlist
 
-        if (run.atFullCapacity() && run.waitList.isNotEmpty()) {
+        if (run.atFullCapacity() || run.waitList.isNotEmpty()) {
             if (!run.isSessionFree()) {
                 val pm = request.paymentMethodId
                 val setupState = paymentService.ensureWaitlistCardReady(
