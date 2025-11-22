@@ -14,6 +14,7 @@ import com.example.runitup.mobile.repository.UserRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
+import com.example.runitup.mobile.rest.v1.dto.session.JoinWaitListModel
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.NumberGenerator
@@ -42,6 +43,9 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
 
     @Autowired
     private lateinit var sessionService: RunSessionService
+
+    @Autowired
+    private lateinit var joinWaitListController: JoinWaitListController
 
     @Autowired
     lateinit var bookingPricingAdjuster: BookingPricingAdjuster
@@ -74,9 +78,13 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         // this means the run is full, so we return the run to the user
         // and the ui will update, this should only happen if they had an old version of the run
         // that didn't not have the proper ui
-        if( run.atFullCapacity()){
-            run.updateStatus(user.id.orEmpty())
-            return  JoinRunSessionResponse(JoinRunSessionStatus.FULL, run)
+        // when waitlist is not empty but run is not at capacity, it means a user jus left but the waitlist promotion job hasn't ran yet
+        // so we need to add user to waitlist and let the job take care of the rest
+        if(run.atFullCapacity() || run.waitList.isNotEmpty()){
+            // join waitlist and let the job take care of promoting the user
+            logger.info("we are waitlisting user")
+            joinWaitListController.execute(JoinWaitListModel(request.sessionId, request.paymentMethodId.orEmpty()))
+            return  JoinRunSessionResponse(JoinRunSessionStatus.WAITLISTED, run)
         }
         val availableSpots = run.availableSpots()
         // this means the run is full because he added guests

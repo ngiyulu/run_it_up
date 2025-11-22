@@ -83,7 +83,8 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             date = dateString
         )
         //user can only join the waitlist if the run is at full capacity
-        if (run.atFullCapacity()) {
+
+        if (run.atFullCapacity() && run.waitList.isNotEmpty()) {
             if (!run.isSessionFree()) {
                 val pm = request.paymentMethodId
                 val setupState = paymentService.ensureWaitlistCardReady(
