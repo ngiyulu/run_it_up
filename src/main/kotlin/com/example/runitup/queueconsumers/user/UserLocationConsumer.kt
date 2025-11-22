@@ -31,9 +31,12 @@ class UserLocationConsumer(
         val payload = data.payload
         withContext(Dispatchers.IO) {
             val userDb = userRepository.findById(payload.userId)
-            val user = userDb.get()
-            user.coordinate = payload.coordinate
-            userRepository.save(user)
+            if(userDb.isPresent){
+                val user = userDb.get()
+                user.coordinate = payload.coordinate
+                userRepository.save(user)
+            }
+
         }
 
     }
