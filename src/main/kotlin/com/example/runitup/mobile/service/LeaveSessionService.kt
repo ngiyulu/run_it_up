@@ -130,7 +130,7 @@ class LeaveSessionService {
             )
             // trigger this job so we can check if there someone else on the waitlist that can get promoted
             appScope.launch {
-                queueService.sendJob(QueueNames.WAIT_LIST_JOB, job)
+                queueService.sendJob(QueueNames.WAIT_LIST_JOB, job,  delaySeconds = 0)
             }
 
         }

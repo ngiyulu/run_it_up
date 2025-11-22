@@ -57,7 +57,7 @@ class ApproveWaiverController: BaseController<ApproveWaiverModel, Waiver>() {
                 taskType = "New user, waiver approved",
                 payload = user.id.orEmpty()
             )
-            queueService.sendJob(QueueNames.NEW_USER_JOB, data)
+            queueService.sendJob(QueueNames.NEW_USER_JOB, data,  delaySeconds = 0)
         }
         return waiverRepository.save(waiver)
     }

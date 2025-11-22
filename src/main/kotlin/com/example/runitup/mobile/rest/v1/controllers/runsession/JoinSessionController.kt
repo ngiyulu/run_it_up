@@ -194,7 +194,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             payload = PushJobModel(PushJobType.USER_JOINED, runSession.id.orEmpty(), map)
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
 
         val data = JobEnvelope(
@@ -206,10 +206,10 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             // this event is to send a text message to user to let them know they have joined
             // the run successfully
             // if the session is already confirmed, we don't need to confirm again
-            queueService.sendJob(QueueNames.JOINED_RUN_JOB, data)
+            queueService.sendJob(QueueNames.JOINED_RUN_JOB, data,  delaySeconds = 0)
             if(runSession.status == RunStatus.PENDING){
                 // we have to trigger this event to confirm session if the number of participants have been reached
-                queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data)
+                queueService.sendJob(QueueNames.RUN_CONFIRMATION_JOB, data,  delaySeconds = 0)
             }
 
         }

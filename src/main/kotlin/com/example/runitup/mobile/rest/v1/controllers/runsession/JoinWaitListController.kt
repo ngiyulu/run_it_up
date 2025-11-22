@@ -154,7 +154,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
             payload = PushJobModel(PushJobType.USER_JOINED_WAITLIST, run.id.orEmpty(), map)
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
 
         return  updatedRun

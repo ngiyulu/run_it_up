@@ -165,7 +165,7 @@ class UpdateSessionGuest: BaseController<JoinSessionModel, RunSession>() {
             payload = PushJobModel(PushJobType.BOOKING_UPDATED, booking.runSessionId, map)
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
 
     }

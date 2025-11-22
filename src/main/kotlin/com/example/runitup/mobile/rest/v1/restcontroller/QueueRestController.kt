@@ -66,7 +66,7 @@ class QueueController(private val q: LightSqsService) {
                 taskType = "Notification booking cancelled by user",
                 payload = req.runSession
             )
-            q.sendJob(QueueNames.WAIT_LIST_JOB, jobEnvelope)
+            q.sendJob(QueueNames.WAIT_LIST_JOB, jobEnvelope,  delaySeconds = 0)
         }
 
 
