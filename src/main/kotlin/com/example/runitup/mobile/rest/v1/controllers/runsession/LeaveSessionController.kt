@@ -6,7 +6,7 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
-import com.example.runitup.mobile.rest.v1.dto.session.CancelSessionModel
+import com.example.runitup.mobile.rest.v1.dto.session.LeaveSessionModel
 import com.example.runitup.mobile.service.LeaveSessionService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
@@ -19,7 +19,7 @@ import java.util.*
 
 @Service
 // user decides not to participate anymore
-class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
+class LeaveSessionController: BaseController<LeaveSessionModel, RunSession>() {
 
     @Autowired
     lateinit var leaveSessionService: LeaveSessionService
@@ -34,7 +34,7 @@ class LeaveSessionController: BaseController<CancelSessionModel, RunSession>() {
     lateinit var queueService: LightSqsService
 
 
-    override fun execute(request: CancelSessionModel): RunSession {
+    override fun execute(request: LeaveSessionModel): RunSession {
         val user = getMyUser()
         val (booking, run) = leaveSessionService.cancelBooking(user, request.sessionId)
         val jobEnvelope = JobEnvelope(
