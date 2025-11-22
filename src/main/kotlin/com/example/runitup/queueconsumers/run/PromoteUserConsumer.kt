@@ -38,6 +38,7 @@ class PromoteUserConsumer(
             jobId,
             120   // give the worker 2 minutes
         )
+        logger.info(env.toString())
         runSessionEventLogger.log(
             sessionId = env.jobId,
             action = RunSessionAction.USER_PROMOTED_FROM_WAITLIST,
