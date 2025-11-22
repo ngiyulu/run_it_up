@@ -3,17 +3,18 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.BookingStatus
-import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.model.SetupStatus
+import com.example.runitup.mobile.model.*
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinWaitListModel
 import com.example.runitup.mobile.security.UserPrincipal
+import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.RunSessionService
 import com.example.runitup.mobile.service.WaitListPaymentService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Service
 class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResponse>() {
@@ -28,12 +30,17 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
     @Autowired
     private lateinit var bookingRepository: BookingRepository
 
+    @Autowired
+    lateinit var queueService: LightSqsService
 
     @Autowired
     lateinit var paymentService: WaitListPaymentService
 
     @Autowired
     lateinit var runSessionService: RunSessionService
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
 
 
     override fun execute(request: JoinWaitListModel): JoinWaitListResponse {
@@ -95,7 +102,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
                     throw  ApiRequestException("payment_error")
                 }
                 booking.setupIntentId = setupState.setupIntentId
-                val updatedRun = updateRun(run, booking, runUser)
+                val updatedRun = completeFlow(run, booking, runUser)
                 runSessionEventLogger.log(
                     sessionId = run.id.orEmpty(),
                     action = RunSessionAction.USER_JOIN_WAITLIST,
@@ -107,7 +114,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
                 )
                 return JoinWaitListResponse(true, null, updatedRun, false)
             }
-            val updatedRun = updateRun(run, booking, runUser)
+            val updatedRun = completeFlow(run, booking, runUser)
             runSessionEventLogger.log(
                 sessionId = run.id.orEmpty(),
                 action = RunSessionAction.USER_JOIN_WAITLIST,
@@ -126,11 +133,23 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
         return JoinWaitListResponse(true, null, run, false, refresh = true)
     }
 
-    fun updateRun(run: RunSession, booking:Booking, runUser: RunUser): RunSession{
+    fun completeFlow(run: RunSession, booking:Booking, runUser: RunUser): RunSession{
         run.waitList.add(runUser)
         run.updateTotal()
         val updatedRun = runSessionService.updateRunSession(run)
         bookingRepository.save(booking)
+        val map = HashMap<String, String>()
+        map[AppConstant.USER_ID] = booking.userId
+        map[AppConstant.BOOKING_ID] = booking.id.orEmpty()
+        val jobEnvelope = JobEnvelope(
+            jobId = UUID.randomUUID().toString(),
+            taskType = "Notification new user joined run waitlist",
+            payload = PushJobModel(PushJobType.USER_JOINED_WAITLIST, run.id.orEmpty(), map)
+        )
+        appScope.launch {
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+        }
+
         return  updatedRun
     }
 }

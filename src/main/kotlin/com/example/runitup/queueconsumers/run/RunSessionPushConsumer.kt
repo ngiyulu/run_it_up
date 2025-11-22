@@ -46,6 +46,7 @@ class RunSessionPushConsumer(
                 PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
                 PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
+                PushJobType.USER_JOINED_WAITLIST -> notifyUserJoinedWaitList(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
                 PushJobType.BOOKING_UPDATED -> notifyUserBookingUpdated(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
                 PushJobType.BOOKING_CANCELLED_BY_ADMIN -> notifyUserBookingCancelledByAdmin(payload.dataId)
                 PushJobType.BOOKING_CANCELLED_BY_USER -> notifyUserBookingCancelledByUser(payload.dataId)
@@ -97,6 +98,29 @@ class RunSessionPushConsumer(
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
                 runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run, bookingId)
+            }
+            else{
+                logger.info("user who joined is also the admin")
+            }
+
+        }?: run {
+            logger.error("run.hostedBy parameter is null, runId = $runId")
+        }
+    }
+
+    private fun  notifyUserJoinedWaitList (runId:String, userId:String, bookingId: String){
+        val run = getRunSession(runId)
+        if(run.status == RunStatus.CANCELLED ||
+            run.status == RunStatus.COMPLETED ||
+            run.status == RunStatus.PROCESSED){
+            return
+        }
+        logger.info("notifyUserJoined waitlist userId = $userId")
+        run.hostedBy?.let {
+            val user = getUser(userId)
+            val adminUser = getAdmin(it)
+            if(adminUser.id != userId){
+                runSessionPushNotificationService.userJoinedWaitListRunSession(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -159,7 +183,6 @@ class RunSessionPushConsumer(
         }?: run {
             logger.error("run.hostedBy parameter is null, runId = ${run.id.orEmpty()}")
         }
-        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run, bookingId)
     }
 
 

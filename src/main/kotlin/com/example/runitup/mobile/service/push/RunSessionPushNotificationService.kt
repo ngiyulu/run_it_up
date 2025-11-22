@@ -106,6 +106,29 @@ class RunSessionPushNotificationService(
         )
     }
 
+    fun userJoinedWaitListRunSession(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "${user.getFullName()} joined waitlist",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        // Notify admins/host (whoever the UI expects via admin screen), not the user who just joined.
+        val phones = phoneService.getPhonesByUser(adminUserId)
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_USER_JOINED_WAITLIST",
+            triggerRefId = sessionId,
+            templateId = "run.user_joined_waitlist",
+            dedupeKey = dedupeKeyUserScoped("run.user_joined_waitlist", sessionId, user.id.orEmpty(), bookingId)
+        )
+    }
+
 
     fun userUpdatedBooking(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
