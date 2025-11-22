@@ -5,6 +5,7 @@ class JoinRunSessionResponse(val status: JoinRunSessionStatus, val runSession: c
 enum class JoinRunSessionStatus{
     FULL,
     GUEST_FULL,
+    WAITLISTED,
     ALREADY_BOOKED,
     NONE
 }
