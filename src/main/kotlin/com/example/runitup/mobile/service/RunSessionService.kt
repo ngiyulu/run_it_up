@@ -127,7 +127,7 @@ class RunSessionService(): BaseService(){
                 taskType = "Process payment after confirmation from job",
                 payload = run.id.orEmpty()
             )
-            queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
+            queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data,  delaySeconds = 0)
         }
         run.status = RunStatus.CONFIRMED
         val data = JobEnvelope(
@@ -136,7 +136,7 @@ class RunSessionService(): BaseService(){
             payload = PushJobModel(PushJobType.CONFIRM_RUN, run.id.orEmpty())
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, data)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, data,  delaySeconds = 0)
         }
         return updateRunSession(run)
     }

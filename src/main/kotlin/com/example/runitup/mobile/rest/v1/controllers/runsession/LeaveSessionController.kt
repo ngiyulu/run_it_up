@@ -43,7 +43,7 @@ class LeaveSessionController: BaseController<LeaveSessionModel, RunSession>() {
             payload = PushJobModel(PushJobType.BOOKING_CANCELLED_BY_USER, booking.id.orEmpty())
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),

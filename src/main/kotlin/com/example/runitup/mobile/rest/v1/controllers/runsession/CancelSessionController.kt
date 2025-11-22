@@ -56,7 +56,7 @@ class CancelSessionController: BaseController<CancelSessionModel, RunSession>() 
             createdAtMs = Instant.now()
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_CANCELLED_JOB, job)
+            queueService.sendJob(QueueNames.RUN_CANCELLED_JOB, job,  delaySeconds = 0)
         }
         run = cacheManager.updateRunSession(run)
         bookingDbService.cancelAllBooking(run.id.orEmpty())

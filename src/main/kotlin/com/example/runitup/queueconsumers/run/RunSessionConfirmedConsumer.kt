@@ -71,7 +71,7 @@ class RunSessionConfirmedConsumer(
                         taskType = "Process payment after confirmation from admin",
                         payload = run.id.orEmpty()
                     )
-                    queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data)
+                    queueService.sendJob(QueueNames.RUN_PROCESS_PAYMENT, data,  delaySeconds = 0)
                 }
                complete(run, jobId)
                 logger.info("Run $runSessionId confirmed and notifications sent (${joinedCount})")

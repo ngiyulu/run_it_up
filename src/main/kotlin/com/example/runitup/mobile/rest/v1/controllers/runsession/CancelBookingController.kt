@@ -94,7 +94,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             payload = PushJobModel(PushJobType.BOOKING_CANCELLED_BY_ADMIN, booking.id.orEmpty())
         )
         appScope.launch {
-            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope)
+            queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
         return runService.updateRunSession(run)
     }
