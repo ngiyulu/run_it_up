@@ -149,8 +149,8 @@ class RunSessionPushNotificationService(
             notif = notif,
             trigger = "RUN_SESSION_USER_JOINED_WAITLIST",
             triggerRefId = sessionId,
-            templateId = "run.user_joined_waitlist",
-            dedupeKey = dedupeKeyUserScoped("run.user_joined_waitlist", sessionId, user.id.orEmpty(), bookingId)
+            templateId = "run.user_joined_waitlist_admin",
+            dedupeKey = dedupeKeyUserScoped("run.user_joined_waitlist_admin", sessionId, user.id.orEmpty(), bookingId)
         )
     }
 
@@ -219,7 +219,7 @@ class RunSessionPushNotificationService(
             trigger = "RUN_SESSION_BOOKING_CANCELLED",
             triggerRefId = sessionId,
             templateId = "run.booking_cancelled",
-            dedupeKey = dedupeKeyBookingScoped("run.booking_cancelled", sessionId, targetUserId, bookingId)
+            dedupeKey = dedupeKeyBookingScoped("run.booking_promoted", sessionId, targetUserId, bookingId)
         )
     }
 
