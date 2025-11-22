@@ -137,7 +137,7 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
 
         }
         // tried to join a wailist when the runsession is not ful
-        return JoinWaitListResponse(true, null, run, false, refresh = true)
+        return JoinWaitListResponse(false, null, run, false, refresh = true)
     }
 
     fun completeFlow(run: RunSession, booking:Booking, runUser: RunUser): RunSession{
