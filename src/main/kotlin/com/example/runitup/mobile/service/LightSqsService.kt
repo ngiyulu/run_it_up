@@ -148,7 +148,7 @@ class LightSqsService(
     private val redis: StringRedisTemplate,
     private val appScope: CoroutineScope,
     @Value("\${queue.defaultVisibilitySeconds:90}") private val defaultVisibility: Int,
-    @Value("\${queue.defaultWaitSeconds:20}") private val defaultWaitSeconds: Int,
+    @Value("\${queue.defaultWaitSeconds:30}") private val defaultWaitSeconds: Int,
     @Value("\${queue.defaultMaxReceiveCount:5}") private val defaultMaxReceiveCount: Int,
     @Value("\${queue.poll.dueScanMs:1000}") private val scanMs: Long,
     @Value("\${queue.dlq.retry.enabled:true}") private val dlqRetryEnabled: Boolean = true,
