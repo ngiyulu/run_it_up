@@ -102,7 +102,7 @@ class RunSessionService(): BaseService(){
     }
 
     fun startConfirmationProcess(run: RunSession, actor:String): RunSession{
-        val bookingList  = bookingDbService.getBookingList(run.id.orEmpty())
+        val bookingList  = bookingDbService.getJoinedBookingList(run.id.orEmpty())
         run.bookings = bookingList.toMutableList()
         if(!run.isSessionFree()){
             // we captured the charge in stripe

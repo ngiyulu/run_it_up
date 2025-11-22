@@ -55,7 +55,7 @@ class RunSessionConfirmedConsumer(
                 logger.info("Run $payload already ${run.status}, skipping")
                 return@withContext
             }
-            val booking = bookingDbService.getBookingList(runSessionId)
+            val booking = bookingDbService.getJoinedBookingList(runSessionId)
             val joinedCount = booking.size
             if (joinedCount < run.minimumPlayer) {
                 logger.info("Run $runSessionId not eligible: $joinedCount/${run.minimumPlayer}")
