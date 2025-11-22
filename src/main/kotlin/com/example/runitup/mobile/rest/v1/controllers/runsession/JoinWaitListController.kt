@@ -88,6 +88,8 @@ class JoinWaitListController: BaseController<JoinWaitListModel, JoinWaitListResp
         // this can happen a user leaves and this call is made before the job is a chance to promote
         //someone from the waitlist
 
+        logger.info("fullCapacity = ${run.atFullCapacity()}")
+        logger.info("waitlist count = ${ run.waitList.count()}")
         if (run.atFullCapacity() || run.waitList.isNotEmpty()) {
             if (!run.isSessionFree()) {
                 val pm = request.paymentMethodId
