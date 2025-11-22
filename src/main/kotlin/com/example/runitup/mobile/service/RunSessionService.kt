@@ -85,7 +85,7 @@ class RunSessionService(): BaseService(){
     fun confirmRunSession(runSessionId:String): UpdateResult{
         val q = Query(
             Criteria.where("_id").`is`(runSessionId)
-                .and("status").`is`(RunStatus.CONFIRMED)
+                .and("status").`is`(RunStatus.PENDING)
         )
         val u = Update()
             .set("status", RunStatus.CONFIRMED)
