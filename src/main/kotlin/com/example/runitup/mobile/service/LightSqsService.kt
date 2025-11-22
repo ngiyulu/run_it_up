@@ -147,7 +147,7 @@ class LightSqsService(
     @Qualifier("queueRedisTemplate")
     private val redis: StringRedisTemplate,
     private val appScope: CoroutineScope,
-    @Value("\${queue.defaultVisibilitySeconds:30}") private val defaultVisibility: Int,
+    @Value("\${queue.defaultVisibilitySeconds:90}") private val defaultVisibility: Int,
     @Value("\${queue.defaultWaitSeconds:20}") private val defaultWaitSeconds: Int,
     @Value("\${queue.defaultMaxReceiveCount:5}") private val defaultMaxReceiveCount: Int,
     @Value("\${queue.poll.dueScanMs:1000}") private val scanMs: Long,
@@ -414,27 +414,24 @@ class LightSqsService(
 
     private suspend fun maintenanceOnce() = withContext(io) {
         val now = System.currentTimeMillis().toDouble()
-        val delayedKeys = scanKeys("q:*:delayed")
-        for (delayedKey in delayedKeys) {
+
+        // 1) delayed -> ready
+        for (delayedKey in scanKeys("q:*:delayed")) {
             val q = delayedKey.substringAfter("q:").substringBefore(":delayed")
-
-            // move due delayed -> ready
-            val due = redis.opsForZSet().rangeByScore(delayedKey, Double.NEGATIVE_INFINITY, now) ?: emptySet()
-            if (due.isNotEmpty()) {
-                due.forEach { msgId ->
-                    redis.opsForZSet().remove(delayedKey, msgId)
-                    redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
-                }
+            val due = redis.opsForZSet().rangeByScore(delayedKey, Double.NEGATIVE_INFINITY, now).orEmpty()
+            due.forEach { msgId ->
+                redis.opsForZSet().remove(delayedKey, msgId)
+                redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
             }
+        }
 
-            // requeue expired inflight
-            val inflightKey = RedisKeys.inflight(q)
-            val expired = redis.opsForZSet().rangeByScore(inflightKey, Double.NEGATIVE_INFINITY, now) ?: emptySet()
-            if (expired.isNotEmpty()) {
-                expired.forEach { msgId ->
-                    redis.opsForZSet().remove(inflightKey, msgId)
-                    redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
-                }
+        // 2) expired inflight -> ready  (scan all inflight keys)
+        for (inflightKey in scanKeys("q:*:inflight")) {
+            val q = inflightKey.substringAfter("q:").substringBefore(":inflight")
+            val expired = redis.opsForZSet().rangeByScore(inflightKey, Double.NEGATIVE_INFINITY, now).orEmpty()
+            expired.forEach { msgId ->
+                redis.opsForZSet().remove(inflightKey, msgId)
+                redis.opsForList().leftPush(RedisKeys.ready(q), msgId)
             }
         }
     }

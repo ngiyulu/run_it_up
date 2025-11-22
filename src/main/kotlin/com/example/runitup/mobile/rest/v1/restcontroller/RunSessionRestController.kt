@@ -1,7 +1,7 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.rest.v1.controllerprovider.SessionControllersProvider
+import com.example.runitup.mobile.rest.v1.controllers.runsession.*
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.CreateRunSessionController
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.GetRunSessionDetailController
 import com.example.runitup.mobile.rest.v1.controllers.user.controller.runsession.GetUserRunSessionByDate
@@ -14,7 +14,9 @@ import com.example.runitup.mobile.rest.v1.dto.session.*
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIRequest
 import com.example.runitup.mobile.rest.v1.dto.stripe.CreatePIResponse
 import com.example.runitup.mobile.rest.v1.dto.user.CheckIn
+import com.example.runitup.mobile.service.PromotionResult
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Profile
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
@@ -30,7 +32,55 @@ class RunSessionRestController {
     lateinit var createSessionController: CreateRunSessionController
 
     @Autowired
-    lateinit var sessionControllersProvider: SessionControllersProvider
+    lateinit var promoteUserController: PromoteUserController
+
+    @Autowired
+    lateinit var confirmSessionController: ConfirmSessionController
+
+    @Autowired
+    lateinit var getRunSessionController: GetRunSessionController
+
+    @Autowired
+    lateinit var runHistoryByDateController: RunHistoryByDateController
+
+    @Autowired
+    lateinit var getRunSessionListController: GetRunSessionListController
+
+    @Autowired
+    lateinit var getMyBookingSessionController: GetMyBookingList
+
+    @Autowired
+    lateinit var joinSessionController: JoinSessionController
+
+    @Autowired
+    lateinit var joinWaitListController: JoinWaitListController
+
+    @Autowired
+    lateinit var updateSessionController: UpdateSessionController
+
+    @Autowired
+    lateinit var cancelSessionController: CancelSessionController
+
+    @Autowired
+    lateinit var checkInController: CheckInController
+
+    @Autowired
+    lateinit var completeSessionController: CompleteSessionController
+
+    @Autowired
+    lateinit var leaveSessionController: LeaveSessionController
+
+    @Autowired
+    lateinit var cancelBookingController: CancelBookingController
+
+    @Autowired
+    lateinit var startSessionController: StartSessionController
+
+    @Autowired
+    lateinit var updateSessionGuest: UpdateSessionGuest
+
+    @Autowired
+    lateinit var createPaymentIntent: CreatePaymentIntent
 
     @Autowired
     lateinit var getUserRunSessionByDate: GetUserRunSessionByDate
@@ -40,32 +90,32 @@ class RunSessionRestController {
 
     @PostMapping("/join")
     fun join(@RequestBody model: JoinSessionModel): JoinRunSessionResponse {
-        return sessionControllersProvider.joinSessionController.execute(model)
+        return joinSessionController.execute(model)
     }
 
     @PostMapping("/waitlist")
     fun joinWaitList(@RequestBody model: JoinWaitListModel): JoinWaitListResponse {
-        return sessionControllersProvider.joinWaitListController.execute(model)
+        return joinWaitListController.execute(model)
     }
 
     @PostMapping("/confirm")
     fun confirm(@RequestBody model: ConfirmSessionModel): RunSession {
-        return sessionControllersProvider.confirmSessionController.execute(model)
+        return confirmSessionController.execute(model)
     }
 
     @PostMapping("/update")
     fun update(@RequestBody model: RunSession): RunSession {
-        return sessionControllersProvider.updateSessionController.execute(model)
+        return updateSessionController.execute(model)
     }
 
     @GetMapping("/retrieve/{id}")
     fun getSession(@PathVariable id:String): RunSession {
-        return sessionControllersProvider.getRunSessionController.execute(id)
+        return getRunSessionController.execute(id)
     }
 
     @GetMapping("/history/{date}")
     fun getHistory(@PathVariable date:String): List<RunSession> {
-        return sessionControllersProvider.runHistoryByDateController.execute(date)
+        return runHistoryByDateController.execute(date)
     }
 
     @GetMapping("/retrieve/details/{id}")
@@ -75,7 +125,7 @@ class RunSessionRestController {
 
     @GetMapping("/booking/{id}")
     fun getMyBooking(@PathVariable id:String):List<RunSession> {
-        return sessionControllersProvider.getMyBookingSessionController.execute(id)
+        return getMyBookingSessionController.execute(id)
     }
 
 
@@ -87,7 +137,7 @@ class RunSessionRestController {
                         @RequestParam(defaultValue = "25") size: Int,
                         @RequestHeader("X-Timezone", required = true) tzHeader: String
     ):List<RunSession> {
-        return sessionControllersProvider.getRunSessionListController.execute(
+        return getRunSessionListController.execute(
             SessionListModel(
                 longitude = long,
                 latitude = lat,
@@ -101,44 +151,51 @@ class RunSessionRestController {
 
     @PostMapping("/check-in")
     fun checkInLevel(@RequestBody model: CheckIn): RunSession {
-        return sessionControllersProvider.checkInController.execute(model)
+        return checkInController.execute(model)
     }
 
     @PostMapping("/cancel")
     fun checkInLevel(@RequestBody model: CancelSessionModel): RunSession {
-        return sessionControllersProvider.cancelSessionController.execute(model)
+        return cancelSessionController.execute(model)
     }
 
     @PostMapping("/complete")
     fun completeSession(@RequestBody model: ConfirmSessionModel): RunSession {
-        return sessionControllersProvider.completeSessionController.execute(model)
+        return completeSessionController.execute(model)
     }
 
     @PostMapping("/leave")
     fun leaveSession(@RequestBody model: LeaveSessionModel): RunSession {
-        return sessionControllersProvider.leaveSessionController.execute(model)
+        return leaveSessionController.execute(model)
     }
 
     // this is the same as leaveSession except this will be triggered by admin from the app
     // this another endpoint for the web
     @PostMapping("/booking/cancel")
     fun cancelBooking(@RequestBody model: CancelBookingModel): RunSession {
-        return sessionControllersProvider.cancelBookingController.execute(model)
+        return cancelBookingController.execute(model)
     }
 
     @PostMapping("/start")
     fun startSession(@RequestBody model: StartSessionModel): RunSession {
-        return sessionControllersProvider.startSessionController.execute(model)
+        return startSessionController.execute(model)
+    }
+
+
+    @Profile(value = ["dev", "local"])
+    @PostMapping("/promote")
+    fun promoteUser(@RequestBody model: PromotionRequestModel): PromotionResult {
+        return promoteUserController.execute(model)
     }
 
     @PostMapping("/update/guest")
     fun updateSessionGuest(@RequestBody model: JoinSessionModel): RunSession {
-        return sessionControllersProvider.updateSessionGuest.execute(model)
+        return updateSessionGuest.execute(model)
     }
 
     @PostMapping("/payment/intent")
     fun createPaymentIntent(@RequestBody model: CreatePIRequest): CreatePIResponse {
-        return sessionControllersProvider.createPaymentIntent.execute(model)
+        return createPaymentIntent.execute(model)
     }
 
     @PostMapping("/create")
