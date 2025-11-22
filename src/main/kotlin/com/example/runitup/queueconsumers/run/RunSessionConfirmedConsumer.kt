@@ -49,7 +49,11 @@ class RunSessionConfirmedConsumer(
         val jobData: JobEnvelope<JoinSessionQueueModel> = objectMapper.readValue(rawBody) as JobEnvelope<JoinSessionQueueModel>
         val payload = jobData.payload
         withContext(Dispatchers.IO) {
-            val run = cacheManager.getRunSession(payload.runSessionId) ?: return@withContext
+            val run = cacheManager.getRunSession(payload.runSessionId)
+            if(run == null){
+                logger.error("error, run ${payload.runSessionId} was not found")
+                 return@withContext
+            }
             val runSessionId = run.id.orEmpty()
             if(run.status != RunStatus.PENDING){
                 logger.info("Run $payload already ${run.status}, skipping")
@@ -63,6 +67,7 @@ class RunSessionConfirmedConsumer(
             }
             // this is  mechanism for making sure that there is no race condition issue
             val result = runSessionService.confirmRunSession(runSessionId)
+            logger.info(result.toString())
             // We "won" the race — send notifications now
             if(result.modifiedCount == 1L){
                 if(!run.isSessionFree()){

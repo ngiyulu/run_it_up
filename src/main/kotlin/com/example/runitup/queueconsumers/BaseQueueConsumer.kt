@@ -108,6 +108,10 @@ abstract class BaseQueueConsumer(
         traceId: String?
     )
 
+    fun logClass(){
+        logger.info("${this.logClass().javaClass.simpleName} is running")
+    }
+
     private fun coroutineName() = this::class::simpleName.name
 
     fun delay(): Long = 30_000
