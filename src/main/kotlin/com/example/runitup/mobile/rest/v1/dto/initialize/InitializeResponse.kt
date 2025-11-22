@@ -18,5 +18,7 @@ class InitializeResponse(
     var allowedPayment: Boolean = false,
     var guideLines: List<GuideLine>,
     var userStats: UserStat? = null,
+    @Value("\${refund_url}")
+    var refundUrl:String = "",
     var messagingEnabled:Boolean = false,
 )

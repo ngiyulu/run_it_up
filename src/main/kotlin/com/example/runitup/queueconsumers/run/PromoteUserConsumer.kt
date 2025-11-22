@@ -33,11 +33,11 @@ class PromoteUserConsumer(
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("PromoteUserConsumer, is running")
         val env: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
-        queueService.changeMessageVisibility(
-            QueueNames.RUN_SESSION_PUSH_JOB,
-            jobId,
-            120   // give the worker 2 minutes
-        )
+//        queueService.changeMessageVisibility(
+//            QueueNames.WAIT_LIST_JOB,
+//            jobId,
+//            120   // give the worker 2 minutes
+//        )
         logger.info(env.toString())
         runSessionEventLogger.log(
             sessionId = env.jobId,
