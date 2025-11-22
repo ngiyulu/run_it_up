@@ -109,8 +109,8 @@ abstract class BaseQueueConsumer(
         receiptHandle:String
     )
 
-    fun logClass(){
-        logger.info("${this.logClass().javaClass.simpleName} is running")
+    fun logClass() {
+        logger.info("${this::class.java.simpleName} is running")
     }
 
     private fun coroutineName() = this::class::simpleName.name
