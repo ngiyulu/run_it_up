@@ -28,6 +28,9 @@ class PromoteUserConsumer(
     private val promotionService: PromotionService
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.WAIT_LIST_JOB, objectMapper) {
 
+    override fun delay(): Long = 2_000          // poll every 2s
+    override fun waitSeconds(): Int = 5         // short poll but responsive
+    override fun maxNumberOfMessages(): Int = 10
 
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue

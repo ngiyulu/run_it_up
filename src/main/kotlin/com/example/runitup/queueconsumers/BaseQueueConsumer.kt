@@ -115,9 +115,9 @@ abstract class BaseQueueConsumer(
 
     private fun coroutineName() = this::class::simpleName.name
 
-    fun delay(): Long = 30_000
+    open fun delay(): Long = 30_000
 
-    fun waitSeconds(): Int = 10
+    open fun waitSeconds(): Int = 10
 
-    fun maxNumberOfMessages(): Int = 2
+    open fun maxNumberOfMessages(): Int = 2
 }
