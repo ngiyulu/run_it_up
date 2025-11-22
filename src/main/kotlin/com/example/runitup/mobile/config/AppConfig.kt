@@ -13,4 +13,5 @@ class AppConfig {
     var waiverUrl:String = ""
     var messaging:Boolean = false
     var baseUrl: String = ""
+    var refundUrl:String = ""
 }
