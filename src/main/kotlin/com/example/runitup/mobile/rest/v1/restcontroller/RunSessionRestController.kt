@@ -115,7 +115,7 @@ class RunSessionRestController {
     }
 
     @PostMapping("/leave")
-    fun leaveSession(@RequestBody model: CancelSessionModel): RunSession {
+    fun leaveSession(@RequestBody model: LeaveSessionModel): RunSession {
         return sessionControllersProvider.leaveSessionController.execute(model)
     }
 

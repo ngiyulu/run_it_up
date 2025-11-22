@@ -42,6 +42,6 @@ class PromoteUserConsumer(
             correlationId = null,
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
-        promotionService.promoteNextWaitlistedUser(env.jobId)
+        promotionService.promoteNextWaitlistedUser(env.payload)
     }
 }

@@ -1,9 +1,14 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
+import com.example.runitup.mobile.model.JobEnvelope
+import com.example.runitup.mobile.queue.QueueNames
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
 import kotlinx.coroutines.runBlocking
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/api/queues")
@@ -47,6 +52,19 @@ class QueueController(private val q: LightSqsService) {
     fun delete(@PathVariable name: String, @RequestBody req: AckRequest) =
         runBlocking {
             mapOf("deleted" to q.deleteMessage(name, req.receiptHandle))
+        }
+
+
+
+    @PostMapping("/add/waitlist")
+    fun addToQueue(@RequestBody req: WaitListQueueMessage) =
+        runBlocking {
+            val jobEnvelope = JobEnvelope(
+                jobId = UUID.randomUUID().toString(),
+                taskType = "Notification booking cancelled by user",
+                payload = req.runSession
+            )
+            q.sendJob(QueueNames.WAIT_LIST_JOB, jobEnvelope)
         }
 
 
@@ -110,3 +128,5 @@ data class QueueOverview(
 )
 data class AckRequest(val receiptHandle: String)
 data class ChangeVisibilityRequest(val receiptHandle: String, val visibilitySeconds: Int)
+
+data class WaitListQueueMessage(val queue:String, val runSession:String)
