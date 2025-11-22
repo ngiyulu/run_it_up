@@ -83,7 +83,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
         if(run.atFullCapacity() || run.waitList.isNotEmpty()){
             // join waitlist and let the job take care of promoting the user
             logger.info("we are waitlisting user")
-            joinWaitListController.execute(JoinWaitListModel(request.sessionId, request.paymentMethodId.orEmpty()))
+            joinWaitListController.execute(JoinWaitListModel(request.sessionId, "Join session API", request.paymentMethodId.orEmpty()))
             return  JoinRunSessionResponse(JoinRunSessionStatus.WAITLISTED, run)
         }
         val availableSpots = run.availableSpots()
