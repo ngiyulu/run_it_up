@@ -35,7 +35,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         val startUtc = request.date.atStartOfDay(userZone).toInstant()
         val endUtc = request.date.plusDays(1)?.atStartOfDay(userZone)?.toInstant()
         val maxDistanceMeters = radius * 1609.344 // 32186.88
-        val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING)
+        val statuses = listOf(RunStatus.PENDING, RunStatus.PROCESSED, RunStatus.ONGOING, RunStatus.CONFIRMED)
         val page = runSessionRepository.findJoinableRunsExcludingUserNearOnLocalDay(
             userId = user.id.orEmpty(),
             lat = request.latitude,
