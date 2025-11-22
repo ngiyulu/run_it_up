@@ -35,6 +35,9 @@ class RunSessionPushConsumer(
     private val bookingRepository: BookingRepository
 ): BaseQueueConsumer(queueService, appScope, trackerService, QueueNames.RUN_SESSION_PUSH_JOB, objectMapper) {
 
+    override fun delay(): Long = 2_000          // poll every 2s
+    override fun waitSeconds(): Int = 5         // short poll but responsive
+    override fun maxNumberOfMessages(): Int = 10
     override suspend fun processOne(rawBody: String, taskType: String, jobId: String, traceId: String?, receiptHandle:String) {
         // Fetch up to 5 messages from the "jobs" queue
         logger.info("RunSessionPushConsumer is running")
