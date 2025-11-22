@@ -166,6 +166,7 @@ class LightSqsService(
 
 ) {
     private val io = Dispatchers.IO
+    private val logger = myLogger()
 
     init {
         appScope.launch(CoroutineName("queue-maintenance")) {
@@ -189,6 +190,7 @@ class LightSqsService(
         attributes: Map<String, String> = emptyMap(),
         delaySeconds: Int = 0
     ): String = withContext(io) {
+        logger.info("send job,  queue = $queue, envelope = $envelope")
         val id = UUID.randomUUID().toString()
         val msgKey = RedisKeys.msg(queue, id)
         val bodyJson = om.writeValueAsString(envelope)
