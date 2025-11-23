@@ -14,5 +14,6 @@ enum class RunSessionAction {
     USER_LEFT,
     USER_KICKED_OUT,
     UPDATE_GUEST,
-    BOOKING_REFUND
+    BOOKING_REFUND,
+    BOOKING_CANCELLED_BY_ADMIN
 }
