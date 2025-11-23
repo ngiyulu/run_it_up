@@ -11,7 +11,7 @@ data class RunSessionEvent(
     val actor: Actor,
     val subjectUserId: String? = null,
     val reason: String? = null,
-    val metadata: Map<String, Any?>? = null,
+    val metadata: Map<String, String?>? = null,
     val prevStatus: String? = null,
     val newStatus: String? = null,
     val correlationId: String? = null,
