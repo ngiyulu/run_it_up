@@ -25,8 +25,8 @@ class CompleteRunSessionCronJob(
         runner.runCron(jobName = "complete-run-session", ttlSeconds = 300) { audit ->
             // example job body — NEVER blocks HTTP threads
             withContext(Dispatchers.IO) {
-                val session = runSessionRepository.findByStatus(RunStatus.ONGOING)
-                session.forEach {
+                val runSession = runSessionRepository.findByStatus(RunStatus.ONGOING)
+                runSession.forEach {
                     val shouldProcess =timeService.hasEndedAtLeast(
                         it.date,
                         it.endTime,
