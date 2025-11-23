@@ -164,7 +164,15 @@ class RunSessionPushConsumer(
             return
         }
         val run = getRunSession(booking.runSessionId)
-        runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run, bookingId)
+        run.hostedBy?.let {
+            val adminUser = getAdmin(it)
+            if(adminUser.id.orEmpty() != booking.userId){
+                runSessionPushNotificationService.runSessionBookingCancelledByAdmin(booking.userId, run, bookingId)
+            }
+            else{
+                logger.info("user whose booking got cancelled is also the admin")
+            }
+        }
     }
 
     private fun  notifyUserBookingCancelledByUser(bookingId:String){
