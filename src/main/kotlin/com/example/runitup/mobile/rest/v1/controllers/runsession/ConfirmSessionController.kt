@@ -3,6 +3,7 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
@@ -50,12 +51,14 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             throw ApiRequestException(text("min_player"))
         }
         run = runSessionService.startConfirmationProcess(run, user.id.orEmpty())
-        if(request.isAdmin){
-            run.updateStatus()
-            run.bookings = run.bookings.map {
-                bookingDbService.getBookingDetails(it)
-            }.toMutableList()
+        val list = mutableListOf<Booking>()
+        run.bookingList.forEach {
+            val bookingDb = bookingRepository.findById(it.bookingId)
+            if(bookingDb.isPresent){
+                list.add(bookingDb.get())
+            }
         }
+        run.bookings = list
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_CONFIRMED,
