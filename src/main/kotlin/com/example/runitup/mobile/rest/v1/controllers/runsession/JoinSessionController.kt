@@ -177,7 +177,7 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             newStatus = null,
             reason = "Self-join",
             correlationId = MDC.get(AppConstant.TRACE_ID) as? String,
-            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE) as String)
         )
         messagingService.createParticipant(CreateParticipantModel(run.id.orEmpty(), participant, run.getConversationTitle())).block()
         return  JoinRunSessionResponse(JoinRunSessionStatus.NONE, updated)

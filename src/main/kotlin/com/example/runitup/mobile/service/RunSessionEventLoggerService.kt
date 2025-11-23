@@ -16,7 +16,7 @@ class RunSessionEventLogger(
         actor: Actor,
         subjectUserId: String? = null,
         reason: String? = null,
-        metadata: Map<String, Any?>? = null,
+        metadata: Map<String, String?>? = null,
         prevStatus: String? = null,
         newStatus: String? = null,
         correlationId: String? = null,
