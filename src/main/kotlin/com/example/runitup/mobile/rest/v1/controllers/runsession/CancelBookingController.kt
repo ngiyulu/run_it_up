@@ -76,10 +76,6 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
         val (booking, run )= leaveSessionService.cancelBooking(user, sessionId, admin)
         run.updateStatus()
         // we need to return this for admin
-        val bookings = run.bookings.map {
-            bookingDbService.getBookingDetails(it)
-        }.toMutableList()
-        run.bookings = bookings
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.BOOKING_CANCELLED_BY_ADMIN,
@@ -98,6 +94,9 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
         val updatedRun = runService.updateRunSession(run)
+        val bookings = run.bookings.map {
+            bookingDbService.getBookingDetails(it)
+        }.toMutableList()
         updatedRun.bookings = bookings
         return updatedRun
     }
