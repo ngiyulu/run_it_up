@@ -97,6 +97,7 @@ class RunSessionService(): BaseService(){
 
     fun updateRunSession(runSession: RunSession): RunSession{
         runSession.bookings = mutableListOf()
+        runSession.version ++
         cacheManager.updateRunSession(runSession)
         return runSession
     }
