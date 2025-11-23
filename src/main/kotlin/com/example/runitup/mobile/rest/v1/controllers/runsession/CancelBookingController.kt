@@ -4,10 +4,12 @@ import com.example.runitup.common.model.AdminUser
 import com.example.runitup.common.repo.AdminUserRepository
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.queue.QueueNames
+import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
@@ -44,7 +46,7 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
     lateinit var queueService: LightSqsService
 
     @Autowired
-    lateinit var bookingDbService: BookingDbService
+    lateinit var bookingRepository: BookingRepository
 
     override fun execute(request: CancelBookingModel): RunSession {
         val auth = SecurityContextHolder.getContext().authentication
@@ -94,10 +96,14 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, jobEnvelope,  delaySeconds = 0)
         }
         val updatedRun = runService.updateRunSession(run)
-        val bookings = run.bookings.map {
-            bookingDbService.getBookingDetails(it)
-        }.toMutableList()
-        updatedRun.bookings = bookings
+        val list = mutableListOf<Booking>()
+        updatedRun.bookingList.forEach {
+            val bookingDb = bookingRepository.findById(it.bookingId)
+            if(bookingDb.isPresent){
+                list.add(bookingDb.get())
+            }
+        }
+        updatedRun.bookings = list
         return updatedRun
     }
 }
