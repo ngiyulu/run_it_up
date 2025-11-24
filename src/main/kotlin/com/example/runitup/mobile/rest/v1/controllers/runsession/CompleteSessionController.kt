@@ -12,13 +12,15 @@ import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.rest.v1.dto.session.ConfirmSessionModel
 import com.example.runitup.mobile.service.RunSessionService
 import org.slf4j.MDC
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>() {
 
-
+    @Autowired
     lateinit var runSessionService: RunSessionService
+    @Autowired
     lateinit var bookingDbService: BookingDbService
 
     override fun execute(request: ConfirmSessionModel): RunSession {
