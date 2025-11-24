@@ -23,4 +23,5 @@ class InitializeResponse(
     var refundUrl:String = "",
     var messagingEnabled:Boolean = false,
     var adminUser: AdminUser? = null,
+    var displayDays:Int
 )

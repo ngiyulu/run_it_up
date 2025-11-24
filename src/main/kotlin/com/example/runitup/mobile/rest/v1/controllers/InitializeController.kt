@@ -78,7 +78,7 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
             adminUser = cacheManager.getAdmin(it)
         }
 
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser).apply {
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser, appConfig.displayDays).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
             }

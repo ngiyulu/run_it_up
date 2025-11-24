@@ -58,6 +58,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
     @Autowired
     lateinit var appScope: CoroutineScope
 
+    @Autowired
+    lateinit var appConfig: AppConfig
+
 
     override fun execute(request: CreateRunSessionRequest): RunSession {
         val gymDb = gymRepository.findById(request.gymId)
@@ -181,8 +184,8 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
                 taskType = "Notification new user joined run waitlist",
                 payload = run.id.orEmpty()
             )
-            val isWithin5Days = timeService.isWithinNextDays(runSession, 5)
-            logger.info("is job within 5 days from today = $isWithin5Days")
+            val isWithin5Days = timeService.isWithinNextDays(runSession, appConfig.displayDays.toLong())
+            logger.info("is job within ${appConfig.displayDays} days from today = $isWithin5Days")
             if(isWithin5Days){
                 appScope.launch {
                     queueService.sendJob(QueueNames.NEW_RUN_JOB, jobEnvelope,  delaySeconds = 0)
