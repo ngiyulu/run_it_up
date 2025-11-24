@@ -37,6 +37,7 @@ class RunSessionEventIndexesConfig(private val mongoTemplate: MongoTemplate) {
             .on("prevStatus", Sort.Direction.ASC).on("newStatus", Sort.Direction.ASC)
             .on("ts", Sort.Direction.ASC).named("session_transition_ts_idx"))
 
+
         idx.createIndex(Index().on("ts", Sort.Direction.DESC).named("ts_desc_idx"))
     }
 }

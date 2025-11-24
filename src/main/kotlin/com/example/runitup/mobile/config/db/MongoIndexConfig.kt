@@ -27,6 +27,12 @@ class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {
             )
         )
 
+        indexOps.createIndex(
+            org.springframework.data.mongodb.core.index.GeospatialIndex("coordinate")
+                .typed(org.springframework.data.mongodb.core.index.GeoSpatialIndexType.GEO_2DSPHERE)
+                .named("location_2dsphere_idx")
+        )
+
         val indexDefinition = CompoundIndexDefinition(indexDoc)
             .named("loc_priv_status_startAtUtc_idx")
         // --- New date index ---
@@ -39,6 +45,8 @@ class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {
 
         // ✅ Use createIndex() instead of ensureIndex()
         indexOps.createIndex(indexDefinition)
+
+
 
         log.info("✅ Created MongoDB index: loc_priv_status_date_time_idx (if not existing)")
     }

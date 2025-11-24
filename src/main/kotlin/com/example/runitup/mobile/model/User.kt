@@ -42,7 +42,6 @@ data class User(
     var runSessions:MutableList<RunSession>? = null,
     var skillLevel: SkillLevel? = null,
     var creator: Creator = Creator.USER,
-    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     var coordinate: GeoJsonPoint? = null,
     var actions:List<UserActionRequired> = mutableListOf(),
     var linkedAdmin: String? = null,
