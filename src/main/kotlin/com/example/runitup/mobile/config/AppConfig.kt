@@ -14,4 +14,5 @@ class AppConfig {
     var messaging:Boolean = false
     var baseUrl: String = ""
     var refundUrl:String = ""
+    var displayDays:Int = 3
 }
