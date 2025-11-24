@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
@@ -39,7 +42,8 @@ data class User(
     var runSessions:MutableList<RunSession>? = null,
     var skillLevel: SkillLevel? = null,
     var creator: Creator = Creator.USER,
-    var coordinate: Coordinate? = null,
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    var coordinate: GeoJsonPoint? = null,
     var actions:List<UserActionRequired> = mutableListOf(),
     var linkedAdmin: String? = null,
     var userType: UserType? = null,

@@ -30,6 +30,13 @@ class BookingIndexesConfig(private val mongoTemplate: MongoTemplate) {
                 .named("userId_status_createdAt_desc_idx")
         )
 
+        idx.createIndex(
+            Index()
+                .on("runSessionId", Sort.Direction.ASC)
+                .on("status", Sort.Direction.ASC)
+                .named("runSessionId_status_idx")
+        )
+
         // Unique-ish matcher for quick GET (user + session + status)
         idx.createIndex(
             Index().on("userId", Sort.Direction.ASC)

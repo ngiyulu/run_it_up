@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.mobile.model.RunSession
 import org.springframework.stereotype.Service
 import java.time.*
 
@@ -41,6 +42,22 @@ class TimeService {
 
         val diffMinutes = Duration.between(endInstant, now).toMinutes()
         return diffMinutes >= minMinutes
+    }
+
+    fun isWithinNextDays(session: RunSession, days: Long = 5): Boolean {
+        val zone = ZoneId.of(session.zoneId)
+
+        // Build the session start as a ZonedDateTime in the session’s timezone
+        val sessionStart: ZonedDateTime = ZonedDateTime.of(
+            session.date,
+            session.startTime,
+            zone
+        )
+
+        val now: ZonedDateTime = ZonedDateTime.now(zone)
+        val cutoff: ZonedDateTime = now.plusDays(days)
+
+        return !sessionStart.isBefore(now) && !sessionStart.isAfter(cutoff)
     }
 
     fun minutesBetween(start: LocalTime, end: LocalTime): Long {

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint
 import org.springframework.stereotype.Component
 
 @Component
@@ -33,7 +34,8 @@ class UserLocationConsumer(
             val userDb = userRepository.findById(payload.userId)
             if(userDb.isPresent){
                 val user = userDb.get()
-                user.coordinate = payload.coordinate
+                val coor = payload.coordinate
+                user.coordinate = GeoJsonPoint(coor.longitude.toDouble(), coor.latitude.toDouble())
                 userRepository.save(user)
             }
 

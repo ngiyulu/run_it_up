@@ -1,13 +1,18 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.cache.MyCacheManager
+import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.WaitlistSetupStateRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
+import org.slf4j.MDC
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -17,6 +22,7 @@ class PromotionService(
     private val waitlistSetupRepo: WaitlistSetupStateRepository,
     private val adjuster: BookingPricingAdjuster,
     private  val bookingDbService: BookingDbService,
+    private val runSessionEventLogger: RunSessionEventLogger,
     private val cacheManager: MyCacheManager,
     private val sessionService: RunSessionService,
     private val runSessionPushNotificationService: RunSessionPushNotificationService,
@@ -189,6 +195,15 @@ class PromotionService(
         booking.promotedAt = Instant.now()
         booking.isLocked = false
         bookingRepo.save(booking)
+        runSessionEventLogger.log(
+            sessionId = booking.runSessionId,
+            action = RunSessionAction.USER_PROMOTED_FROM_WAITLIST,
+            actor = Actor(ActorType.SYSTEM, ""),
+            newStatus = null,
+            reason = "System attempting to promote user from waitlist",
+            correlationId = null,
+            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+        )
         runSessionPushNotificationService.notifyAdminUserPromotion(runSession.hostedBy.orEmpty(), user, runSession, booking.id.orEmpty())
         runSessionPushNotificationService.runSessionBookingPromoted(user.id.orEmpty(), runSession, booking.id.orEmpty())
         // TODO: add text message and email
