@@ -5,18 +5,21 @@ import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.constants.AppConstant.TRACE_ID
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.controllers.UserModelType
-import com.example.runitup.mobile.rest.v1.dto.Actor
-import com.example.runitup.mobile.rest.v1.dto.ActorType
-import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
-import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
+import com.example.runitup.mobile.rest.v1.dto.*
+import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.NumberGenerator
+import com.example.runitup.mobile.service.TimeService
 import com.example.runitup.mobile.service.http.MessagingService
 import com.example.runitup.web.security.AdminPrincipal
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import model.messaging.Conversation
 import model.messaging.ConversationType
 import org.bson.types.ObjectId
@@ -34,9 +37,14 @@ import java.util.*
 class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSession>() {
 
 
-
     @Autowired
     lateinit var gymRepository: GymRepository
+
+    @Autowired
+    lateinit var timeService: TimeService
+
+    @Autowired
+    lateinit var  queueService: LightSqsService
 
     @Autowired
     lateinit var messagingService: MessagingService
@@ -46,6 +54,9 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
 
     @Autowired
     lateinit var numberGenerator: NumberGenerator
+
+    @Autowired
+    lateinit var appScope: CoroutineScope
 
 
     override fun execute(request: CreateRunSessionRequest): RunSession {
@@ -163,6 +174,22 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             correlationId = MDC.get(TRACE_ID) as? String,
             idempotencyKey = "session:create:${run.id}"
         )
+
+        appScope.launch {
+            val jobEnvelope = JobEnvelope(
+                jobId = UUID.randomUUID().toString(),
+                taskType = "Notification new user joined run waitlist",
+                payload = run.id.orEmpty()
+            )
+            val isWithin5Days = timeService.isWithinNextDays(runSession, 5)
+            logger.info("is job within 5 days from today = $isWithin5Days")
+            if(isWithin5Days){
+                appScope.launch {
+                    queueService.sendJob(QueueNames.NEW_RUN_JOB, jobEnvelope,  delaySeconds = 0)
+                }
+            }
+
+        }
 
         return  runSession
     }

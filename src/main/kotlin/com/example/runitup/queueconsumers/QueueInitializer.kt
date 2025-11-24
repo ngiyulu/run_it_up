@@ -21,6 +21,7 @@ class QueueInitializer(
             listOf(
                 QueueInitializerModel(QueueNames.WAIT_LIST_JOB,  visibilitySeconds = 300),
                 QueueInitializerModel(QueueNames.JOINED_RUN_JOB),
+                QueueInitializerModel(QueueNames.NEW_RUN_JOB),
                 QueueInitializerModel(QueueNames.FIRST_SESSION_JOB),
                 QueueInitializerModel(QueueNames.LOCATION_JOB),
                 QueueInitializerModel(QueueNames.NEW_USER_JOB),

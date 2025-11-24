@@ -47,7 +47,7 @@ class PromoteUserConsumer(
             action = RunSessionAction.USER_PROMOTED_FROM_WAITLIST,
             actor = Actor(ActorType.SYSTEM, jobId),
             newStatus = null,
-            reason = "System promoting user from waitlist",
+            reason = "System attempting to promote user from waitlist",
             correlationId = null,
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )

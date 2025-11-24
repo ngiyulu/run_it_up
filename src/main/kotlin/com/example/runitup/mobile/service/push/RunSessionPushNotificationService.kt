@@ -201,6 +201,30 @@ class RunSessionPushNotificationService(
     }
 
 
+    fun notifyUserNewRunCreated(targetUserId: String, runSession: RunSession) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "Join a new session in ${runSession.gym?.city ?: ""}",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        val phones = phoneService.getPhonesByUser(targetUserId)
+        val templateId = "run.created"
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_CREATED",
+            triggerRefId = sessionId,
+            templateId = templateId,
+            dedupeKey = dedupeKeyUserScoped(templateId, sessionId, targetUserId)
+        )
+    }
+
+
     fun runSessionBookingPromoted(targetUserId: String, runSession: RunSession, bookingId:String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
@@ -265,6 +289,7 @@ class RunSessionPushNotificationService(
             "$templateId:$sessionId:$userId"
     }
 
-    private fun dedupeKeyUserScoped(templateId: String, sessionId: String, userId: String, bookingId:String): String =
-        "$templateId:$sessionId:$userId"
+    private fun dedupeKeyUserScoped(templateId: String, sessionId: String, userId: String, bookingId:String? = null): String =
+        if(bookingId != null)  "$templateId:$sessionId:$userId:$bookingId" else  "$templateId:$sessionId:$userId"
+
 }
