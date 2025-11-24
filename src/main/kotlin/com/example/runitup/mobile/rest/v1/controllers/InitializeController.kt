@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.exception.ApiRequestException
@@ -18,6 +19,7 @@ import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.UserStatsService
 import com.example.runitup.mobile.utility.GuideLineUtil
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin
 import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 
@@ -70,9 +72,13 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 phoneService.createPhone(request.tokenModel, request.os, request.userId)
             }
         }
-
+        var adminUser: AdminUser? = null
         sendEmail()
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging).apply {
+        user?.linkedAdmin?.let {
+            adminUser = cacheManager.getAdmin(it)
+        }
+
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", "", false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
             }

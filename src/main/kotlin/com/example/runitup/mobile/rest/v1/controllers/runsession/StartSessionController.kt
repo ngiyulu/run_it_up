@@ -3,7 +3,9 @@ package com.example.runitup.mobile.rest.v1.controllers.runsession
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
+import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.RunSession
+import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.Actor
@@ -29,14 +31,15 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
     @Autowired
     lateinit var runSessionService: RunSessionService
 
+    @Autowired
+    lateinit var bookingRepository: BookingRepository
+
     override fun execute(request: StartSessionModel): RunSession {
         val user = getMyUser()
         var run =runSessionService.getRunSession(user.linkedAdmin != null, null, request.sessionId)?: throw ApiRequestException(text("invalid_session_id"))
 
         if(run.status == RunStatus.ONGOING){
-            run.bookings = run.bookings.map {
-                bookingDbService.getBookingDetails(it)
-            }.toMutableList()
+            run.bookings = getBooking(run).toMutableList()
         }
        val session = sessionService.startRunSession(request, run, user.linkedAdmin)
         if(session.status ==  StartRunSessionModelEnum.INVALID_ID){
@@ -47,19 +50,29 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
         }
         run = session.session!!
         run.updateStatus()
-        run.bookings = run.bookings.map {
-            bookingDbService.getBookingDetails(it)
-        }.toMutableList()
+        run.bookings = getBooking(run).toMutableList()
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_STARTED,
-            actor = Actor(ActorType.USER, user.id.orEmpty()),
+            actor = Actor(ActorType.ADMIN, user.id.orEmpty()),
             newStatus = null,
             reason = "Admin started session",
             correlationId = MDC.get(AppConstant.TRACE_ID),
             metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
         )
         return run
+    }
+
+
+    fun getBooking(runSession: RunSession):List<Booking>{
+        val list = mutableListOf<Booking>()
+        runSession.bookingList.forEach {
+            val bookingDb = bookingRepository.findById(it.bookingId)
+            if(bookingDb.isPresent){
+                list.add(bookingDb.get())
+            }
+        }
+        return  list
     }
 
 }

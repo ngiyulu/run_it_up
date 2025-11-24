@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.rest.v1.dto.initialize
 
+import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.rest.v1.dto.GuideLine
 import com.example.runitup.mobile.rest.v1.dto.UserStat
@@ -21,4 +22,5 @@ class InitializeResponse(
     @Value("\${refund_url}")
     var refundUrl:String = "",
     var messagingEnabled:Boolean = false,
+    var adminUser: AdminUser? = null,
 )
