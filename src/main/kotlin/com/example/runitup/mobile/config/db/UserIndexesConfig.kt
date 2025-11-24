@@ -22,7 +22,7 @@ class UserIndexesConfig(private val mongoTemplate: MongoTemplate) {
 
         // Uniques (sparse to avoid null duplicates)
         idx.createIndex(Index().on("phoneNumber", Sort.Direction.ASC).unique().sparse().named("phone_unique_idx"))
-       //we don't have an auth yet which is equivalent to the paassword
+        //we don't have an auth yet which is equivalent to the paassword
         // idx.createIndex(Index().on("auth", Sort.Direction.ASC).unique().sparse().named("auth_unique_idx"))
 
         // Stripe

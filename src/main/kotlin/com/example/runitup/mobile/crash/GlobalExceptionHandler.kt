@@ -23,6 +23,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException::class)
     fun handleNoResourceFound(ex: NoResourceFoundException): RedirectView {
+        logger.error("NoResourceFoundException ${ex.message}")
         return RedirectView("/")
     }
 
