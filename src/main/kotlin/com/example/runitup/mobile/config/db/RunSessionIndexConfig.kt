@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.index.CompoundIndexDefinition
 
 @Configuration
-class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {
+class RunSessionIndexConfig(private val mongoTemplate: MongoTemplate) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -25,12 +25,6 @@ class MongoIndexConfig(private val mongoTemplate: MongoTemplate) {
                 "status" to 1,
                 "startAtUtc" to 1       // 👈 use this instead of date + startTime
             )
-        )
-
-        indexOps.createIndex(
-            org.springframework.data.mongodb.core.index.GeospatialIndex("coordinate")
-                .typed(org.springframework.data.mongodb.core.index.GeoSpatialIndexType.GEO_2DSPHERE)
-                .named("location_2dsphere_idx")
         )
 
         val indexDefinition = CompoundIndexDefinition(indexDoc)

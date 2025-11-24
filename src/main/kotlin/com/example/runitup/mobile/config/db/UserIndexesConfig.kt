@@ -14,6 +14,12 @@ class UserIndexesConfig(private val mongoTemplate: MongoTemplate) {
     fun ensureUserIndexes() {
         val idx = mongoTemplate.indexOps(User::class.java)
 
+        idx.createIndex(
+            org.springframework.data.mongodb.core.index.GeospatialIndex("coordinate")
+                .typed(org.springframework.data.mongodb.core.index.GeoSpatialIndexType.GEO_2DSPHERE)
+                .named("location_2dsphere_idx")
+        )
+
         // Uniques (sparse to avoid null duplicates)
         idx.createIndex(Index().on("phoneNumber", Sort.Direction.ASC).unique().sparse().named("phone_unique_idx"))
        //we don't have an auth yet which is equivalent to the paassword
