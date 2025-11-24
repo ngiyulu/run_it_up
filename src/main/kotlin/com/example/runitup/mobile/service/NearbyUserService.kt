@@ -14,8 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class NearbyUserService(
-    private val mongoTemplate: MongoTemplate
-) {
+    private val mongoTemplate: MongoTemplate) {
 
     /**
      * Finds users within [radiusMiles] of the runSession's gym location.
@@ -35,6 +34,7 @@ class NearbyUserService(
             .maxDistance(Distance(radiusMiles, Metrics.MILES))
             .spherical(true)
 
+        
         // Optional extra filters:
         val baseQuery = Query().addCriteria(
             Criteria.where("coordinate").ne(null)   // only users with location
