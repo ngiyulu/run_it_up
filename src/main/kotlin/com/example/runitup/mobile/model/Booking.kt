@@ -34,7 +34,8 @@ class Booking (
     var bookingPaymentState: BookingPaymentState? = null,
     var completedAt:Instant? = null,
     var paidAt:Instant? = null,
-    var date:String
+    var date:String,
+    var isManual: Boolean = false,
 ): BaseModel(){
 
     fun getNumOfGuest(): Int{

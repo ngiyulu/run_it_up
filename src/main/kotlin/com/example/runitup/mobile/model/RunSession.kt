@@ -37,6 +37,7 @@ data class RunSession(
     var privateRun : Boolean,
     var description: String,
     var amount: Double = 0.0,
+    var manualFee:Double = 0.0,
     var total: Double = 0.0,
     var maxPlayer: Int,
     var title: String,

@@ -177,6 +177,11 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             correlationId = MDC.get(TRACE_ID) as? String,
             idempotencyKey = "session:create:${run.id}"
         )
+        // if payment is disable, force the amount to  be 0
+        if(!appConfig.payment){
+            run.amount = 0.0
+            run.manualFee = request.manualFee
+        }
 
         appScope.launch {
             val jobEnvelope = JobEnvelope(

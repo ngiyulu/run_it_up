@@ -128,7 +128,8 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             joinedAtFromWaitList = null,
             currentTotalCents = amount.convertToCents(),
             customerId = user.stripeId,
-            date = dateString
+            date = dateString,
+
         )
         if(!run.isSessionFree()){
             val holdingCharge = bookingPricingAdjuster.createPrimaryHoldWithChange(
@@ -145,6 +146,10 @@ class JoinSessionController: BaseController<JoinSessionModel, JoinRunSessionResp
             }
             booking.paymentId = holdingCharge.paymentIntentId
             booking.paymentMethodId = request.paymentMethodId
+        }
+        else{
+            booking.isManual = true
+            booking.sessionAmount = run.manualFee
         }
 
         bookingRepository.save(booking)

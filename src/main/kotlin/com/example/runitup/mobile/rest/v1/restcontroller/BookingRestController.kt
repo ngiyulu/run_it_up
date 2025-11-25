@@ -24,8 +24,8 @@ class BookingRestController {
         return updateBookingPaymentController.execute(model)
     }
 
-    @GetMapping("/details/{bookingId}")
-    fun getBookingDetails(@PathVariable bookingId: String): BookingDetails {
-        return getBookingDetails.execute(bookingId)
+    @GetMapping("/details/{runSessionId}")
+    fun getBookingDetails(@PathVariable runSessionId: String): BookingDetails {
+        return getBookingDetails.execute(runSessionId)
     }
 }
