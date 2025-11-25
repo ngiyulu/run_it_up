@@ -57,6 +57,8 @@ data class RunSession(
     var userStatus: UserButtonStatus = UserButtonStatus.NONE,
     var showUpdatePaymentButton: Boolean = true,
     var showStartButton: Boolean = false,
+    //this flag determines whether or not admin is allowed to mark payment as paid manually
+    var shouldShowPayButton: Boolean = false,
     var guestUpdateAllowed: Boolean = true,
     var leaveSessionUpdateAllowed: Boolean = true,
     var confirmedAt:Instant? = null,
@@ -82,7 +84,7 @@ data class RunSession(
     }
     fun updateStatus(userId: String){
         isFree = isSessionFree()
-
+        shouldShowPayButton = isFree && status == RunStatus.PENDING || status == RunStatus.ONGOING || status == RunStatus.CONFIRMED
         isFull = bookings.size == maxPlayer
         buttonStatus = if(status == RunStatus.CANCELLED || status == RunStatus.ONGOING || status == RunStatus.COMPLETED || status == RunStatus.PROCESSED){
             JoinButtonStatus.HIDE

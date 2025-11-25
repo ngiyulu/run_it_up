@@ -33,14 +33,21 @@ class Booking (
     var paymentAuthorization: List<PaymentAuthorization> = emptyList(),
     var bookingPaymentState: BookingPaymentState? = null,
     var completedAt:Instant? = null,
+    var paidAt:Instant? = null,
     var date:String
 ): BaseModel(){
 
     fun getNumOfGuest(): Int{
         return partySize - 1
     }
+    fun isPaymentStatusManualUpdateAllowed(): Boolean{
+        return status == BookingStatus.JOINED
+    }
 }
 class  BookingPayment(var amount: Double, var stripePaymentId:String,  var paymentStatus: PaymentStatus = PaymentStatus.PENDING)
 enum class BookingStatus{
     JOINED, WAITLISTED, CANCELLED, COMPLETED
+}
+fun getAllBookingStatuses(): List<BookingStatus> {
+    return enumValues<BookingStatus>().toList()
 }

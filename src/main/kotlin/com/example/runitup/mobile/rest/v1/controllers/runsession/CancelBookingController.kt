@@ -85,7 +85,10 @@ class CancelBookingController: BaseController<CancelBookingModel, RunSession>() 
             newStatus = null,
             reason = "Admin cancelled booking",
             correlationId = MDC.get(AppConstant.TRACE_ID),
-            metadata = mapOf(AppConstant.SOURCE to MDC.get(AppConstant.SOURCE))
+            metadata = mapOf(
+                AppConstant.SOURCE to MDC.get(AppConstant.SOURCE),
+                AppConstant.BOOKING_ID to booking.id.orEmpty()
+            )
         )
         val jobEnvelope = JobEnvelope(
             jobId = UUID.randomUUID().toString(),

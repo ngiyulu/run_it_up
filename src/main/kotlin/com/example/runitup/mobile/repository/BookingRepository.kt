@@ -54,7 +54,7 @@ interface BookingRepository : MongoRepository<Booking, String> {
     fun findAllByPaymentStatus(paymentStatus: com.example.runitup.mobile.enum.PaymentStatus, pageable: Pageable): Page<Booking>
 
     // Waitlist / promotions
-    fun findAllByRunSessionIdAndStatus(runSessionId: String, status: BookingStatus, pageable: Pageable): Page<Booking>
+    fun findAllByRunSessionIdAndStatus(runSessionId: String, status: BookingStatus, pageable: Pageable?): Page<Booking>
     fun findAllByRunSessionIdAndPromotedAtIsNotNullOrderByPromotedAtDesc(runSessionId: String): List<Booking>
 
     // Locks (ops)
