@@ -5,6 +5,7 @@ import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.getAllBookingStatuses
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
+import com.example.runitup.mobile.service.BookingService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -12,16 +13,10 @@ import org.springframework.stereotype.Service
 class GetBookingDetailsController: BaseController<String, BookingDetails>() {
 
     @Autowired
-    lateinit var bookingRepository: BookingRepository
+    lateinit var bookingService: BookingService
     override fun execute(request: String): BookingDetails {
-        val booking = bookingRepository.findByRunSessionIdAndStatusIn(request, getAllBookingStatuses().toMutableList() )
-        val paidBooking = booking.filter {
-            it.paymentStatus == PaymentStatus.PAID ||
-                    it.paymentStatus == PaymentStatus.MANUAL_PAID }
-        val total = paidBooking.sumOf { it.partySize * it.sessionAmount }
-        return BookingDetails(total, booking)
+       return bookingService.getBookingDetails(request)
     }
-
 }
 
 data class BookingDetails(val total:Double, val booking:List<Booking>)

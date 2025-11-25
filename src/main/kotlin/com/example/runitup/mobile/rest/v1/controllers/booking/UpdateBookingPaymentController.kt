@@ -12,17 +12,21 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.Actor
 import com.example.runitup.mobile.rest.v1.dto.ActorType
 import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
+import com.example.runitup.mobile.service.BookingService
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
 
 @Service
-class UpdateBookingPaymentController: BaseController<UpdateBookingPaymentModel, Booking>() {
+class UpdateBookingPaymentController: BaseController<UpdateBookingPaymentModel, BookingDetails>() {
 
     @Autowired
     lateinit var bookingRepository: BookingRepository
-    override fun execute(request: UpdateBookingPaymentModel): Booking {
+
+    @Autowired
+    lateinit var bookingService: BookingService
+    override fun execute(request: UpdateBookingPaymentModel): BookingDetails {
         val user =getMyUser()
         val bookingDb = bookingRepository.findById(request.bookingId)
         if(!bookingDb.isPresent){
@@ -51,7 +55,7 @@ class UpdateBookingPaymentController: BaseController<UpdateBookingPaymentModel, 
                 BOOKING_ID to booking.id.orEmpty()
                 )
         )
-        return bookingRepository.save(booking)
+        return bookingService.getBookingDetails(booking.runSessionId)
     }
 
 }
