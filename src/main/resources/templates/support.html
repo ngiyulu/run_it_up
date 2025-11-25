@@ -75,17 +75,7 @@
     </style>
 </head>
 <body>
-<nav class="nav">
-    <div class="inner">
-        <div class="logo"><span class="logo-badge">🏀</span> RunItUp</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <a class="btn" href="/">Home</a>
-            <a class="btn" href="/main/terms-and-conditions">Terms</a>
-            <a class="btn" href="/main/privacy">Privacy</a>
-        </div>
-    </div>
-</nav>
-
+<div th:replace="fragments/nav :: mainNav"></div>
 <div class="wrap">
     <header>
         <h1>Support Center</h1>
