@@ -10,4 +10,5 @@ class PageController {
     @GetMapping("/support") fun support() = "support"
     @GetMapping("/") fun home() = "home"
     @GetMapping("/refund") fun refund() = "refund"
+    @GetMapping("/waiver") fun waiver() = "download-waiver"
 }

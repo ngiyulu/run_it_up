@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RunItUp — Waiver Download</title>
+    <style>
+        :root{
+            --bg:#0b0c10; --bg2:#0f1118; --panel:#12131a; --text:#e8ecf1; --muted:#a8b0bd; --border:#1d2130;
+            --accent:#ff6a00; --accent2:#ff9a3c;
+        }
+        body{
+            margin:0; padding:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+            background:linear-gradient(180deg,var(--bg),var(--bg2));
+            color:var(--text);
+        }
+        .wrap{
+            max-width:720px; margin:0 auto; padding:24px;
+        }
+        h1{
+            font-size:clamp(26px,6vw,40px);
+            font-weight:800;
+            margin-top:20px;
+        }
+        p{color:var(--muted); line-height:1.6;}
+        .panel{
+            background:var(--panel);
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:20px;
+            margin-top:20px;
+        }
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+            padding:14px 20px;
+            margin-top:20px;
+            background:linear-gradient(90deg,var(--accent),var(--accent2));
+            border-radius:14px;
+            color:#111;
+            font-weight:700;
+            font-size:16px;
+            text-decoration:none;
+        }
+        .btn:hover{
+            opacity:.9;
+        }
+        footer{
+            margin-top:40px;
+            padding:20px 0;
+            text-align:center;
+            color:var(--muted);
+            font-size:14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <h1>RunItUp — Youth Waiver</h1>
+    <p>Please download and review the official RunItUp Youth Waiver.
+        You may be asked to upload this document within the app during the registration process.</p>
+
+    <div class="panel">
+        <h2 style="margin-top:0;">Download Waiver (PDF)</h2>
+        <p>Tap the button below to download the latest waiver in PDF format.</p>
+
+        <a class="btn"
+           href="https://firebasestorage.googleapis.com/v0/b/runitup-dev.firebasestorage.app/o/RunItUp_Youth_Waiver_Branded_v2%20(1).pdf?alt=media&token=0fe0c9ae-92e2-4f5f-9562-47b5c4b1cd18"
+           download>
+            📄 Download Waiver
+        </a>
+
+        <p style="margin-top:16px;font-size:14px;color:var(--muted);">
+            PDF size: ~1–2 MB • Opens in any PDF viewer
+        </p>
+    </div>
+
+    <footer>
+        © <span id="year"></span> RunItUp, Inc.
+    </footer>
+</div>
+
+<script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
