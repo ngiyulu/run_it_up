@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link th:href="@{/styles.css}" rel="stylesheet" />
     <title>RunItUp — Terms & Conditions</title>
     <style>
         :root {
@@ -40,6 +41,7 @@
     </style>
 </head>
 <body>
+<div th:replace="fragments/nav :: mainNav"></div>
 <div class="container">
     <header>
         <span class="badge">RunItUp</span>

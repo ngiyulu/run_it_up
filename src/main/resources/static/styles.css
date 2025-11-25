@@ -289,3 +289,40 @@ footer {
     border-radius: 8px;
     display: inline-block;
 }
+
+
+/* Shared nav styles */
+.nav{
+    position:sticky;
+    top:0;
+    z-index:40;
+    background:rgba(11,12,16,.8);
+    backdrop-filter:saturate(160%) blur(10px);
+    border-bottom:1px solid var(--border);
+    padding-top: env(safe-area-inset-top);
+}
+.nav .inner{
+    max-width:980px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 12px;
+}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800}
+.logo-badge{
+    display:inline-grid;
+    place-items:center;
+    width:28px;height:28px;
+    border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#111;
+}
+.nav a.btn{
+    padding:10px 14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    text-decoration:none;
+}
+.nav a.btn:hover { text-decoration: underline; }
