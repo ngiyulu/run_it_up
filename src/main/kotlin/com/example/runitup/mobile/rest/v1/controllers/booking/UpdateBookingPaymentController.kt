@@ -43,6 +43,7 @@ class UpdateBookingPaymentController: BaseController<UpdateBookingPaymentModel, 
         }
         booking.paymentStatus = PaymentStatus.MANUAL_PAID
         booking.paidAt = Instant.now()
+        bookingRepository.save(booking)
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.BOOKING_PAID_MANUALLY,
