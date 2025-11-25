@@ -20,7 +20,7 @@ class BookingRestController {
 
 
     @PostMapping("/payment/update")
-    fun updatePayment(@RequestBody model: UpdateBookingPaymentModel): Booking {
+    fun updatePayment(@RequestBody model: UpdateBookingPaymentModel): BookingDetails {
         return updateBookingPaymentController.execute(model)
     }
 
