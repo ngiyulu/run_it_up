@@ -6,9 +6,14 @@
     <title>RunItUp — Waiver Download</title>
     <style>
         :root{
-            --bg:#0b0c10; --bg2:#0f1118; --panel:#12131a; --text:#e8ecf1; --muted:#a8b0bd; --border:#1d2130;
+            --bg:#0b0c10; --bg2:#0f1016; --panel:#12131a; --text:#e8ecf1; --muted:#a8b0bd; --border:#1d2130;
             --accent:#ff6a00; --accent2:#ff9a3c;
         }
+        .footer a {
+            color: #7ab6ff;
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
         body{
             margin:0; padding:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
             background:linear-gradient(180deg,var(--bg),var(--bg2));
@@ -68,7 +73,7 @@
         <p>Tap the button below to download the latest waiver in PDF format.</p>
 
         <a class="btn"
-           href="https://firebasestorage.googleapis.com/v0/b/runitup-dev.firebasestorage.app/o/RunItUp_Youth_Waiver_Branded_v2%20(1).pdf?alt=media&token=0fe0c9ae-92e2-4f5f-9562-47b5c4b1cd18"
+           th:href="${waiverUrl}"
            download>
             📄 Download Waiver
         </a>
@@ -86,7 +91,7 @@
                 <a href="/main/privacy">Privacy</a>
                 <a href="/main/support">Support</a>
                 <a href="/main/refund">Refund</a>
-                <a href="/main/waiver">Wavier</a>
+                <a href="/main/waiver">Waiver</a>
             </div>
         </div>
     </footer>
