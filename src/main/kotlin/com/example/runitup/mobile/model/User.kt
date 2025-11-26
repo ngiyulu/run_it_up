@@ -76,4 +76,4 @@ enum class UserType{
     ADMIN, SUPER_ADMIN
 }
 
-class Coordinate(val longitude: Long, val latitude: Long)
+data class Coordinate(val longitude: Long, val latitude: Long)

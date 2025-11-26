@@ -62,4 +62,4 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     }
 }
 
-class CoordinateUpdateModel(val userId: String , val coordinate: Coordinate)
+data class CoordinateUpdateModel(val userId: String , val coordinate: Coordinate)
