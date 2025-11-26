@@ -50,6 +50,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
         )
 
         val payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
+        logger.info("payload = $payload")
         val data = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "User location update",
