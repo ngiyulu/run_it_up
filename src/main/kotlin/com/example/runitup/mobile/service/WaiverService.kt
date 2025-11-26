@@ -20,14 +20,8 @@ class WaiverService {
                 user.waiverSigned = false
                 user.waiverAuthorized = false
             }
-            else if(waiver.status == WaiverStatus.APPROVED){
-                user.waiverSigned = true
-                user.waiverAuthorized = true
-            }
             else{
-                user.waiverSigned = true
-                user.waiverAuthorized = false
-                user.rejectionNotes = waiver.note
+                user.waiver = waiver
             }
         }
         else{

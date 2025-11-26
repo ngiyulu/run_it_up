@@ -23,6 +23,7 @@ data class User(
     var waiverSigned: Boolean = false,
     var waiverUrl:String? = null,
     var waiverAuthorized:Boolean = false,
+    var waiver:Waiver? = null,
 
     var firstSession: Boolean = false,
     var waiverAuthorizedAt: Instant? = null,
