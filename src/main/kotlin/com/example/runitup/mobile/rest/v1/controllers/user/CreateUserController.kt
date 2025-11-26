@@ -40,13 +40,10 @@ class CreateUserController: BaseController<Pair<String, CreateUserRequest>, User
 
     override fun execute(request: Pair<String, CreateUserRequest>): User {
         val  (zoneId, userRequest)= request
-        val existingUser = userRepository.findByAuth(userRequest.user.phoneNumber)
+        val existingUser = userRepository.findByPhoneNumberOrEmail(userRequest.user.phoneNumber, userRequest.user.email)
         if(existingUser != null){
             throw  ApiRequestException(text("user_exist"))
         }
-//        if(!passwordValidator.isValid(request.user.auth)){
-//            throw  ApiRequestException(text("invalid_password"))
-//        }
         val user = userRequest.user
         user.email = user.email.lowercase()
         user.createdAt = Instant.now()
