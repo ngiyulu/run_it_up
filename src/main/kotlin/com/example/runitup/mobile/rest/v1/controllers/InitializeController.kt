@@ -6,9 +6,11 @@ import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
+import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.repository.UserActionRequiredRepository
 import com.example.runitup.mobile.repository.UserRepository
+import com.example.runitup.mobile.repository.WaiverRepository
 import com.example.runitup.mobile.rest.v1.dto.UserStat
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
@@ -17,6 +19,8 @@ import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PaymentService
 import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.UserStatsService
+import com.example.runitup.mobile.service.WaiverService
+import com.example.runitup.mobile.utility.AgeUtil
 import com.example.runitup.mobile.utility.GuideLineUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin
@@ -44,9 +48,11 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
     @Autowired
     lateinit var userStatsService: UserStatsService
 
-
     @Autowired
-    lateinit var actionRequiredRepository: UserActionRequiredRepository
+    lateinit var waiverService: WaiverService
+
+
+
 
     @Autowired
     lateinit var appConfig: AppConfig
@@ -61,6 +67,8 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
                 user = null
             }
             user?.let {
+                val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId.orEmpty())
+                waiverService.setWaiverData(user, age)
                 user.stripeId?.let {
                     user.payments = paymentService.listOfCustomerCards(it)
                 }

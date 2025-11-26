@@ -7,6 +7,7 @@ class InitializeRequest(
     val userId: String?,
     val tokenModel: FirebaseTokenModel?,
     val location: MyLocationModel?,
-    var os: String = ""
+    var os: String = "",
+    var zoneId:String? = null
 
 )
