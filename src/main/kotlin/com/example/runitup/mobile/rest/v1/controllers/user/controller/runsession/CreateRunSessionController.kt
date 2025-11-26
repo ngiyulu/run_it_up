@@ -61,6 +61,18 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
     @Autowired
     lateinit var appConfig: AppConfig
 
+    val sportsEmojis = listOf(
+        "🏀", "⛹️‍♂️", "⛹️‍♀️", "🤾‍♂️", "🤾‍♀️", "🧺", "🪜",
+        "🏆", "🏅", "🥇", "🥈", "🥉", "🎖️",
+        "🎯", "💯", "🔥", "💪", "⚡", "🚀", "🧨",
+        "🙌", "👏", "🗣️", "📣", "🎉", "🔊",
+        "👟", "🧦", "🧢", "👕", "🏟️", "🪑", "🧵",
+        "📈", "📉", "📊", "⭐", "🎥", "🎬", "⏳", "⏱️",
+        "🤕", "🩼", "🩹", "🧊", "🤦‍♂️", "😤", "😮‍💨",
+        "🧱", "😮", "👀", "🧊", "🚫", "🪣",
+        "🎒", "🧹", "❄️",  "⚡️"
+    )
+
 
     override fun execute(request: CreateRunSessionRequest): RunSession {
         val gymDb = gymRepository.findById(request.gymId)
@@ -112,7 +124,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             allowGuest = request.allowGuest,
             notes = request.notes,
             privateRun = request.privateRun,
-            title = request.title,
+            title = withRandomEmojis(request.title),
             maxGuest = request.maxGuest,
             amount = request.fee,
             minimumPlayer = request.minPlayer,
@@ -201,5 +213,10 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         }
 
         return  runSession
+    }
+
+    fun withRandomEmojis(title: String): String {
+        val emojis = sportsEmojis.shuffled().take(2).joinToString(" ")
+        return "$title $emojis"
     }
 }

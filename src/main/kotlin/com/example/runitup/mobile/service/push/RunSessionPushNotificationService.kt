@@ -83,6 +83,9 @@ class RunSessionPushNotificationService(
         )
     }
 
+
+
+
     fun userJoinedRunSession(adminUserId: String, user: User, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
@@ -236,14 +239,39 @@ class RunSessionPushNotificationService(
             )
         )
 
+        val templateId = "run.booking_cancelled"
         val phones = phoneService.getPhonesByUser(targetUserId)
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
             trigger = "RUN_SESSION_BOOKING_CANCELLED",
             triggerRefId = sessionId,
-            templateId = "run.booking_cancelled",
-            dedupeKey = dedupeKeyBookingScoped("run.booking_promoted", sessionId, targetUserId, bookingId)
+            templateId = templateId,
+            dedupeKey = dedupeKeyBookingScoped(templateId, sessionId, targetUserId, bookingId)
+        )
+    }
+
+
+    fun runSessionAboutToStart(targetUserId: String, runSession: RunSession, bookingId:String) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = runSession.title,
+            body = "Run session is about to start soon!!!",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        var templateId = "run.booking_start_notification"
+        val phones = phoneService.getPhonesByUser(targetUserId)
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = "RUN_SESSION_BOOKING_CANCELLED",
+            triggerRefId = sessionId,
+            templateId = templateId,
+            dedupeKey = dedupeKeyBookingScoped(templateId, sessionId, targetUserId, bookingId)
         )
     }
 
@@ -270,6 +298,9 @@ class RunSessionPushNotificationService(
             dedupeKey = dedupeKeyUserScoped("run.booking_cancelled_user", sessionId, adminUserId, bookingId)
         )
     }
+
+
+
 
     private fun dedupeKeySessionVersion(templateId: String, sessionId: String, version: Int?): String {
         val v = version ?: 0

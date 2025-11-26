@@ -18,12 +18,15 @@ import com.mongodb.client.result.UpdateResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
@@ -93,6 +96,38 @@ class RunSessionService(): BaseService(){
 
         cacheManager.evictRunSession(runSessionId)
         return mongoTemplate.updateFirst(q, u, RunSession::class.java)
+    }
+
+
+    /**
+     * Atomically "claims" one session by setting oneHourNotificationSent = true
+     * and returning the updated document. Safe across multiple workers.
+     */
+    fun claimNextSessionForOneHourNotification(
+        nowUtc: Instant,
+        windowMinutes: Long
+    ): RunSession? {
+        val upperBound = nowUtc.plus(windowMinutes, ChronoUnit.MINUTES)
+
+        val query = Query()
+            .addCriteria(Criteria.where("status").`is`(RunStatus.CONFIRMED))
+            .addCriteria(Criteria.where("startAtUtc").gte(nowUtc).lt(upperBound))
+            .addCriteria(Criteria.where("oneHourNotificationSent").`is`(false))
+            .with(Sort.by(Sort.Direction.ASC, "startAtUtc")) // earliest first
+
+        val update = Update()
+            .set("oneHourNotificationSent", true)
+
+        val options = FindAndModifyOptions.options()
+            .returnNew(true)   // return document AFTER update
+            .upsert(false)     // don't create new documents
+
+        return mongoTemplate.findAndModify(
+            query,
+            update,
+            options,
+            RunSession::class.java
+        )
     }
 
     fun updateRunSession(runSession: RunSession): RunSession{

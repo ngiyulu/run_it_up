@@ -28,6 +28,7 @@ data class RunSession(
     var endTime: LocalTime,      // local time at the venue
     val zoneId: String,       // IANA zone, e.g. "America/Chicago"
     val startAtUtc: Instant? = null, // optional cache
+    var oneHourNotificationSent: Boolean = false,
     //AdminUser Id
     var hostedBy: String?,
     var host:AdminUser? = null,

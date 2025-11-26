@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-@Profile(value = ["dev", "local"]) // ✅ active for both dev and local profiles
+@Profile(value = ["dev", "local", "prod"]) // ✅ active for both dev and local profiles
 @RequestMapping("/api/dev/user")
 class DevUserRestController {
 

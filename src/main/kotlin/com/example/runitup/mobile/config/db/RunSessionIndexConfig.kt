@@ -37,6 +37,15 @@ class RunSessionIndexConfig(private val mongoTemplate: MongoTemplate) {
         val statusIndexDoc = Document(mapOf("status" to 1))
         indexOps.createIndex(CompoundIndexDefinition(statusIndexDoc).named("status_idx"))
 
+        // ✅ Optional: index for notification workflow
+        val notifIndexDoc = Document(
+            mapOf(
+                "status" to 1,
+                "startAtUtc" to 1,
+                "oneHourNotificationSent" to 1
+            )
+        )
+
         // ✅ Use createIndex() instead of ensureIndex()
         indexOps.createIndex(indexDefinition)
 
