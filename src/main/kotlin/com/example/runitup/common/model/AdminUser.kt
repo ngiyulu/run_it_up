@@ -9,6 +9,7 @@ data class AdminUser(
     @Id val id: String? = null,
     val email: String = "",
     val first: String = "",
+    val phoneNumber: String = "",
     var last: String = "",
     val passwordHash: String = "",
     val role: Role = Role.ADMIN,

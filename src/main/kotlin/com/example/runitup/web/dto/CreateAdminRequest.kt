@@ -8,4 +8,5 @@ data class CreateAdminRequest(
     @field:NotBlank val password: String,
     @field:NotBlank val firstName: String,
     @field:NotBlank val lastName: String,
+    @field:NotBlank val phoneNumber: String,
 )
