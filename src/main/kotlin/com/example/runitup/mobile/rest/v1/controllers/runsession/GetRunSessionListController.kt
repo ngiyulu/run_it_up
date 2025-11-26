@@ -31,6 +31,8 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
     override fun execute(request: SessionListModel): List<RunSession> {
         val user = getMyUser()
         val radius = 20.0
+        logger.info("longitude = ${request.longitude}")
+        logger.info("latitude = ${request.latitude}")
         val userZone = request.zoneId // 👈 from client (device timezone)
         val startUtc = request.date.atStartOfDay(userZone).toInstant()
         val endUtc = request.date.plusDays(1)?.atStartOfDay(userZone)?.toInstant()
@@ -46,10 +48,12 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
             startInclusive = Date.from(startUtc),
             endExclusive = Date.from(endUtc)
         )
+
+        val payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
         val data = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "User location update",
-            payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
+            payload = payload
         )
         appScope.launch {
             queueService.sendJob(QueueNames.LOCATION_JOB, data)
