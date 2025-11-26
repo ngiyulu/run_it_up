@@ -49,7 +49,7 @@ class GetRunSessionListController: BaseController<SessionListModel, List<RunSess
             endExclusive = Date.from(endUtc)
         )
 
-        val payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude.toLong(), request.latitude.toLong()))
+        val payload = CoordinateUpdateModel(user.id.orEmpty(), Coordinate(request.longitude, request.latitude))
         logger.info("payload = $payload")
         val data = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
