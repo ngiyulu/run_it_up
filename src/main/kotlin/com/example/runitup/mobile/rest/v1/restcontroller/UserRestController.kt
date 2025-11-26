@@ -83,9 +83,11 @@ class UserRestController {
     @PostMapping("/init")
     fun init(@RequestBody model: InitializeRequest,
              @RequestHeader("X-Source-Type") type:String = HeaderConstants.ANDROID_TYPE,
+             @RequestHeader("X-Timezone", required = true) tzHeader: String,
              @RequestHeader("X-OS-Version", required = true) phoneOs: String): InitializeResponse {
         model.tokenModel?.type = type
         model.os = phoneOs
+        model.zoneId = tzHeader
         return userControllersProvider.initializeController.execute(model)
     }
 

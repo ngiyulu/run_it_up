@@ -11,6 +11,7 @@ import com.example.runitup.mobile.security.JwtTokenService
 import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.PhoneService
 import com.example.runitup.mobile.service.UserStatsService
+import com.example.runitup.mobile.service.WaiverService
 import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.i18n.LocaleContextHolder
@@ -31,9 +32,11 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
     @Autowired
     lateinit var phoneService: PhoneService
 
-
     @Autowired
     lateinit var userStatsService: UserStatsService
+
+    @Autowired
+    lateinit var waiverService: WaiverService
 
 
     override fun execute(request: VerifyPhoneNumberControllerModel): VerifyPhoneNumberResponse {
@@ -49,14 +52,11 @@ class VerifyPhoneNumberController: BaseController<VerifyPhoneNumberController.Ve
             val user: User = cacheManager.getUser(otp.userId.orEmpty()) ?: throw ApiRequestException(text("invalid_user"))
             val token = jwtService.generateToken(UserPrincipal(user))
             otpDbService.disableOtp(otp)
-            val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId)
-            println("age = $age")
             if(!user.isActive){
                 throw ApiRequestException(textService.getText("inactive_user", LocaleContextHolder.getLocale().toString()))
             }
-            if(!user.waiverSigned){
-                user.waiverSigned = age >= 18
-            }
+            val age = AgeUtil.ageFrom(user.dob, zoneIdString = request.zoneId)
+            waiverService.setWaiverData(user, age)
             request.request.tokenModel?.let {
                 phoneService.createPhone(it, request.os, user.id.orEmpty())
             }

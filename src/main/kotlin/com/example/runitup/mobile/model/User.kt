@@ -23,6 +23,7 @@ data class User(
     var waiverSigned: Boolean = false,
     var waiverUrl:String? = null,
     var waiverAuthorized:Boolean = false,
+
     var firstSession: Boolean = false,
     var waiverAuthorizedAt: Instant? = null,
     var waiverAuthorizedBy: String? = null,
@@ -48,6 +49,7 @@ data class User(
     var userType: UserType? = null,
     var updatedActivatedStatusAt:Instant? = null,
     var updatedActivatedStatusBy:String? = null,
+    var rejectionNotes:String? = null
 ): BaseModel(){
 
     fun getFullName(): String{
