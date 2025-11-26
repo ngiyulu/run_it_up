@@ -119,7 +119,8 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             maxPlayer = request.maxPlayer,
             description = request.description,
             duration = 0,
-            startAtUtc = startAtUtc
+            startAtUtc = startAtUtc,
+            contact = admin.phoneNumber
         ).apply {
             createdAt = Instant.now()
             status = RunStatus.PENDING
@@ -148,6 +149,11 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             throw ApiRequestException(text("payment_disabled"))
         }
 
+        // if payment is disable, force the amount to  be 0
+        if(!appConfig.payment){
+            run.amount = 0.0
+            run.manualFee = request.manualFee
+        }
         val runSession = cacheManager.updateRunSession(run)
 
         val conversation =   Conversation(UUID.randomUUID().toString(),
@@ -177,11 +183,6 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
             correlationId = MDC.get(TRACE_ID) as? String,
             idempotencyKey = "session:create:${run.id}"
         )
-        // if payment is disable, force the amount to  be 0
-        if(!appConfig.payment){
-            run.amount = 0.0
-            run.manualFee = request.manualFee
-        }
 
         appScope.launch {
             val jobEnvelope = JobEnvelope(

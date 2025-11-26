@@ -51,6 +51,7 @@ class AdminAuthRestController{
             ObjectId().toString(),
             body.email,
             body.firstName,
+            body.phoneNumber,
             body.lastName,
             passwordEncoder.encode(body.password))
         return adminUserRepository.save(adminUser)

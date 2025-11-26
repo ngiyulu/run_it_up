@@ -73,7 +73,8 @@ data class RunSession(
     var code: EncryptedCodeModel? = null,
     var plain:String? = null,
     var adminStatus: AdminStatus = AdminStatus.OTHER,
-    var bookingPaymentState: BookingPaymentState? = null
+    var bookingPaymentState: BookingPaymentState? = null,
+    var contact:String
 ): BaseModel(){
 
     fun isSessionFree(): Boolean{
