@@ -36,6 +36,10 @@ interface UserRepository : MongoRepository<User, String> {
     // 🧭 activity
     fun findAllByOrderByLoggedInAtDesc(pageable: Pageable): Page<User>
 
+
+    fun findByPhoneNumberOrEmail(phoneNumber: String, email: String): User?
+
+
     // 🔎 optional search by name (use a text index below)
     // For text search, prefer a service that calls $text; you can also do:
     // @Query("{ \$text: { \$search: ?0 } }")
