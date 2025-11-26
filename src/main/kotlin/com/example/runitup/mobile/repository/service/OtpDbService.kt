@@ -35,7 +35,6 @@ class OtpDbService {
         )
         val u = Update().set("isActive", false)
         mongoTemplate.updateFirst(q, u, Otp::class.java)
-
         val code = numberGenerator.generateCode(4)
 
         return  otpRepository.save(
