@@ -22,9 +22,28 @@ class GlobalExceptionHandler {
     private val logger = myLogger()
 
     @ExceptionHandler(NoResourceFoundException::class)
-    fun handleNoResourceFound(ex: NoResourceFoundException): RedirectView {
-        logger.error("NoResourceFoundException ${ex.message}")
-        return RedirectView("/")
+    fun handleNoResourceFound(
+        ex: NoResourceFoundException,
+        req: HttpServletRequest
+    ): Any {
+        val traceId = MDC.get("traceId")
+        val path = req.requestURI
+
+        logger.warn("NoResourceFoundException [traceId=$traceId] ${req.method} $path : ${ex.message}")
+
+        return if (path.contains("/api/")) {
+            // Return JSON error for API routes
+            val problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
+                title = "Resource Not Found"
+                detail = "No handler found for ${req.method} $path"
+                setProperty("traceId", traceId)
+                setProperty("path", path)
+            }
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem)
+        } else {
+            // Redirect to SPA root (or your main page) for non-API routes
+            RedirectView("/")
+        }
     }
 
     @ExceptionHandler(Throwable::class)

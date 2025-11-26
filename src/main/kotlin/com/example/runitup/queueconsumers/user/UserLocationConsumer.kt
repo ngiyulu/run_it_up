@@ -30,6 +30,7 @@ class UserLocationConsumer(
         logger.info("UserLocationConsumer is running")
         val data: JobEnvelope<CoordinateUpdateModel> = objectMapper.readValue(rawBody) as JobEnvelope<CoordinateUpdateModel>
         val payload = data.payload
+        logger.info("payload = $payload")
         withContext(Dispatchers.IO) {
             val userDb = userRepository.findById(payload.userId)
             if(userDb.isPresent){
