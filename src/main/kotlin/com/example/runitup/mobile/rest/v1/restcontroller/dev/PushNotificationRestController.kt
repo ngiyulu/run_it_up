@@ -1,6 +1,8 @@
 package com.example.runitup.mobile.rest.v1.restcontroller.dev
 
 
+import com.example.runitup.mobile.enum.PushTemplateId
+import com.example.runitup.mobile.enum.PushTrigger
 import com.example.runitup.mobile.repository.service.PhoneDbService
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
@@ -33,7 +35,7 @@ class PushNotificationRestController {
             badge = req.badge
         )
         val phones = phoneRepository.findAllByPhoneId(req.phoneId)
-        return pushService.sendToPhonesAudited(phones, notification, "", null, "", null)
+        return pushService.sendToPhonesAudited(phones, notification, PushTrigger.RUN_SESSION_CREATED, null,  PushTemplateId.RUN_BOOKING_START_NOTIFICATION, null)
     }
 }
 

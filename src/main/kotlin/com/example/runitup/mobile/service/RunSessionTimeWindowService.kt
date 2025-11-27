@@ -48,17 +48,22 @@ class RunSessionTimeWindowService(
             val claimed = runSessionService.claimNextSessionForOneHourNotification(nowUtc, windowMinutes)
             if (claimed == null) {
                 // No more matching sessions found
+                setBooking(processed)
                 return processed
             }
 
             processed += claimed
         }
 
-        processed.forEach {
+        setBooking(processed)
+        return processed
+    }
+
+    fun setBooking(list:List<RunSession>){
+        list.forEach {
             val bookings = getBooking(it.id.orEmpty())
             it.bookings = bookings.toMutableList()
         }
-        return processed
     }
 
 

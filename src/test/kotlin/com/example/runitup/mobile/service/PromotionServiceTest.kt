@@ -9,6 +9,7 @@ import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.PrimaryHoldResult
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -22,7 +23,9 @@ class PromotionServiceTest {
     private val bookingDbService = mockk<BookingDbService>()
     private val adjuster = mockk<BookingPricingAdjuster>()
     private val cacheManager = mockk<MyCacheManager>()
+    private val runSessionPushNotificationService = mockk<RunSessionPushNotificationService>()
     private val sessionService = mockk<RunSessionService>(relaxed = true)
+    private val runSessionEventLogger = mockk<RunSessionEventLogger>(relaxed = true)
     private val paymentPushNotificationService = mockk<PaymentPushNotificationService>(relaxed = true)
 
     private lateinit var service: PromotionService
@@ -36,7 +39,9 @@ class PromotionServiceTest {
             bookingDbService = bookingDbService,
             cacheManager = cacheManager,
             sessionService = sessionService,
-            paymentPushNotificationService = paymentPushNotificationService
+            paymentPushNotificationService = paymentPushNotificationService,
+            runSessionEventLogger = runSessionEventLogger,
+            runSessionPushNotificationService = runSessionPushNotificationService
         )
 
         // Avoid ClassCastException for save()

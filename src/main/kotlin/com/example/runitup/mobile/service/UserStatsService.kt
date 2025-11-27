@@ -38,8 +38,9 @@ class UserStatsService(
 
     fun countUniqueGymsVisited(visits: List<RunSession>): Int {
         return visits
-            .mapNotNull { it.gym?.id?.trim()?.lowercase() } // safely extract gym title
-            .toSet()                                           // deduplicate titles
-            .size                                              // count unique gyms
+            .mapNotNull { it.gym?.id?.trim()?.lowercase() }
+            .filter { it.isNotBlank() }   // <-- ignore empty strings
+            .toSet()
+            .size
     }
 }

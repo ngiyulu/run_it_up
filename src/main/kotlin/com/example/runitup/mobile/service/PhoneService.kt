@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 @Service
 class PhoneService(private var phoneRepository: PhoneRepository): BaseService() {
 
-    fun createPhone(token: FirebaseTokenModel, os:String, userId: String): com.example.runitup.mobile.model.Phone {
+    fun createPhone(token: FirebaseTokenModel, os:String, userId: String): Phone {
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
         println("createPhone userId = $userId")

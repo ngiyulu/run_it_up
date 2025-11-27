@@ -90,7 +90,9 @@ class BookingRepositoryIT @Autowired constructor(
             customerId = null,
             paymentAuthorization = emptyList(),
             bookingPaymentState = null,
-            completedAt = null
+            completedAt = null,
+            paidAt = null,
+            date = ""
         )
 
         // Assuming BaseModel.createdAt is Instant

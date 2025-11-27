@@ -2,453 +2,545 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.constants.AppConstant
 import com.example.runitup.mobile.constants.ScreenConstant
+import com.example.runitup.mobile.enum.PhoneType
+import com.example.runitup.mobile.enum.PushTemplateId
+import com.example.runitup.mobile.enum.PushTrigger
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
-import com.example.runitup.mobile.rest.v1.dto.PushResult
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
-import io.mockk.*
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
+import junit.framework.TestCase.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.*
+import kotlin.test.assertEquals
 
 class RunSessionPushNotificationServiceTest {
 
-    private val phoneService = mockk<PhoneService>(relaxed = true)
-    private val pushService = mockk<PushService>(relaxed = true)
+    private val phoneService: PhoneService = mock()
+    private val pushService: PushService = mock()
 
     private lateinit var service: RunSessionPushNotificationService
 
     @BeforeEach
     fun setUp() {
         service = RunSessionPushNotificationService(phoneService, pushService)
-        clearMocks(phoneService, pushService)
+
+        // Default: pushService returns a dummy result; we don't care about contents here
+        whenever(
+            pushService.sendToPhonesAudited(
+                any(),
+                any(),
+                any(),
+                anyOrNull(),
+                any(),
+                anyOrNull()
+            )
+        ).thenReturn(
+            com.example.runitup.mobile.rest.v1.dto.PushResult(
+                requested = 1,
+                success = 1,
+                failed = 0,
+                invalidTokens = emptyList(),
+                errors = emptyList()
+            )
+        )
     }
 
-    @AfterEach
-    fun tearDown() {
-        clearAllMocks()
+    // --- Helpers -------------------------------------------------------------
+
+    private fun phone(userId: String, token: String = "token-$userId"): Phone =
+        Phone(
+            os = "iOS",
+            model = "iPhone",
+            token = token,
+            phoneId = "phone-$userId",
+            userId = userId,
+            type = PhoneType.IOS
+        )
+
+    private fun runSessionBasic(
+        id: String = "session-1",
+        title: String = "Pickup Run",
+        version: Int? = 3,
+        city: String? = "Dallas",
+        bookingUserIds: List<String> = emptyList()
+    ): RunSession {
+        // We mock RunSession to avoid its big constructor.
+        val rs: RunSession = mock()
+
+        whenever(rs.id).thenReturn(id)
+        whenever(rs.title).thenReturn(title)
+        whenever(rs.version).thenReturn(version)
+
+        val gym: Gym? = if (city != null) {
+            mock<Gym>().apply {
+                whenever(this.city).thenReturn(city)
+            }
+        } else null
+        whenever(rs.gym).thenReturn(gym)
+
+        val bookingList = bookingUserIds.map { userId ->
+            RunSession.SessionRunBooking(
+                bookingId = "b-$userId",
+                userId = userId,
+                partySize = 1
+            )
+        }.toMutableList()
+        whenever(rs.bookingList).thenReturn(bookingList)
+
+        return rs
     }
 
-    // ------------------------------------------------------------------------
-    // runSessionConfirmed
-    // ------------------------------------------------------------------------
+    private fun user(
+        id: String,
+        firstName: String = "John",
+        lastName: String = "Doe"
+    ): User {
+        val u: User = mock()
+        whenever(u.id).thenReturn(id)
+        whenever(u.getFullName()).thenReturn("$firstName $lastName")
+        return u
+    }
+
+    private fun booking(userId: String): Booking {
+        val b: Booking = mock()
+        whenever(b.userId).thenReturn(userId)
+        return b
+    }
+
+    // --- Tests ---------------------------------------------------------------
 
     @Test
-    fun `runSessionConfirmed - notifies all non-admin participants and builds proper dedupe key`() {
+    fun `runSessionConfirmed sends push to booking users excluding admin and uses RUN_CONFIRMED template`() {
         val adminId = "admin-1"
-        val sessionId = "sess-1"
+        val userIds = listOf("u1", "u2", adminId)
+        val session = runSessionBasic(
+            id = "session-123",
+            version = 5,
+            bookingUserIds = userIds
+        )
 
-        val booking1 = mockk<RunSession.SessionRunBooking>()
-        val booking2 = mockk<RunSession.SessionRunBooking>()
-        val booking3 = mockk<RunSession.SessionRunBooking>()
+        val phones = listOf(phone("u1"), phone("u2"))
+        whenever(phoneService.getListOfPhone(listOf("u1", "u2"))).thenReturn(phones)
 
-        every { booking1.userId } returns "u1"
-        every { booking2.userId } returns adminId
-        every { booking3.userId } returns "u2"
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val phonesCaptor = argumentCaptor<List<Phone>>()
+        val notifCaptor = argumentCaptor<PushNotification>()
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Morning Run"
-        every { runSession.version } returns 3
-        every { runSession.bookingList } returns mutableListOf(booking1, booking2, booking3)
+        service.notifyAdminRunSessionConfirmed(adminId, session)
 
-        val phones = listOf(mockk<Phone>(), mockk(), mockk())
-        every {
-            phoneService.getListOfPhone(match { it.contains("u1") && it.contains("u2") && !it.contains(adminId) && it.size == 2 })
-        } returns phones
+        // Phones – admin filtered out
+        verify(phoneService).getListOfPhone(listOf("u1", "u2"))
 
-        val phonesSlot = slot<List<Phone>>()
-        val notifSlot = slot<PushNotification>()
-        val triggerSlot = slot<String>()
-        val refIdSlot = slot<String>()
-        val templateIdSlot = slot<String>()
-        val dedupeSlot = slot<String>()
+        verify(pushService).sendToPhonesAudited(
+            phonesCaptor.capture(),
+            notifCaptor.capture(),
+            triggerCaptor.capture(),
+            eq("session-123"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-        every {
-            pushService.sendToPhonesAudited(
-                phones = capture(phonesSlot),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = capture(refIdSlot),
-                templateId = capture(templateIdSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(3, 3, 0, emptyList(), emptyList())
+        // Phones passed to push
+        val passedPhones = phonesCaptor.firstValue
+        val passedUserIds = passedPhones.map { it.userId }.sorted()
+        assert(passedUserIds == listOf("u1", "u2"))
 
-        // ACT
-        service.runSessionConfirmed(adminId, runSession)
+        // Trigger & template
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_CONFIRMED)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_CONFIRMED)
 
-        // ASSERT
-        verify(exactly = 1) {
-            phoneService.getListOfPhone(match { it.contains("u1") && it.contains("u2") && it.size == 2 })
-        }
-        verify(exactly = 1) {
-            pushService.sendToPhonesAudited(any(), any(), any(), any(), any(), any())
-        }
+        // Dedupe: "run.confirmed:session-123:5"
+        assert(dedupeCaptor.firstValue == "run.confirmed:session-123:5")
 
-        assertThat(phonesSlot.captured).isEqualTo(phones)
-
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Morning Run")
-        assertThat(notif.body).isEqualTo("Session confirmed")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
-
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_CONFIRMED")
-        assertThat(refIdSlot.captured).isEqualTo(sessionId)
-        assertThat(templateIdSlot.captured).isEqualTo("run.confirmed")
-        assertThat(dedupeSlot.captured).isEqualTo("run.confirmed:$sessionId:3")
+        // Notification payload basics
+        val notif = notifCaptor.firstValue
+        assert(notif.title == "Pickup Run")
+        assert(notif.body == "Session confirmed")
+        assert(notif.data[AppConstant.SCREEN] == ScreenConstant.RUN_DETAIL)
+        assert(notif.data[AppConstant.SessionId] == "session-123")
     }
 
     @Test
-    fun `runSessionConfirmed - null version falls back to 0 in dedupe key`() {
-        val adminId = "admin-2"
-        val sessionId = "sess-2"
+    fun `runSessionCancelled filters out creator and uses RUN_CANCELLED`() {
+        val creatorId = "creator-1"
+        val session = runSessionBasic(
+            id = "session-9",
+            title = "Morning Run",
+            version = 2
+        )
+        val bookings = listOf(
+            booking("u1"),
+            booking("u2"),
+            booking(creatorId)
+        )
+        val phonesAll = listOf(
+            phone("u1"),
+            phone("u2"),
+            phone(creatorId)
+        )
 
-        val booking = mockk<RunSession.SessionRunBooking>()
-        every { booking.userId } returns "u1"
+        val creator = user(creatorId)
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Evening Run"
-        every { runSession.version } returns 1
-        every { runSession.bookingList } returns mutableListOf(booking)
+        whenever(phoneService.getListOfPhone(listOf("u1", "u2", creatorId))).thenReturn(phonesAll)
 
-        every { phoneService.getListOfPhone(any()) } returns emptyList()
+        val phonesCaptor = argumentCaptor<List<Phone>>()
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
 
-        val dedupeSlot = slot<String>()
-        every {
-            pushService.sendToPhonesAudited(
-                phones = any(),
-                notif = any(),
-                trigger = any(),
-                triggerRefId = any(),
-                templateId = any(),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(0, 0, 0, emptyList(), emptyList())
+        service.runSessionCancelled(session, bookings, creator)
 
-        service.runSessionConfirmed(adminId, runSession)
+        verify(phoneService).getListOfPhone(listOf("u1", "u2", creatorId))
 
-        assertThat(dedupeSlot.captured).isEqualTo("run.confirmed:$sessionId:1")
-    }
+        verify(pushService).sendToPhonesAudited(
+            phonesCaptor.capture(),
+            any(),
+            triggerCaptor.capture(),
+            eq("session-9"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-    // ------------------------------------------------------------------------
-    // runSessionCancelled
-    // ------------------------------------------------------------------------
+        val passedUserIds = phonesCaptor.firstValue.map { it.userId }.sorted()
+        // creator must NOT be notified
+        assert(passedUserIds == listOf("u1", "u2"))
 
-    @Test
-    fun `runSessionCancelled - no creator filters nobody`() {
-        val sessionId = "sess-c1"
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Pickup Run"
-        every { runSession.version } returns 5
-
-        val booking1 = mockk<Booking>()
-        val booking2 = mockk<Booking>()
-        every { booking1.userId } returns "u1"
-        every { booking2.userId } returns "u2"
-
-        val bookings = listOf(booking1, booking2)
-
-        val phones = listOf(mockk<Phone>(), mockk())
-        every {
-            phoneService.getListOfPhone(match { it == listOf("u1", "u2") })
-        } returns phones
-
-        val phonesSlot = slot<List<Phone>>()
-        val notifSlot = slot<PushNotification>()
-        val templateIdSlot = slot<String>()
-        val triggerSlot = slot<String>()
-        val dedupeSlot = slot<String>()
-
-        every {
-            pushService.sendToPhonesAudited(
-                phones = capture(phonesSlot),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = any(),
-                templateId = capture(templateIdSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(2, 2, 0, emptyList(), emptyList())
-
-        service.runSessionCancelled(runSession, bookings, null)
-
-        verify(exactly = 1) {
-            phoneService.getListOfPhone(match { it == listOf("u1", "u2") })
-        }
-
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Pickup Run")
-        assertThat(notif.body).isEqualTo("Session cancelled")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
-
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_CANCELLED")
-        assertThat(templateIdSlot.captured).isEqualTo("run.cancelled")
-        assertThat(dedupeSlot.captured).isEqualTo("run.cancelled:$sessionId:5")
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_CANCELLED)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_CANCELLED)
+        assert(dedupeCaptor.firstValue == "run.cancelled:session-9:2")
     }
 
     @Test
-    fun `runSessionCancelled - creator is filtered out from recipients`() {
-        val sessionId = "sess-c2"
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "League Game"
-        every { runSession.version } returns 1
+    fun `userJoinedRunSession notifies admin using RUN_USER_JOINED and user-scoped dedupe`() {
+        val adminId = "admin-11"
+        val userId = "user-99"
+        val bookingId = "booking-123"
+        val session = runSessionBasic(id = "sess-join")
 
-        val creator = mockk<User>()
-        every { creator.id } returns "admin-u"
+        val adminPhones = listOf(phone(adminId))
+        whenever(phoneService.getPhonesByUser(adminId)).thenReturn(adminPhones)
 
-        val booking1 = mockk<Booking>()
-        val booking2 = mockk<Booking>()
-        every { booking1.userId } returns "u1"
-        every { booking2.userId } returns "admin-u"
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
 
-        val bookings = listOf(booking1, booking2)
+        service.notifyAdminUserJoinedRunSession(
+            adminUserId = adminId,
+            user = user(userId, "Mike", "Smith"),
+            runSession = session,
+            bookingId = bookingId
+        )
 
-        // Phones returned from PhoneService
-        val phoneU1 = mockk<Phone>()
-        every { phoneU1.userId } returns "u1"
-        val phoneAdmin = mockk<Phone>()
-        every { phoneAdmin.userId } returns "admin-u"
+        verify(phoneService).getPhonesByUser(adminId)
 
-        val phonesFromRepo = listOf(phoneU1, phoneAdmin)
+        verify(pushService).sendToPhonesAudited(
+            any(),
+            any(),
+            triggerCaptor.capture(),
+            eq("sess-join"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-        // Service will call getListOfPhone(listOf("u1", "admin-u"))
-        every {
-            phoneService.getListOfPhone(match { it == listOf("u1", "admin-u") })
-        } returns phonesFromRepo
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_USER_JOINED)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_USER_JOINED)
+        // "run.user_joined:sess-join:user-99:booking-123"
+        assert(dedupeCaptor.firstValue == "run.user_joined:sess-join:user-99:booking-123")
+    }
 
-        val phonesSlot = slot<List<Phone>>()
-        every {
-            pushService.sendToPhonesAudited(
-                phones = capture(phonesSlot),
-                notif = any(),
-                trigger = any(),
-                triggerRefId = any(),
-                templateId = any(),
-                dedupeKey = any()
-            )
-        } returns PushResult(1, 1, 0, emptyList(), emptyList())
+    @Test
+    fun `userJoinedWaitListRunSession notifies admin with RUN_USER_JOINED_WAITLIST template`() {
+        val adminId = "admin-22"
+        val userId = "user-55"
+        val bookingId = "wait-1"
+        val session = runSessionBasic(id = "sess-wl")
 
-        // ACT
-        service.runSessionCancelled(runSession, bookings, creator)
+        whenever(phoneService.getPhonesByUser(adminId)).thenReturn(listOf(phone(adminId)))
 
-        // ASSERT: PhoneService was called with both IDs
-        verify(exactly = 1) {
-            phoneService.getListOfPhone(match { it == listOf("u1", "admin-u") })
-        }
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
 
-        // And the push is sent only to the non-admin phone
-        assertThat(phonesSlot.captured).containsExactly(phoneU1)
+        service.notifyAdminUserJoinedWaitListRunSession(
+            adminUserId = adminId,
+            user = user(userId),
+            runSession = session,
+            bookingId = bookingId
+        )
+
+        verify(phoneService).getPhonesByUser(adminId)
+
+        verify(pushService).sendToPhonesAudited(
+            any(),
+            any(),
+            triggerCaptor.capture(),
+            eq("sess-wl"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
+
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_USER_JOINED_WAITLIST)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_USER_JOINED_WAITLIST)
+        assert(dedupeCaptor.firstValue == "run.user_joined_waitlist:sess-wl:user-55:wait-1")
+    }
+
+    @Test
+    fun `notifyAdminUserPromotion uses RUN_USER_JOINED_WAITLIST_ADMIN template`() {
+        val adminId = "admin-33"
+        val userId = "user-77"
+        val bookingId = "b-promote"
+        val session = runSessionBasic(id = "sess-promote")
+
+        whenever(phoneService.getPhonesByUser(adminId)).thenReturn(listOf(phone(adminId)))
+
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val phonesCaptor = argumentCaptor<List<Phone>>()
+
+        service.notifyAdminUserPromotion(
+            adminUserId = adminId,
+            user = user(userId),
+            runSession = session,
+            bookingId = bookingId
+        )
+
+        verify(phoneService).getPhonesByUser(adminId)
+
+        verify(pushService).sendToPhonesAudited(
+            phonesCaptor.capture(),
+            any(),
+            triggerCaptor.capture(),
+            eq("sess-promote"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
+
+        // phones should target the admin
+        val passedUserIds = phonesCaptor.firstValue.map { it.userId }
+        assertEquals(listOf(adminId), passedUserIds)
+
+        // Trigger & template
+        assertEquals(PushTrigger.RUN_SESSION_USER_JOINED_WAITLIST, triggerCaptor.firstValue)
+        assertEquals(PushTemplateId.RUN_USER_JOINED_WAITLIST_ADMIN, templateCaptor.firstValue)
+
+        // build expected dedupe from enum id so it matches your actual enum value
+        val expectedDedupe =
+            "${PushTemplateId.RUN_USER_JOINED_WAITLIST_ADMIN.id}:sess-promote:$userId:$bookingId"
+        assertEquals(expectedDedupe, dedupeCaptor.firstValue)
     }
 
 
-    // ------------------------------------------------------------------------
-    // userJoinedRunSession
-    // ------------------------------------------------------------------------
-
     @Test
-    fun `userJoinedRunSession - notifies admin with correct dedupe key and body`() {
-        val adminId = "admin-join"
-        val userId = "user-1"
-        val sessionId = "sess-j1"
+    fun `runSessionBookingCancelledByAdmin uses RUN_BOOKING_CANCELLED template and booking-scoped dedupe`() {
+        val targetUserId = "user-target"
+        val bookingId = "b-1"
+        val session = runSessionBasic(id = "sess-cancel")
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Sunday Run"
+        whenever(phoneService.getPhonesByUser(targetUserId))
+            .thenReturn(listOf(phone(targetUserId)))
 
-        val user = mockk<User>()
-        every { user.id } returns userId
-        every { user.getFullName() } returns "John Doe"
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val phonesCaptor = argumentCaptor<List<Phone>>()
 
-        val phones = listOf(mockk<Phone>())
-        every { phoneService.getPhonesByUser(adminId) } returns phones
+        service.runSessionBookingCancelledByAdmin(
+            targetUserId = targetUserId,
+            runSession = session,
+            bookingId = bookingId
+        )
 
-        val notifSlot = slot<PushNotification>()
-        val triggerSlot = slot<String>()
-        val templateSlot = slot<String>()
-        val dedupeSlot = slot<String>()
-        every {
-            pushService.sendToPhonesAudited(
-                phones = any(),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = any(),
-                templateId = capture(templateSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(1, 1, 0, emptyList(), emptyList())
+        verify(phoneService).getPhonesByUser(targetUserId)
 
-        service.userJoinedRunSession(adminId, user, runSession, bookingId = "b-123")
+        verify(pushService).sendToPhonesAudited(
+            phonesCaptor.capture(),
+            any(),                         // notif
+            triggerCaptor.capture(),
+            eq("sess-cancel"),             // triggerRefId
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-        verify(exactly = 1) { phoneService.getPhonesByUser(adminId) }
+        // 1) Phones: should target the user who got removed
+        val passedUserIds = phonesCaptor.firstValue.map { it.userId }
+        assertEquals(listOf(targetUserId), passedUserIds)
 
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Sunday Run")
-        assertThat(notif.body).isEqualTo("John Doe joined session")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.ADMIN_RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
+        // 2) Trigger & template
+        assertEquals(PushTrigger.RUN_SESSION_BOOKING_CANCELLED, triggerCaptor.firstValue)
+        assertEquals(PushTemplateId.RUN_BOOKING_CANCELLED, templateCaptor.firstValue)
 
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_USER_JOINED")
-        assertThat(templateSlot.captured).isEqualTo("run.user_joined")
-        assertThat(dedupeSlot.captured).isEqualTo("run.user_joined:$sessionId:$userId")
+        // 3) Dedupe key from enum id (no hard-coded string)
+        val expectedDedupe =
+            "${PushTemplateId.RUN_BOOKING_CANCELLED.id}:sess-cancel:$targetUserId:$bookingId"
+        assertEquals(expectedDedupe, dedupeCaptor.firstValue)
     }
 
-    // ------------------------------------------------------------------------
-    // userUpdatedBooking
-    // ------------------------------------------------------------------------
 
     @Test
-    fun `userUpdatedBooking - notifies admin with correct body and user-scoped dedupe key`() {
-        val adminId = "admin-upd"
-        val userId = "user-2"
-        val sessionId = "sess-u1"
+    fun `notifyUserNewRunCreated uses RUN_CREATED template and user-scoped dedupe`() {
+        val targetUserId = "user-2"
+        val session = runSessionBasic(
+            id = "sess-new",
+            title = "Evening Run",
+            city = "Plano"
+        )
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Evening Pickup"
+        whenever(phoneService.getPhonesByUser(targetUserId)).thenReturn(listOf(phone(targetUserId)))
 
-        val user = mockk<User>()
-        every { user.id } returns userId
-        every { user.getFullName() } returns "Jane Smith"
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val notifCaptor = argumentCaptor<PushNotification>()
 
-        val phones = listOf(mockk<Phone>())
-        every { phoneService.getPhonesByUser(adminId) } returns phones
+        service.notifyUserNewRunCreated(targetUserId, session)
 
-        val notifSlot = slot<PushNotification>()
-        val triggerSlot = slot<String>()
-        val templateSlot = slot<String>()
-        val dedupeSlot = slot<String>()
+        verify(phoneService).getPhonesByUser(targetUserId)
 
-        every {
-            pushService.sendToPhonesAudited(
-                phones = any(),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = any(),
-                templateId = capture(templateSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(1, 1, 0, emptyList(), emptyList())
+        verify(pushService).sendToPhonesAudited(
+            any(),
+            notifCaptor.capture(),
+            triggerCaptor.capture(),
+            eq("sess-new"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-        service.userUpdatedBooking(adminId, user, runSession, bookingId = "b-777")
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_CREATED)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_CREATED)
+        assert(dedupeCaptor.firstValue == "run.created:sess-new:user-2")
 
-        verify(exactly = 1) { phoneService.getPhonesByUser(adminId) }
-
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Evening Pickup")
-        assertThat(notif.body).isEqualTo("Jane Smith updated booking")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.ADMIN_RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
-
-        // Current implementation reuses RUN_SESSION_USER_JOINED + run.user_joined
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_USER_JOINED")
-        assertThat(templateSlot.captured).isEqualTo("run.user_joined")
-        assertThat(dedupeSlot.captured).isEqualTo("run.user_joined:$sessionId:$userId")
+        val notif = notifCaptor.firstValue
+        assert(notif.title == "Evening Run")
+        // body contains city
+        assert(notif.body?.contains("Plano") == true)
     }
 
-    // ------------------------------------------------------------------------
-    // runSessionBookingCancelledByAdmin
-    // ------------------------------------------------------------------------
-
     @Test
-    fun `runSessionBookingCancelledByAdmin - notifies target user with proper dedupe booking key`() {
-        val sessionId = "sess-cba"
-        val targetUserId = "user-x"
-        val bookingId = "book-1"
+    fun `runSessionBookingPromoted uses RUN_BOOKING_CANCELLED template but promotion message and booking-scoped dedupe`() {
+        val targetUserId = "user-3"
+        val bookingId = "b-promoted"
+        val session = runSessionBasic(id = "sess-promoted", title = "Noon Run")
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Night Run"
+        whenever(phoneService.getPhonesByUser(targetUserId))
+            .thenReturn(listOf(phone(targetUserId)))
 
-        val phones = listOf(mockk<Phone>())
-        every { phoneService.getPhonesByUser(targetUserId) } returns phones
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val notifCaptor = argumentCaptor<PushNotification>()
 
-        val notifSlot = slot<PushNotification>()
-        val triggerSlot = slot<String>()
-        val templateSlot = slot<String>()
-        val dedupeSlot = slot<String>()
+        service.runSessionBookingPromoted(targetUserId, session, bookingId)
 
-        every {
-            pushService.sendToPhonesAudited(
-                phones = any(),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = any(),
-                templateId = capture(templateSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(1, 1, 0, emptyList(), emptyList())
+        verify(phoneService).getPhonesByUser(targetUserId)
 
-        service.runSessionBookingCancelledByAdmin(targetUserId, runSession, bookingId)
+        verify(pushService).sendToPhonesAudited(
+            any(),                          // phones
+            notifCaptor.capture(),          // notif
+            triggerCaptor.capture(),        // trigger
+            eq("sess-promoted"),            // triggerRefId
+            templateCaptor.capture(),       // templateId
+            dedupeCaptor.capture()          // dedupeKey
+        )
 
-        verify(exactly = 1) { phoneService.getPhonesByUser(targetUserId) }
+        // Trigger and template
+        assertEquals(
+            PushTrigger.RUN_SESSION_BOOKING_CANCELLED,
+            triggerCaptor.firstValue,
+            "Trigger should be RUN_SESSION_BOOKING_CANCELLED"
+        )
+        assertEquals(
+            PushTemplateId.RUN_BOOKING_CANCELLED,
+            templateCaptor.firstValue,
+            "Template should be RUN_BOOKING_CANCELLED"
+        )
 
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Night Run")
-        assertThat(notif.body).isEqualTo("You have been removed from the run session")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
+        // Dedupe key (don’t hard-code the template string, use enum.id)
+        val expectedDedupe =
+            "${PushTemplateId.RUN_BOOKING_CANCELLED.id}:sess-promoted:$targetUserId:$bookingId"
+        assertEquals(expectedDedupe, dedupeCaptor.firstValue)
 
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_BOOKING_CANCELLED")
-        assertThat(templateSlot.captured).isEqualTo("run.booking_cancelled")
-        assertThat(dedupeSlot.captured).isEqualTo("run.booking_cancelled:$sessionId:$targetUserId:$bookingId")
+        // Notification body
+        val notif = notifCaptor.firstValue
+        assertEquals("You have been added to the run", notif.body)
     }
 
-    // ------------------------------------------------------------------------
-    // runSessionBookingCancelledByUser
-    // ------------------------------------------------------------------------
 
     @Test
-    fun `runSessionBookingCancelledByUser - notifies admin with proper message and user-scoped dedupe key`() {
-        val adminId = "admin-cbu"
-        val sessionId = "sess-cbu"
-        val bookingId = "book-9"
+    fun `runSessionAboutToStart uses RUN_BOOKING_START_NOTIFICATION template`() {
+        val targetUserId = "user-4"
+        val bookingId = "b-start"
+        val session = runSessionBasic(id = "sess-soon", title = "Run Soon")
 
-        val runSession = mockk<RunSession>()
-        every { runSession.id } returns sessionId
-        every { runSession.title } returns "Lunch Run"
+        whenever(phoneService.getPhonesByUser(targetUserId)).thenReturn(listOf(phone(targetUserId)))
 
-        val user = mockk<User>()
-        every { user.id } returns "user-z"
-        every { user.getFullName() } returns "Zack Taylor"
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val notifCaptor = argumentCaptor<PushNotification>()
 
-        val phones = listOf(mockk<Phone>())
-        every { phoneService.getPhonesByUser(adminId) } returns phones
+        service.runSessionAboutToStart(targetUserId, session, bookingId)
 
-        val notifSlot = slot<PushNotification>()
-        val triggerSlot = slot<String>()
-        val templateSlot = slot<String>()
-        val dedupeSlot = slot<String>()
+        verify(phoneService).getPhonesByUser(targetUserId)
 
-        every {
-            pushService.sendToPhonesAudited(
-                phones = any(),
-                notif = capture(notifSlot),
-                trigger = capture(triggerSlot),
-                triggerRefId = any(),
-                templateId = capture(templateSlot),
-                dedupeKey = capture(dedupeSlot)
-            )
-        } returns PushResult(1, 1, 0, emptyList(), emptyList())
+        verify(pushService).sendToPhonesAudited(
+            any(),
+            notifCaptor.capture(),
+            triggerCaptor.capture(),
+            eq("sess-soon"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
 
-        service.runSessionBookingCancelledByUser(adminId, runSession, user, bookingId)
+        // You currently reuse RUN_SESSION_BOOKING_CANCELLED trigger; we just assert that.
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_BOOKING_CANCELLED)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_BOOKING_START_NOTIFICATION)
+        assert(dedupeCaptor.firstValue == "run.booking_start_notification:sess-soon:user-4:b-start")
 
-        verify(exactly = 1) { phoneService.getPhonesByUser(adminId) }
+        val notif = notifCaptor.firstValue
+        assert(notif.body == "Run session is about to start soon!!!")
+    }
 
-        val notif = notifSlot.captured
-        assertThat(notif.title).isEqualTo("Lunch Run")
-        assertThat(notif.body).isEqualTo("Zack Taylor has cancelled booking")
-        assertThat(notif.data[AppConstant.SCREEN]).isEqualTo(ScreenConstant.ADMIN_RUN_DETAIL)
-        assertThat(notif.data[AppConstant.SessionId]).isEqualTo(sessionId)
+    @Test
+    fun `runSessionBookingCancelledByUser notifies admin with RUN_BOOKING_CANCELLED_USER template`() {
+        val adminId = "admin-44"
+        val userId = "user-10"
+        val bookingId = "b-user-cancel"
+        val session = runSessionBasic(id = "sess-user-cancel", title = "Evening Run 2")
 
-        assertThat(triggerSlot.captured).isEqualTo("RUN_SESSION_BOOKING_CANCELLED_BY_USER")
-        assertThat(templateSlot.captured).isEqualTo("run.booking_cancelled_user")
-        assertThat(dedupeSlot.captured).isEqualTo("run.booking_cancelled_user:$sessionId:$adminId")
+        whenever(phoneService.getPhonesByUser(adminId)).thenReturn(listOf(phone(adminId)))
+
+        val triggerCaptor = argumentCaptor<PushTrigger>()
+        val templateCaptor = argumentCaptor<PushTemplateId>()
+        val dedupeCaptor = argumentCaptor<String>()
+        val notifCaptor = argumentCaptor<PushNotification>()
+
+        service.notifyAdminRunSessionBookingCancelledByUser(
+            adminUserId = adminId,
+            runSession = session,
+            user = user(userId, "Chris", "Paul"),
+            bookingId = bookingId
+        )
+
+        verify(phoneService).getPhonesByUser(adminId)
+
+        verify(pushService).sendToPhonesAudited(
+            any(),
+            notifCaptor.capture(),
+            triggerCaptor.capture(),
+            eq("sess-user-cancel"),
+            templateCaptor.capture(),
+            dedupeCaptor.capture()
+        )
+
+        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_BOOKING_CANCELLED_BY_USER)
+        assert(templateCaptor.firstValue == PushTemplateId.RUN_BOOKING_CANCELLED_USER)
+        assert(dedupeCaptor.firstValue == "run.booking_cancelled_user:sess-user-cancel:admin-44:b-user-cancel")
+
+        val notif = notifCaptor.firstValue
+        assert(notif.body?.contains("has cancelled booking") == true)
     }
 }

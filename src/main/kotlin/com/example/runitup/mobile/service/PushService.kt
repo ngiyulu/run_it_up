@@ -2,16 +2,17 @@ package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.constants.ConfigConstant.apnsPushGateway
 import com.example.runitup.mobile.constants.ConfigConstant.fcmPushGateway
+import com.example.runitup.mobile.enum.PushTemplateId
+import com.example.runitup.mobile.enum.PushTrigger
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.push.PushGateway
 import com.example.runitup.mobile.repository.PushDeliveryAttemptRepository
 import com.example.runitup.mobile.repository.PushNotificationEventRepository
-
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
@@ -30,31 +31,22 @@ class PushService(
             .digest(input.toByteArray())
             .joinToString("") { "%02x".format(it) }
 
-    /**
-     * Audited push sender.
-     * @param phones target devices
-     * @param notif  payload
-     * @param trigger logical event key (e.g. RUN_SESSION_CONFIRMED)
-     * @param triggerRefId link to the originating entity (e.g. runSessionId)
-     * @param templateId logical template (e.g. run.confirmed)
-     * @param dedupeKey optional idempotency key
-     */
     @Transactional
     fun sendToPhonesAudited(
         phones: List<Phone>,
         notif: PushNotification,
-        trigger: String,
+        trigger: PushTrigger,
         triggerRefId: String?,
-        templateId: String,
+        templateId: PushTemplateId,
         dedupeKey: String? = null
     ): PushResult {
 
         val event = eventRepo.save(
             PushNotificationEvent(
-                trigger = trigger,
+                trigger = trigger.key,
                 triggerRefId = triggerRefId,
                 dedupeKey = dedupeKey,
-                templateId = templateId,
+                templateId = templateId.id,
                 title = notif.title,
                 bodyPreview = notif.body?.take(80),
                 dataKeys = notif.data.mapValues { it.value.toString().take(64) },
@@ -94,9 +86,8 @@ class PushService(
                         else -> null
                     },
                     errorMessage = result.errors.firstOrNull(),
-                    // ---- NEW FIELDS ----
-                    templateId = templateId,
-                    sessionId = triggerRefId        // usually your runSession.id
+                    templateId = templateId.id,
+                    sessionId = triggerRefId
                 )
             }
             attemptRepo.saveAll(attemptDocs)
@@ -112,12 +103,10 @@ class PushService(
 
         // iOS
         if (iosPhones.isNotEmpty()) {
-            val gateway = apns
-            val vendor = PushVendor.APNS
-            val r = gateway.sendToTokens(iosPhones.map { it.token }, notif)
+            val r = apns.sendToTokens(iosPhones.map { it.token }, notif)
             requested += r.requested; success += r.success; failed += r.failed
             invalid += r.invalidTokens; errors += r.errors
-            recordAttempts(vendor, iosPhones, r)
+            recordAttempts(PushVendor.APNS, iosPhones, r)
         }
 
         val result = PushResult(requested, success, failed, invalid, errors)
@@ -127,7 +116,7 @@ class PushService(
 
     private fun handleInvalidTokens(result: PushResult) {
         if (result.invalidTokens.isNotEmpty()) {
-            // TODO: implement phoneRepo soft-delete or disable logic
+            // TODO: phoneRepo soft-delete or disable tokens
         }
     }
 }
