@@ -20,14 +20,7 @@
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} -
-                %replace(%msg){
-                '(?i).*consumer.*'
-                }{
-                '[33m$0[0m'
-                }%n
-            </pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} %X{traceId} - %msg%n</pattern>
         </encoder>
     </appender>
 
