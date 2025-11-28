@@ -76,7 +76,7 @@ class RunSessionPushNotificationService(
     fun notifyUserNewRunCreated(targetUserId: String, runSession: RunSession) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
-            title = runSession.title,
+            title =  "New run session",
             body = "Join a new session in ${runSession.gym?.city ?: ""}",
             data = mapOf(
                 AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
@@ -98,8 +98,8 @@ class RunSessionPushNotificationService(
     fun runSessionBookingPromoted(targetUserId: String, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
-            title = runSession.title,
-            body = "You have been added to the run",
+            title = "Congratulation!!1",
+            body = "You have been added to session ${runSession.title}",
             data = mapOf(
                 AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
                 SessionId to sessionId
@@ -117,6 +117,31 @@ class RunSessionPushNotificationService(
             dedupeKey = dedupeKeyBookingScoped(template, sessionId, targetUserId, bookingId)
         )
     }
+
+
+    fun notifyPlayersRunSessionConfirmed(targetUser: String, runSession: RunSession) {
+        val sessionId = runSession.id.orEmpty()
+        val notif = PushNotification(
+            title = "Session confirmation",
+            body = "Session ${runSession.title} is confirmed",
+            data = mapOf(
+                AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
+                SessionId to sessionId
+            )
+        )
+
+        val phones = phoneService.getPhonesByUser(targetUser)
+
+        pushService.sendToPhonesAudited(
+            phones = phones,
+            notif = notif,
+            trigger = PushTrigger.RUN_SESSION_CONFIRMED,
+            triggerRefId = sessionId,
+            templateId = PushTemplateId.RUN_CONFIRMED,
+            dedupeKey = dedupeKeySessionVersion(PushTemplateId.RUN_CONFIRMED, sessionId, runSession.version)
+        )
+    }
+
 
     fun runSessionAboutToStart(targetUserId: String, runSession: RunSession, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
@@ -147,7 +172,7 @@ class RunSessionPushNotificationService(
     fun notifyAdminRunSessionBookingCancelledByUser(adminUserId: String, runSession: RunSession, user: User, bookingId: String) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
-            title = runSession.title,
+            title = "Booking cancellation",
             body = "${user.getFullName()} has cancelled booking",
             data = mapOf(
                 AppConstant.SCREEN to ScreenConstant.ADMIN_RUN_DETAIL,
@@ -234,22 +259,20 @@ class RunSessionPushNotificationService(
         )
     }
 
-    fun notifyAdminRunSessionConfirmed(adminUserId: String, runSession: RunSession) {
+
+
+    fun notifyAdminRunSessionConfirmed(targetUser: String, runSession: RunSession) {
         val sessionId = runSession.id.orEmpty()
         val notif = PushNotification(
-            title = runSession.title,
-            body = "Session confirmed",
+            title = "Session confirmation",
+            body = "Your session ${runSession.title} is confirmed",
             data = mapOf(
                 AppConstant.SCREEN to ScreenConstant.RUN_DETAIL,
                 SessionId to sessionId
             )
         )
 
-        val phones = phoneService.getListOfPhone(
-            runSession.bookingList
-                .map { it.userId }
-                .filter { it != adminUserId }
-        )
+        val phones = phoneService.getPhonesByUser(targetUser)
 
         pushService.sendToPhonesAudited(
             phones = phones,

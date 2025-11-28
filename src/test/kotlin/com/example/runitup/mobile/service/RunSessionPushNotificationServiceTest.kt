@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.constants.AppConstant
+import com.example.runitup.mobile.constants.AppConstant.SessionId
 import com.example.runitup.mobile.constants.ScreenConstant
 import com.example.runitup.mobile.enum.PhoneType
 import com.example.runitup.mobile.enum.PushTemplateId
@@ -111,28 +112,27 @@ class RunSessionPushNotificationServiceTest {
     // --- Tests ---------------------------------------------------------------
 
     @Test
-    fun `runSessionConfirmed sends push to booking users excluding admin and uses RUN_CONFIRMED template`() {
-        val adminId = "admin-1"
-        val userIds = listOf("u1", "u2", adminId)
+    fun `notifyPlayersRunSessionConfirmed sends RUN_CONFIRMED to target user`() {
+        val targetUser = "user-1"
         val session = runSessionBasic(
             id = "session-123",
-            version = 5,
-            bookingUserIds = userIds
+            title = "Pickup Run",
+            version = 5
         )
 
-        val phones = listOf(phone("u1"), phone("u2"))
-        whenever(phoneService.getListOfPhone(listOf("u1", "u2"))).thenReturn(phones)
+        val phones = listOf(phone(targetUser))
+        whenever(phoneService.getPhonesByUser(targetUser)).thenReturn(phones)
 
+        val phonesCaptor = argumentCaptor<List<Phone>>()
+        val notifCaptor = argumentCaptor<PushNotification>()
         val triggerCaptor = argumentCaptor<PushTrigger>()
         val templateCaptor = argumentCaptor<PushTemplateId>()
         val dedupeCaptor = argumentCaptor<String>()
-        val phonesCaptor = argumentCaptor<List<Phone>>()
-        val notifCaptor = argumentCaptor<PushNotification>()
 
-        service.notifyAdminRunSessionConfirmed(adminId, session)
+        service.notifyPlayersRunSessionConfirmed(targetUser, session)
 
-        // Phones – admin filtered out
-        verify(phoneService).getListOfPhone(listOf("u1", "u2"))
+        // Should call getPhonesByUser, not getListOfPhone
+        verify(phoneService).getPhonesByUser(targetUser)
 
         verify(pushService).sendToPhonesAudited(
             phonesCaptor.capture(),
@@ -143,24 +143,23 @@ class RunSessionPushNotificationServiceTest {
             dedupeCaptor.capture()
         )
 
-        // Phones passed to push
-        val passedPhones = phonesCaptor.firstValue
-        val passedUserIds = passedPhones.map { it.userId }.sorted()
-        assert(passedUserIds == listOf("u1", "u2"))
+        // Phones are only for the target user
+        val passedUserIds = phonesCaptor.firstValue.map { it.userId }
+        assertEquals(listOf(targetUser), passedUserIds)
 
         // Trigger & template
-        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_CONFIRMED)
-        assert(templateCaptor.firstValue == PushTemplateId.RUN_CONFIRMED)
+        assertEquals(PushTrigger.RUN_SESSION_CONFIRMED, triggerCaptor.firstValue)
+        assertEquals(PushTemplateId.RUN_CONFIRMED, templateCaptor.firstValue)
 
-        // Dedupe: "run.confirmed:session-123:5"
-        assert(dedupeCaptor.firstValue == "run.confirmed:session-123:5")
+        // Dedupe key: "run.confirmed:session-123:5"
+        assertEquals("run.confirmed:session-123:5", dedupeCaptor.firstValue)
 
-        // Notification payload basics
+        // Notification payload
         val notif = notifCaptor.firstValue
-        assert(notif.title == "Pickup Run")
-        assert(notif.body == "Session confirmed")
-        assert(notif.data[AppConstant.SCREEN] == ScreenConstant.RUN_DETAIL)
-        assert(notif.data[AppConstant.SessionId] == "session-123")
+        assertEquals("Session confirmation", notif.title)
+        assertEquals("Session Pickup Run is confirmed", notif.body)
+        assertEquals(ScreenConstant.RUN_DETAIL, notif.data[AppConstant.SCREEN])
+        assertEquals("session-123", notif.data[SessionId])
     }
 
     @Test
@@ -389,7 +388,8 @@ class RunSessionPushNotificationServiceTest {
             city = "Plano"
         )
 
-        whenever(phoneService.getPhonesByUser(targetUserId)).thenReturn(listOf(phone(targetUserId)))
+        whenever(phoneService.getPhonesByUser(targetUserId))
+            .thenReturn(listOf(phone(targetUserId)))
 
         val triggerCaptor = argumentCaptor<PushTrigger>()
         val templateCaptor = argumentCaptor<PushTemplateId>()
@@ -409,14 +409,13 @@ class RunSessionPushNotificationServiceTest {
             dedupeCaptor.capture()
         )
 
-        assert(triggerCaptor.firstValue == PushTrigger.RUN_SESSION_CREATED)
-        assert(templateCaptor.firstValue == PushTemplateId.RUN_CREATED)
-        assert(dedupeCaptor.firstValue == "run.created:sess-new:user-2")
+        assertEquals(PushTrigger.RUN_SESSION_CREATED, triggerCaptor.firstValue)
+        assertEquals(PushTemplateId.RUN_CREATED, templateCaptor.firstValue)
+        assertEquals("run.created:sess-new:user-2", dedupeCaptor.firstValue)
 
         val notif = notifCaptor.firstValue
-        assert(notif.title == "Evening Run")
-        // body contains city
-        assert(notif.body?.contains("Plano") == true)
+        assertEquals("New run session", notif.title)
+        assertEquals("Join a new session in Plano", notif.body)
     }
 
     @Test
@@ -446,27 +445,17 @@ class RunSessionPushNotificationServiceTest {
             dedupeCaptor.capture()          // dedupeKey
         )
 
-        // Trigger and template
-        assertEquals(
-            PushTrigger.RUN_SESSION_BOOKING_CANCELLED,
-            triggerCaptor.firstValue,
-            "Trigger should be RUN_SESSION_BOOKING_CANCELLED"
-        )
-        assertEquals(
-            PushTemplateId.RUN_BOOKING_CANCELLED,
-            templateCaptor.firstValue,
-            "Template should be RUN_BOOKING_CANCELLED"
-        )
+        assertEquals(PushTrigger.RUN_SESSION_BOOKING_CANCELLED, triggerCaptor.firstValue)
+        assertEquals(PushTemplateId.RUN_BOOKING_CANCELLED, templateCaptor.firstValue)
 
-        // Dedupe key (don’t hard-code the template string, use enum.id)
         val expectedDedupe =
             "${PushTemplateId.RUN_BOOKING_CANCELLED.id}:sess-promoted:$targetUserId:$bookingId"
         assertEquals(expectedDedupe, dedupeCaptor.firstValue)
 
-        // Notification body
         val notif = notifCaptor.firstValue
-        assertEquals("You have been added to the run", notif.body)
+        assertEquals("You have been added to session Noon Run", notif.body)
     }
+
 
 
     @Test

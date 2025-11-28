@@ -572,8 +572,7 @@ class BookingPricingAdjuster(
                 userId = userId,
                 customerId = customerId,
                 currency = currency,
-                paymentIntentId = pa.paymentIntentId,
-                reason = null
+                paymentIntentId = pa.paymentIntentId
             )
         }
     }
