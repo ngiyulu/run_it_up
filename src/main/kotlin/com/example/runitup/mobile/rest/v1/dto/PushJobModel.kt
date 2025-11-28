@@ -7,7 +7,7 @@ data class PushJobModel(
 )
 
 enum class PushJobType{
-    CONFIRM_RUN,
+    CONFIRM_RUN_BY_ADMIN,
     CANCEL_RUN,
     USER_JOINED, BOOKING_CANCELLED_BY_ADMIN, USER_JOINED_WAITLIST,
     BOOKING_UPDATED,

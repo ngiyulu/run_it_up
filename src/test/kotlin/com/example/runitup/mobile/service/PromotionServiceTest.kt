@@ -9,6 +9,7 @@ import com.example.runitup.mobile.rest.v1.dto.RunUser
 import com.example.runitup.mobile.service.payment.BookingPricingAdjuster
 import com.example.runitup.mobile.service.payment.PrimaryHoldResult
 import com.example.runitup.mobile.service.push.PaymentPushNotificationService
+import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -22,7 +23,9 @@ class PromotionServiceTest {
     private val bookingDbService = mockk<BookingDbService>()
     private val adjuster = mockk<BookingPricingAdjuster>()
     private val cacheManager = mockk<MyCacheManager>()
+    private val runSessionPushNotificationService = mockk<RunSessionPushNotificationService>(relaxed = true)
     private val sessionService = mockk<RunSessionService>(relaxed = true)
+    private val runSessionEventLogger = mockk<RunSessionEventLogger>(relaxed = true)
     private val paymentPushNotificationService = mockk<PaymentPushNotificationService>(relaxed = true)
 
     private lateinit var service: PromotionService
@@ -36,7 +39,9 @@ class PromotionServiceTest {
             bookingDbService = bookingDbService,
             cacheManager = cacheManager,
             sessionService = sessionService,
-            paymentPushNotificationService = paymentPushNotificationService
+            paymentPushNotificationService = paymentPushNotificationService,
+            runSessionEventLogger = runSessionEventLogger,
+            runSessionPushNotificationService = runSessionPushNotificationService
         )
 
         // Avoid ClassCastException for save()
@@ -214,16 +219,24 @@ class PromotionServiceTest {
         val runUser = mockk<RunUser>()
         every { runUser.userId } returns "u-5"
 
-        val session = mockk<RunSession>()
+        // Real lists the service can mutate
+        val waitList = mutableListOf(runUser)
+        val bookingList = mutableListOf<RunSession.SessionRunBooking>()
+
+        val session = mockk<RunSession>(relaxed = true)
         every { session.id } returns "sess-7"
-        every { session.waitList } returns mutableListOf(runUser)
+        every { session.waitList } returns waitList
+        every { session.bookingList } returns bookingList
         every { session.isSessionFree() } returns true
+        every { session.hostedBy } returns "admin-1"
 
         every { cacheManager.getRunSession("sess-7") } returns session
 
         val booking = mockk<Booking>(relaxed = true)
         every { booking.id } returns "b-4"
         every { booking.userId } returns "u-5"
+        every { booking.partySize } returns 1
+        every { booking.runSessionId } returns "sess-7"
 
         every {
             bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-5", "sess-7", any())
@@ -241,9 +254,15 @@ class PromotionServiceTest {
         assertThat(result.ok).isTrue()
         assertThat(result.message).isEqualTo("User promoted (free session).")
 
+        // extra sanity checks
+        assertThat(waitList).isEmpty()
+        assertThat(bookingList).hasSize(1)
+
         verify(exactly = 1) { sessionService.updateRunSession(session) }
         verify(exactly = 1) { bookingRepo.save(booking) }
-        verify(exactly = 0) { adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 0) {
+            adjuster.createPrimaryHoldWithChange(any(), any(), any(), any(), any(), any(), any())
+        }
     }
 
     // ---------------------------------------------------------
@@ -342,10 +361,17 @@ class PromotionServiceTest {
         val runUser = mockk<RunUser>()
         every { runUser.userId } returns "u-8"
 
-        val session = mockk<RunSession>()
+        // Real lists
+        val waitList = mutableListOf(runUser)
+        val bookingList = mutableListOf<RunSession.SessionRunBooking>()
+
+        val session = mockk<RunSession>(relaxed = true)
         every { session.id } returns "sess-10"
-        every { session.waitList } returns mutableListOf(runUser)
+        every { session.waitList } returns waitList
+        every { session.bookingList } returns bookingList
         every { session.isSessionFree() } returns false
+        every { session.hostedBy } returns "admin-1"
+
         every { cacheManager.getRunSession("sess-10") } returns session
 
         val booking = mockk<Booking>(relaxed = true)
@@ -353,6 +379,8 @@ class PromotionServiceTest {
         every { booking.userId } returns "u-8"
         every { booking.paymentMethodId } returns "pm_456"
         every { booking.currentTotalCents } returns 2000L
+        every { booking.partySize } returns 2
+        every { booking.runSessionId } returns "sess-10"
 
         every {
             bookingRepo.findByUserIdAndRunSessionIdAndStatusIn("u-8", "sess-10", any())
@@ -373,9 +401,15 @@ class PromotionServiceTest {
 
         every {
             adjuster.createPrimaryHoldWithChange(
-                "b-7", "u-8", "cus_999", "usd", 2000L, "pm_456", "SYSTEM_WAITLIST_PROMOTION"
+                "b-7",
+                "u-8",
+                "cus_999",
+                "usd",
+                2000L,
+                "pm_456",
+                "SYSTEM_WAITLIST_PROMOTION"
             )
-        } returns PrimaryHoldResult(true, paymentIntentId = "pi_123")
+        } returns PrimaryHoldResult(ok = true, paymentIntentId = "pi_123")
 
         val result = service.promoteNextWaitlistedUser("sess-10")
 
@@ -383,12 +417,23 @@ class PromotionServiceTest {
         assertThat(result.message).contains("authorized")
         assertThat(result.paymentIntentId).isEqualTo("pi_123")
 
+        // extra sanity checks
+        assertThat(waitList).isEmpty()
+        assertThat(bookingList).hasSize(1)
+
         verify(exactly = 1) { sessionService.updateRunSession(session) }
         verify(exactly = 1) { bookingRepo.save(booking) }
         verify(exactly = 1) {
             adjuster.createPrimaryHoldWithChange(
-                "b-7", "u-8", "cus_999", "usd", 2000L, "pm_456", "SYSTEM_WAITLIST_PROMOTION"
+                "b-7",
+                "u-8",
+                "cus_999",
+                "usd",
+                2000L,
+                "pm_456",
+                "SYSTEM_WAITLIST_PROMOTION"
             )
         }
     }
+
 }

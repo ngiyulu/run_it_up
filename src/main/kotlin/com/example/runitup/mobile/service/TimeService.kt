@@ -6,18 +6,6 @@ import java.time.*
 
 @Service
 class TimeService {
-    fun isWithinRange(
-        startDate: LocalDate,
-        startTime: LocalTime,
-        zoneId: ZoneId,
-        maxMinutes: Long
-    ): Boolean {
-        val now = Instant.now()
-        val sessionInstant = ZonedDateTime.of(startDate, startTime, zoneId).toInstant()
-
-        val diffMinutes = Duration.between(now, sessionInstant).toMinutes()
-        return diffMinutes < 0
-    }
 
     fun shouldSessionStart(
         startDate: LocalDate,

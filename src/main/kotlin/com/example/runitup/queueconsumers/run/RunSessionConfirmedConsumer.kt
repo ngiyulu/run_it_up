@@ -92,7 +92,7 @@ class RunSessionConfirmedConsumer(
     private fun complete(runSession: RunSession, jobId: String){
         val runSessionCreator = userRepository.findByLinkedAdmin(runSession.hostedBy.orEmpty())
         runSessionCreator?.let {
-            runSesionPushNotificationService.runSessionConfirmed(it.id.orEmpty(), runSession)
+            runSesionPushNotificationService.notifyAdminRunSessionConfirmed(it.id.orEmpty(), runSession)
         }
         runSession.status = RunStatus.CONFIRMED
         runSessionEventLogger.log(

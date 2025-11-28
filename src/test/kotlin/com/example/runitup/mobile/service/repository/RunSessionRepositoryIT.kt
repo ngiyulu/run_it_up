@@ -113,13 +113,14 @@ class RunSessionRepositoryIT @Autowired constructor(
             confirmedAt = null,
             statusBeforeCancel = RunStatus.PENDING,
             showRemoveButton = true,
-            cancelledAt = null,
+            cancellation = null,
             startedAt = null,
             startedBy = null,
             completedAt = null,
             code = null,
             plain = null,
-            bookingPaymentState = null
+            bookingPaymentState = null,
+            contact = "7605717457"
         )
     }
 

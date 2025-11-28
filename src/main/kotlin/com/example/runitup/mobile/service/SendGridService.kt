@@ -20,8 +20,6 @@ class SendGridService(
     @Value("\${email}") private val  adminEmail: String) : BaseService() {
 
     private val logger = myLogger()
-
-
     // --- generic html sender (same as you had, kept concise) ---
     @Throws(IOException::class)
     fun sendEmailHtml(to: String, subject: String, html: String, plainTextFallback: String? = null) {
@@ -42,7 +40,6 @@ class SendGridService(
             endpoint = "mail/send"
             body = mail.build()
         }
-
         val response: Response = sendGrid.api(request)
         if (response.statusCode !in 200..299) {
             logger.error("SendGrid error ${response.statusCode}: ${response.body}")

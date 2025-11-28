@@ -169,7 +169,7 @@ class RunSessionService(): BaseService(){
         val data = JobEnvelope(
             jobId = UUID.randomUUID().toString(),
             taskType = "Notification users of a run session confirmation",
-            payload = PushJobModel(PushJobType.CONFIRM_RUN, run.id.orEmpty())
+            payload = PushJobModel(PushJobType.CONFIRM_RUN_BY_ADMIN, run.id.orEmpty())
         )
         appScope.launch {
             queueService.sendJob(QueueNames.RUN_SESSION_PUSH_JOB, data,  delaySeconds = 0)

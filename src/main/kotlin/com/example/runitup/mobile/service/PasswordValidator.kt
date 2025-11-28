@@ -3,7 +3,7 @@ package com.example.runitup.mobile.service
 import org.springframework.stereotype.Service
 
 @Service
-class PasswordValidator: com.example.runitup.mobile.service.BaseService() {
+class PasswordValidator: BaseService() {
     private val lengthRegex = ".{8,}".toRegex()
     private val uppercaseRegex = "[A-Z]".toRegex()
     private val lowercaseRegex = "[a-z]".toRegex()

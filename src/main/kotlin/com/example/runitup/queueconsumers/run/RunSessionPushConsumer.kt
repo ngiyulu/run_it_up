@@ -46,7 +46,7 @@ class RunSessionPushConsumer(
         withContext(Dispatchers.IO) {
             logger.info("payload = $payload")
             when(payload.type){
-                PushJobType.CONFIRM_RUN -> notifyConfirmationRun(payload.dataId)
+                PushJobType.CONFIRM_RUN_BY_ADMIN -> notifyPlayersConfirmationRun(payload.dataId)
                 PushJobType.CANCEL_RUN -> notifyCancelledRun(payload.dataId)
                 PushJobType.USER_JOINED -> notifyUserJoined(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
                 PushJobType.USER_JOINED_WAITLIST -> notifyUserJoinedWaitList(payload.dataId, payload.metadata[USER_ID]?: "", payload.metadata[AppConstant.BOOKING_ID]?: System.currentTimeMillis().toString())
@@ -58,7 +58,7 @@ class RunSessionPushConsumer(
         }
     }
 
-    private fun notifyConfirmationRun(runId:String){
+    private fun notifyPlayersConfirmationRun(runId:String){
         val run = getRunSession(runId)
         if(run.status != RunStatus.CONFIRMED){
             return
@@ -67,8 +67,9 @@ class RunSessionPushConsumer(
             runId,
             mutableListOf(BookingStatus.JOINED)
         )
-        booking.forEach {
-            runSessionPushNotificationService.runSessionConfirmed(it.userId, run)
+
+        booking.filter { it.userId != run.hostedBy }.forEach {
+            runSessionPushNotificationService.notifyPlayersRunSessionConfirmed(it.userId, run)
         }
 
     }
@@ -100,7 +101,7 @@ class RunSessionPushConsumer(
             val user = getUser(userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
-                runSessionPushNotificationService.userJoinedRunSession(adminUser.id.orEmpty(), user, run, bookingId)
+                runSessionPushNotificationService.notifyAdminUserJoinedRunSession(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -123,7 +124,7 @@ class RunSessionPushConsumer(
             val user = getUser(userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
-                runSessionPushNotificationService.userJoinedWaitListRunSession(adminUser.id.orEmpty(), user, run, bookingId)
+                runSessionPushNotificationService.notifyAdminUserJoinedWaitListRunSession(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -147,7 +148,7 @@ class RunSessionPushConsumer(
             val user = getUser(userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != userId){
-                runSessionPushNotificationService.userUpdatedBooking(adminUser.id.orEmpty(), user, run, bookingId)
+                runSessionPushNotificationService.notifyAdminUserUpdatedBooking(adminUser.id.orEmpty(), user, run, bookingId)
             }
             else{
                 logger.info("user who joined is also the admin")
@@ -186,7 +187,7 @@ class RunSessionPushConsumer(
             val user = getUser(booking.userId)
             val adminUser = getAdmin(it)
             if(adminUser.id != booking.userId){
-                runSessionPushNotificationService.runSessionBookingCancelledByUser(adminUser.id.orEmpty(), run,  user, bookingId)
+                runSessionPushNotificationService.notifyAdminRunSessionBookingCancelledByUser(adminUser.id.orEmpty(), run,  user, bookingId)
             }
             else{
                 logger.info("user who cancelled booking is also the admin")
