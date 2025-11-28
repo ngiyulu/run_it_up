@@ -199,7 +199,7 @@ class CreateRunSessionController: BaseController<CreateRunSessionRequest, RunSes
         appScope.launch {
             val jobEnvelope = JobEnvelope(
                 jobId = UUID.randomUUID().toString(),
-                taskType = "Notification new user joined run waitlist",
+                taskType = "Notification for new run session created",
                 payload = run.id.orEmpty()
             )
             val isWithin5Days = timeService.isWithinNextDays(runSession, appConfig.displayDays.toLong())
