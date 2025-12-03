@@ -24,6 +24,7 @@ abstract class BaseQueueConsumer(
 
     @PostConstruct
     fun startPolling() {
+        logger.info("Starting polling for queue '$queueName' in ${this::class.java.simpleName}")
         appScope.launch(CoroutineName(coroutineName())) {
             while (isActive) {
                 try {
@@ -39,6 +40,7 @@ abstract class BaseQueueConsumer(
     }
 
     private suspend fun pollOnce() {
+        logger.info("polling once for $queueName")
         val batch = queueService.receiveMessages(
             ReceiveRequest(queue = queueName, maxNumberOfMessages = maxNumberOfMessages(), waitSeconds = waitSeconds())
         )
@@ -113,7 +115,7 @@ abstract class BaseQueueConsumer(
         logger.info("${this::class.java.simpleName} is running")
     }
 
-    private fun coroutineName() = this::class::simpleName.name
+    private fun coroutineName() = this::class.java.simpleName
 
     open fun delay(): Long = 30_000
 
