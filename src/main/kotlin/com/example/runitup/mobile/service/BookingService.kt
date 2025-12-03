@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.enum.PaymentStatus
+import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.getAllBookingStatuses
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.booking.BookingDetails
@@ -12,14 +13,14 @@ class BookingService {
     @Autowired
     lateinit var bookingRepository: BookingRepository
 
-    fun getBookingDetails(sessionId: String): BookingDetails {
-        val booking = bookingRepository.findByRunSessionIdAndStatusIn(sessionId, getAllBookingStatuses().toMutableList() )
+    fun getBookingDetails(runSession: RunSession): BookingDetails {
+        val booking = bookingRepository.findByRunSessionIdAndStatusIn(runSession.id.orEmpty(), getAllBookingStatuses().toMutableList() )
         val paidBooking = booking.filter {
             it.paymentStatus == PaymentStatus.PAID ||
                     it.paymentStatus == PaymentStatus.MANUAL_PAID }
         val total = paidBooking.sumOf { it.partySize * it.sessionAmount }
         return BookingDetails(total, booking.map {
-            it.updateStatus()
+            it.updateStatus(runSession)
             it
         })
     }

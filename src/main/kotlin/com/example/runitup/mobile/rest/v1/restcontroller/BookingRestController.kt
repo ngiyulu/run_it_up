@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.rest.v1.restcontroller
 
-import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.rest.v1.controllers.booking.BookingDetails
 import com.example.runitup.mobile.rest.v1.controllers.booking.GetBookingDetailsController
 import com.example.runitup.mobile.rest.v1.controllers.booking.UpdateBookingPaymentController

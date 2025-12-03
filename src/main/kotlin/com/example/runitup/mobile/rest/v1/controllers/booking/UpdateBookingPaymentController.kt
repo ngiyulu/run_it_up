@@ -56,7 +56,7 @@ class UpdateBookingPaymentController: BaseController<UpdateBookingPaymentModel, 
                 BOOKING_ID to booking.id.orEmpty()
                 )
         )
-        return bookingService.getBookingDetails(booking.runSessionId)
+        return bookingService.getBookingDetails(run)
     }
 
 }

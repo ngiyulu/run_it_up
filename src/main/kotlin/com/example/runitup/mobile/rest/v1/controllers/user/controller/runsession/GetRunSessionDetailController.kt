@@ -36,7 +36,7 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
             bookingDbService.getBookingDetails(it)
         }
         run.bookings = list.map {
-            it.updateStatus()
+            it.updateStatus(run)
             it
         }.toMutableList()
 

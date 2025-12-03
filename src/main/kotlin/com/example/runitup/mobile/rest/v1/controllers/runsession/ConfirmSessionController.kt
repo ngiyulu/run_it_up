@@ -59,7 +59,7 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
             }
         }
         run.bookings = list.map {
-            it.updateStatus()
+            it.updateStatus(run)
             it
         }.toMutableList()
         runSessionEventLogger.log(
