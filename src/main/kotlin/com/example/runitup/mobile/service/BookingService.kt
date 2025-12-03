@@ -18,6 +18,9 @@ class BookingService {
             it.paymentStatus == PaymentStatus.PAID ||
                     it.paymentStatus == PaymentStatus.MANUAL_PAID }
         val total = paidBooking.sumOf { it.partySize * it.sessionAmount }
-        return BookingDetails(total, booking)
+        return BookingDetails(total, booking.map {
+            it.updateStatus()
+            it
+        })
     }
 }

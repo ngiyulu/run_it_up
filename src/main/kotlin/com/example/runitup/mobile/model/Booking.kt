@@ -36,7 +36,13 @@ class Booking (
     var paidAt:Instant? = null,
     var date:String,
     var isManual: Boolean = false,
+    var showMarkAsPaid: Boolean = false
 ): BaseModel(){
+
+    fun updateStatus(){
+        showMarkAsPaid = isManual &&  status == BookingStatus.JOINED  && paymentStatus == PaymentStatus.PENDING
+        total = sessionAmount * partySize
+    }
 
     fun getNumOfGuest(): Int{
         return partySize - 1

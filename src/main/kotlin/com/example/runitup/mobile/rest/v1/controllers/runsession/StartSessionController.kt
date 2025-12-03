@@ -72,7 +72,10 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
                 list.add(bookingDb.get())
             }
         }
-        return  list
+        return  list.map {
+            it.updateStatus()
+            it
+        }.toMutableList()
     }
 
 }
