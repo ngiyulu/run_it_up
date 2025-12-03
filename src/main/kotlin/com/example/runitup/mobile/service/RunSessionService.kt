@@ -65,7 +65,7 @@ class RunSessionService(): BaseService(){
 
     fun getBooking(runSessionId: String):List<Booking>{
         return bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED)).map {
-            it.updateStatus()
+            it.updateStatus(null)
             it
         }
     }

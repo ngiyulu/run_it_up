@@ -73,7 +73,7 @@ class StartSessionController: BaseController<StartSessionModel, RunSession>() {
             }
         }
         return  list.map {
-            it.updateStatus()
+            it.updateStatus(runSession)
             it
         }.toMutableList()
     }

@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.rest.v1.controllers.booking
 
 import com.example.runitup.mobile.enum.PaymentStatus
+import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.getAllBookingStatuses
 import com.example.runitup.mobile.repository.BookingRepository
@@ -15,7 +16,8 @@ class GetBookingDetailsController: BaseController<String, BookingDetails>() {
     @Autowired
     lateinit var bookingService: BookingService
     override fun execute(request: String): BookingDetails {
-       return bookingService.getBookingDetails(request)
+        val runSession = cacheManager.getRunSession(request)?: throw  ApiRequestException("session_not_found")
+        return bookingService.getBookingDetails(runSession)
     }
 }
 

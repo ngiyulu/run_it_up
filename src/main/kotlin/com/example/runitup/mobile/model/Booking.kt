@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.model
 
 import com.example.runitup.mobile.enum.PaymentStatus
+import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.rest.v1.dto.RunUser
 import org.bson.types.ObjectId
 import java.time.Instant
@@ -36,12 +37,17 @@ class Booking (
     var paidAt:Instant? = null,
     var date:String,
     var isManual: Boolean = false,
-    var showMarkAsPaid: Boolean = false
+    var showMarkAsPaid: Boolean = false,
+    var showCancelButton: Boolean = false
 ): BaseModel(){
 
-    fun updateStatus(){
+    fun updateStatus(runSession: RunSession?){
         showMarkAsPaid = isManual &&  status == BookingStatus.JOINED  && paymentStatus == PaymentStatus.PENDING
         total = sessionAmount * partySize
+        runSession?.let {
+            showCancelButton = it.status == RunStatus.PENDING || it.status == RunStatus.CONFIRMED
+
+        }
     }
 
     fun getNumOfGuest(): Int{
