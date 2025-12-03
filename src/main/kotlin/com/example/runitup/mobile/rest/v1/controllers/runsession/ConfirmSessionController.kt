@@ -58,7 +58,10 @@ class ConfirmSessionController: BaseController<ConfirmSessionModel, RunSession>(
                 list.add(bookingDb.get())
             }
         }
-        run.bookings = list
+        run.bookings = list.map {
+            it.updateStatus()
+            it
+        }.toMutableList()
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_CONFIRMED,

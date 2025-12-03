@@ -64,7 +64,10 @@ class RunSessionService(): BaseService(){
 
 
     fun getBooking(runSessionId: String):List<Booking>{
-        return bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED))
+        return bookingRepository.findByRunSessionIdAndStatusIn(runSessionId, mutableListOf(BookingStatus.WAITLISTED, BookingStatus.JOINED)).map {
+            it.updateStatus()
+            it
+        }
     }
     fun getRunSession(isAdmin:Boolean, runSession: RunSession? = null, runSessionId:String, userId:String? = null): RunSession?{
         val session:RunSession = runSession ?: (cacheManager.getRunSession(runSessionId) ?: return  null)

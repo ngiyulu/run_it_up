@@ -32,9 +32,14 @@ class GetRunSessionDetailController: BaseController<String, RunSession>() {
         val run = runSessionService.getRunSession(user.linkedAdmin != null, null, request) ?: throw  ApiRequestException("not_found")
         run.updateStatus()
         run.updateAdmin(admin)
-        run.bookings = run.bookings.map {
+        val list  = run.bookings.map {
             bookingDbService.getBookingDetails(it)
+        }
+        run.bookings = list.map {
+            it.updateStatus()
+            it
         }.toMutableList()
+
         return  run
     }
 }

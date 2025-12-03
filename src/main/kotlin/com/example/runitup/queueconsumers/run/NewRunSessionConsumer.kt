@@ -43,7 +43,9 @@ class NewRunSessionConsumer(
                 logger.error("couldn't find run id ${env.payload} from NewRunSessionConsumer")
                 return@withContext
             }
-            val users = nearbyUserService.findUsersNearRunSession(run, 20.0)
+            var users = nearbyUserService.findUsersNearRunSession(run, 20.0)
+            // remove the host
+            users = users.filter {run.hostedBy != it.linkedAdmin }
             logger.info("${users.size} users will get notified for the new session")
             users.forEach {
                 logger.info("notifying ${it.getFullName()}")
