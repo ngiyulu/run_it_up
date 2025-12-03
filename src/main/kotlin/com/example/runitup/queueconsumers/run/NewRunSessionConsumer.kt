@@ -38,7 +38,11 @@ class NewRunSessionConsumer(
         val env: JobEnvelope<String> = objectMapper.readValue(rawBody) as JobEnvelope<String>
         logger.info(env.toString())
         withContext(Dispatchers.IO) {
-            val run = cacheManager.getRunSession(env.payload) ?: return@withContext
+            val run = cacheManager.getRunSession(env.payload)
+            if(run == null){
+                logger.error("couldn't find run id ${env.payload} from NewRunSessionConsumer")
+                return@withContext
+            }
             val users = nearbyUserService.findUsersNearRunSession(run, 20.0)
             logger.info("${users.size} users will get notified for the new session")
             users.forEach {
