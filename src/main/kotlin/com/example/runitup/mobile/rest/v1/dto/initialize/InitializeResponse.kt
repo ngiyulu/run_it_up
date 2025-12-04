@@ -23,5 +23,7 @@ class InitializeResponse(
     var refundUrl:String = "",
     var messagingEnabled:Boolean = false,
     var adminUser: AdminUser? = null,
+    var privacyUrl:String = "",
+    var termsAndConditionUrl:String = "",
     var displayDays:Int
 )
