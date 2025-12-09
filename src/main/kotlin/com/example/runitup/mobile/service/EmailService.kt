@@ -37,4 +37,29 @@ class EmailService {
             """.trimIndent()
         )
     }
+
+
+    fun sendOtpEmail(to: String, otp: String) {
+        val html = templateRenderer.render(
+            templateName = "otp",
+            variables = mapOf(
+                "otp" to otp,
+                "expirationMinutes" to 10,
+                "appName" to "RunItUp",
+                "year" to Year.now().value
+            )
+        )
+
+        sendGridService.sendEmailHtml(
+            to = to,
+            subject = "Your RunItUp Verification Code",
+            html = html,
+            plainTextFallback = """
+            Your verification code is $otp.
+            This code expires in 10 minutes.
+            © ${Year.now().value} RunItUp
+        """.trimIndent()
+        )
+    }
+
 }
