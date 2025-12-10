@@ -17,4 +17,5 @@ class AppConfig {
     var privacyUrl:String = ""
     var termsAndConditionUrl:String = ""
     var displayDays:Int = 3
+    var smsEnabled:Boolean = false
 }
