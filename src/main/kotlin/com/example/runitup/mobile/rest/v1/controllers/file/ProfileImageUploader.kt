@@ -25,6 +25,7 @@ class ProfileImageUploader: BaseController<FileUploadModel, User>() {
         val user = getMyUser()
         val resized = imageService.resizeToAvatarJpeg(request.file, maxSize = 512, quality = 0.85)
         val storageResponse = service.uploadProfileImage(user, resized) ?: throw ApiRequestException("error")
+        logger.info(storageResponse.toString())
         user.imageUrl = storageResponse.url
         return cacheManager.updateUser(user)
     }

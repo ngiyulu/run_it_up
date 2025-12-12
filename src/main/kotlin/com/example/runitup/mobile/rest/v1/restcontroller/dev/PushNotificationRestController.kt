@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 
-@Profile(value = ["dev", "local"]) // ✅ active for both dev and local profiles
+@Profile(value = ["dev", "local", "prod"]) // ✅ active for both dev and local profiles
 @RestController
 @RequestMapping("/api/push")
 class PushNotificationRestController {
