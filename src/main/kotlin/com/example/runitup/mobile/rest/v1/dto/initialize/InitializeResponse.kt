@@ -24,5 +24,7 @@ class InitializeResponse(
     var adminUser: AdminUser? = null,
     var privacyUrl:String = "",
     var termsAndConditionUrl:String = "",
-    var displayDays:Int
+    var displayDays:Int,
+    var showDeleteButton:Boolean,
+    var waiverAppUrl:String = ""
 )
