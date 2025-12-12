@@ -85,8 +85,11 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         user?.linkedAdmin?.let {
             adminUser = cacheManager.getAdmin(it)
         }
-
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", appConfig.baseUrl+"/ios/run", appConfig.email, false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser, appConfig.privacyUrl, appConfig.termsAndConditionUrl, appConfig.displayDays).apply {
+        var deeplink = appConfig.baseUrl+"/ios/run"
+        if(request.os.convertToPhoneType() == PhoneType.ANDROID){
+            deeplink = appConfig.baseUrl+"/android/run"
+        }
+        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", deeplink, appConfig.email, false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser, appConfig.privacyUrl, appConfig.termsAndConditionUrl, appConfig.displayDays).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
             }
