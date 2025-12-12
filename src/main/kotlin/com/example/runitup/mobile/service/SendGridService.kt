@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.service
 
+import com.example.runitup.mobile.config.AppConfig
 import com.sendgrid.Method
 import com.sendgrid.Request
 import com.sendgrid.Response
@@ -17,13 +18,13 @@ import java.io.IOException
 class SendGridService(
     @Autowired
     private  val  sendGrid: SendGrid,
-    @Value("\${email}") private val  adminEmail: String) : BaseService() {
+    private val appConfig: AppConfig) : BaseService() {
 
     private val logger = myLogger()
     // --- generic html sender (same as you had, kept concise) ---
     @Throws(IOException::class)
     fun sendEmailHtml(to: String, subject: String, html: String, plainTextFallback: String? = null) {
-        val from = Email(adminEmail)
+        val from = Email(appConfig.email)
         val toEmail = Email(to)
         val personalization = Personalization().apply { addTo(toEmail) }
 

@@ -18,4 +18,5 @@ class AppConfig {
     var termsAndConditionUrl:String = ""
     var displayDays:Int = 3
     var smsEnabled:Boolean = false
+    var email:String = ""
 }

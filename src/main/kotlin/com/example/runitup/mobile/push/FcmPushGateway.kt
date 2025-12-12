@@ -48,7 +48,7 @@ class FcmPushGateway : PushGateway {
             notif.clickAction?.let { builder.putData("click_action", it) }
 
             val message = builder.build()
-            val resp = FirebaseMessaging.getInstance().sendMulticast(message)
+            val resp = FirebaseMessaging.getInstance().sendEachForMulticast(message)
 
             requested += batch.size
             success += resp.successCount

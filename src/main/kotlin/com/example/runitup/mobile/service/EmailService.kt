@@ -15,6 +15,9 @@ class EmailService {
     @Autowired
     lateinit var sendGridService: SendGridService
 
+    @Autowired
+    lateinit var mailerSendService: MailerSendService
+
 
     @Throws(IOException::class)
     fun sendWelcomeEmail(to: String, name: String, loginUrl: String) {
@@ -26,7 +29,7 @@ class EmailService {
                 "year" to Year.now().value
             )
         )
-        sendGridService.sendEmailHtml(
+        mailerSendService.sendEmailHtml(
             to = to,
             subject = "Welcome to RunItUp",
             html = html,
@@ -37,7 +40,6 @@ class EmailService {
             """.trimIndent()
         )
     }
-
 
     fun sendOtpEmail(to: String, otp: String) {
         val html = templateRenderer.render(
@@ -50,7 +52,7 @@ class EmailService {
             )
         )
 
-        sendGridService.sendEmailHtml(
+        mailerSendService.sendEmailHtml(
             to = to,
             subject = "Your RunItUp Verification Code",
             html = html,
