@@ -89,7 +89,26 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
         if(request.os.convertToPhoneType() == PhoneType.ANDROID){
             deeplink = appConfig.baseUrl+"/android/run"
         }
-        return InitializeResponse(gyms, user, token.orEmpty(), true, 3, "", deeplink, appConfig.email, false,  GuideLineUtil.provideGuideLineList(), userStats = stats, refundUrl = appConfig.refundUrl, appConfig.messaging, adminUser, appConfig.privacyUrl, appConfig.termsAndConditionUrl, appConfig.displayDays).apply {
+        return InitializeResponse(gyms,
+            user,
+            token.orEmpty(),
+            true,
+            3,
+            "",
+            deeplink,
+            appConfig.email,
+            false,
+            GuideLineUtil.provideGuideLineList(),
+            userStats = stats,
+            refundUrl = appConfig.refundUrl,
+            appConfig.messaging,
+            adminUser,
+            appConfig.privacyUrl,
+            appConfig.termsAndConditionUrl,
+            appConfig.displayDays,
+            appConfig.showDeleteButton,
+            appConfig.waiverAppUrl
+        ).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
             }

@@ -19,4 +19,6 @@ class AppConfig {
     var displayDays:Int = 3
     var smsEnabled:Boolean = false
     var email:String = ""
+    var showDeleteButton = true
+    var waiverAppUrl:String = ""
 }
