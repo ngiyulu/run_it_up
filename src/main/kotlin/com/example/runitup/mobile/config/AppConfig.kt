@@ -21,4 +21,5 @@ class AppConfig {
     var email:String = ""
     var showDeleteButton = true
     var waiverAppUrl:String = ""
+    var baseProfileImageUrl: String = ""
 }

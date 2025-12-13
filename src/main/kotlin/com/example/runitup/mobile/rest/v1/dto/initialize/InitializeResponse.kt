@@ -26,5 +26,6 @@ class InitializeResponse(
     var termsAndConditionUrl:String = "",
     var displayDays:Int,
     var showDeleteButton:Boolean,
-    var waiverAppUrl:String = ""
+    var waiverAppUrl:String = "",
+    var baseProfileImageUrl: String = ""
 )

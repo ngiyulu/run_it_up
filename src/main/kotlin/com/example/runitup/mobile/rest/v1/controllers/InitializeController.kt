@@ -107,7 +107,8 @@ class InitializeController: BaseController<InitializeRequest, InitializeResponse
             appConfig.termsAndConditionUrl,
             appConfig.displayDays,
             appConfig.showDeleteButton,
-            appConfig.waiverAppUrl
+            appConfig.waiverAppUrl,
+            appConfig.baseProfileImageUrl
         ).apply {
             if(request.os.convertToPhoneType() == PhoneType.ANDROID){
                 this.allowedPayment = appConfig.paymentAndroid
