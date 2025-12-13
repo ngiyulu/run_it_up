@@ -86,7 +86,7 @@ class UserRestController {
              @RequestHeader("X-Timezone", required = true) tzHeader: String,
              @RequestHeader("X-OS-Version", required = true) phoneOs: String): InitializeResponse {
         model.tokenModel?.type = type
-        model.os = phoneOs
+        model.os = type
         model.zoneId = tzHeader
         return userControllersProvider.initializeController.execute(model)
     }
