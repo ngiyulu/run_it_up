@@ -96,7 +96,7 @@ class RunSessionPushConsumer(
             run.status == RunStatus.PROCESSED){
             return
         }
-        logger.info("notifyUserJoined userId = $userId")
+        logger.info("notify admin that userId $userId has joined its session")
         run.hostedBy?.let {
             val user = getUser(userId)
             val adminUser = getAdmin(it)

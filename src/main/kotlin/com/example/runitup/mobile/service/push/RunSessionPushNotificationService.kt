@@ -39,6 +39,7 @@ class RunSessionPushNotificationService(
             phones = phones.filter { it.userId != runSessionCreator.id }
         }
 
+        println("runSessionCancelled phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -63,6 +64,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(targetUserId)
+        println("runSessionBookingCancelledByAdmin phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -85,6 +87,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(targetUserId)
+        println("notifyUserNewRunCreated phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -108,6 +111,7 @@ class RunSessionPushNotificationService(
 
         val phones = phoneService.getPhonesByUser(targetUserId)
         val template = PushTemplateId.RUN_BOOKING_CANCELLED // keeping your current value
+        println("runSessionBookingPromoted phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -131,7 +135,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(targetUser)
-
+        println("notifyPlayersRunSessionConfirmed phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -156,6 +160,7 @@ class RunSessionPushNotificationService(
 
         val template = PushTemplateId.RUN_BOOKING_START_NOTIFICATION
         val phones = phoneService.getPhonesByUser(targetUserId)
+        println("runSessionAboutToStart phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -181,6 +186,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(adminUserId)
+        println("notifyAdminRunSessionBookingCancelledByUser phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -203,6 +209,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(adminUserId)
+        println("notifyAdminUserUpdatedBooking phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -226,6 +233,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(adminUserId)
+        println("notifyAdminUserJoinedWaitListRunSession phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -249,6 +257,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(adminUserId)
+        println("notifyAdminUserJoinedRunSession phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -273,7 +282,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(targetUser)
-
+        print("notifyAdminRunSessionConfirmed phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
@@ -296,6 +305,7 @@ class RunSessionPushNotificationService(
         )
 
         val phones = phoneService.getPhonesByUser(adminUserId)
+        println("notifyAdminUserPromotion phone size = ${phones.size}")
         pushService.sendToPhonesAudited(
             phones = phones,
             notif = notif,
