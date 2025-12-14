@@ -1,6 +1,7 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.enum.PhoneType
+import com.example.runitup.mobile.enum.PushRegistrationEnvironment
 import com.example.runitup.mobile.model.Phone
 import com.example.runitup.mobile.repository.PhoneRepository
 import com.example.runitup.mobile.rest.v1.dto.FirebaseTokenModel
@@ -10,10 +11,18 @@ import org.springframework.stereotype.Service
 @Service
 class PhoneService(private var phoneRepository: PhoneRepository): BaseService() {
 
-    fun createPhone(token: FirebaseTokenModel, os:String, userId: String): Phone {
+    private val logger = myLogger()
+    fun createPhone(token: FirebaseTokenModel, os:String, userId: String): Phone? {
         var ph = phoneRepository.findByPhoneId(token.phoneId)
         var phoneType = PhoneType.ANDROID
         println("createPhone userId = $userId")
+        if (!shouldRegisterPushToken(token.environment)) {
+            logger.info(
+                "Skipping push token registration. " +
+                        "env=${token.environment}, phoneId=${token.phoneId}, userId=$userId"
+            )
+            return null
+        }
         if(ph == null){
             if(token.type == HeaderConstants.IOS_TYPE){
                 phoneType = PhoneType.IOS
@@ -63,6 +72,17 @@ class PhoneService(private var phoneRepository: PhoneRepository): BaseService() 
 
     fun getPhonesByUser(userId:String): List<Phone>{
         return phoneRepository.findAllByUserId(userId)
+    }
+
+    fun shouldRegisterPushToken(
+        env: PushRegistrationEnvironment?
+    ): Boolean {
+        return when (env) {
+            PushRegistrationEnvironment.XCODE -> false
+            PushRegistrationEnvironment.TESTFLIGHT -> true
+            PushRegistrationEnvironment.APPSTORE -> true
+            null -> true // this for android
+        }
     }
 
 }
