@@ -119,7 +119,8 @@ class SecurityConfig{
                 "api/queues/**",
                 "api/test/cache/**",
                 "api/sms/status/**",
-                "ios/**"
+                "ios/**",
+                "android/**"
                 ).permitAll()
 
             // everything else needs to be authenticated
