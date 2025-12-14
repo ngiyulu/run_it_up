@@ -8,11 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class CreateOrUpdatePhone: BaseController<CreateOrUpdatePhone.CreateOrUpdatePhoneModel, Phone>() {
+class CreateOrUpdatePhone: BaseController<CreateOrUpdatePhone.CreateOrUpdatePhoneModel, Phone?>() {
 
     @Autowired
     lateinit var phoneService: PhoneService
-    override fun execute(request: CreateOrUpdatePhoneModel): com.example.runitup.mobile.model.Phone {
+    override fun execute(request: CreateOrUpdatePhoneModel): Phone? {
         val user =getMyUser()
        return phoneService.createPhone(request.token, request.phoneOS, user.id.orEmpty())
     }

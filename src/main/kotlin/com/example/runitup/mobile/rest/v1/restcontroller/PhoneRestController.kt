@@ -17,7 +17,7 @@ class PhoneRestController {
     @PostMapping("/create")
     fun create(@RequestBody model: FirebaseTokenModel,
                @RequestHeader("X-Source-Type")  type:String = ANDROID_TYPE,
-               @RequestHeader("X-OS-Version", required = true) phoneOs: String): com.example.runitup.mobile.model.Phone {
+               @RequestHeader("X-OS-Version", required = true) phoneOs: String): com.example.runitup.mobile.model.Phone? {
         model.type = type
         return createOrUpdatePhone.execute(CreateOrUpdatePhone.CreateOrUpdatePhoneModel(model, phoneOs))
     }
