@@ -11,4 +11,9 @@ class IosLinkController {
     fun iosFallback(): String {
         return "home"
     }
+
+    @GetMapping("/android/**")
+    fun androidFallBack(): String {
+        return "home"
+    }
 }
