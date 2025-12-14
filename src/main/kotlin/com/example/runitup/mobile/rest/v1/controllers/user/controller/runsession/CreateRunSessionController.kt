@@ -11,12 +11,14 @@ import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.GymRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.controllers.UserModelType
-import com.example.runitup.mobile.rest.v1.dto.*
+import com.example.runitup.mobile.rest.v1.dto.Actor
+import com.example.runitup.mobile.rest.v1.dto.ActorType
+import com.example.runitup.mobile.rest.v1.dto.CreateRunSessionRequest
+import com.example.runitup.mobile.rest.v1.dto.RunSessionAction
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.TimeService
 import com.example.runitup.mobile.service.http.MessagingService
-import com.example.runitup.web.security.AdminPrincipal
 import com.ngiyulu.runitup.messaging.runitupmessaging.dto.conversation.CreateConversationModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -25,7 +27,6 @@ import model.messaging.ConversationType
 import org.bson.types.ObjectId
 import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDate

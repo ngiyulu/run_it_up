@@ -1,6 +1,5 @@
 package com.example.runitup.mobile.rest.v1.controllers.user.controller.waiver
 
-import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.cache.MyCacheManager
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.JobEnvelope
@@ -12,11 +11,9 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.controllers.UserModelType
 import com.example.runitup.mobile.service.GcsImageService
 import com.example.runitup.mobile.service.LightSqsService
-import com.example.runitup.web.security.AdminPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.util.*
 

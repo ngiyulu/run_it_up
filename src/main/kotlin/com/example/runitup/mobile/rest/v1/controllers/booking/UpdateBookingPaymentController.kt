@@ -5,8 +5,6 @@ import com.example.runitup.mobile.constants.AppConstant.BOOKING_ID
 import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.getAllBookingStatuses
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.Actor

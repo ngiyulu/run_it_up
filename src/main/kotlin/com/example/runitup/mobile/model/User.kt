@@ -8,8 +8,6 @@ import com.ngiyulu.runitup.messaging.runitupmessaging.model.user.Sex
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint
-import org.springframework.data.mongodb.core.index.GeoSpatialIndexType
-import org.springframework.data.mongodb.core.index.GeoSpatialIndexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 

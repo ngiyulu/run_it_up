@@ -2,7 +2,6 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.rest.v1.controllers.phone.CreateOrUpdatePhone
 import com.example.runitup.mobile.rest.v1.dto.FirebaseTokenModel
-import constant.HeaderConstants
 import constant.HeaderConstants.ANDROID_TYPE
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*

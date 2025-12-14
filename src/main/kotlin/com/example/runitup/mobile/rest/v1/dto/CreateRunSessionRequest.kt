@@ -1,6 +1,4 @@
 package com.example.runitup.mobile.rest.v1.dto
-import java.time.LocalDate
-import java.time.LocalTime
 
 class CreateRunSessionRequest(
     val gymId:String,

@@ -6,10 +6,15 @@ import com.example.runitup.mobile.enum.PushTemplateId
 import com.example.runitup.mobile.enum.PushTrigger
 import com.example.runitup.mobile.model.*
 import com.example.runitup.mobile.push.PushGateway
+import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.PushDeliveryAttemptRepository
 import com.example.runitup.mobile.repository.PushNotificationEventRepository
+import com.example.runitup.mobile.rest.v1.dto.PushJobModel
+import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.rest.v1.dto.PushNotification
 import com.example.runitup.mobile.rest.v1.dto.PushResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -17,13 +22,16 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.*
 
 @Service
 class PushService(
     @Autowired @Qualifier(fcmPushGateway) private val fcm: PushGateway,
     @Autowired @Qualifier(apnsPushGateway) private val apns: PushGateway,
     @Autowired private val eventRepo: PushNotificationEventRepository,
-    @Autowired private val attemptRepo: PushDeliveryAttemptRepository
+    @Autowired private val attemptRepo: PushDeliveryAttemptRepository,
+    @Autowired private  val appScope: CoroutineScope,
+    @Autowired private var queueService: LightSqsService
 ) {
 
     private fun sha256(input: String): String =
@@ -116,7 +124,16 @@ class PushService(
 
     private fun handleInvalidTokens(result: PushResult) {
         if (result.invalidTokens.isNotEmpty()) {
-            // TODO: phoneRepo soft-delete or disable tokens
+            println("there are invalid tokens")
+            val data = JobEnvelope(
+                jobId = UUID.randomUUID().toString(),
+                taskType = "Delete bad phone tokens",
+                payload = result.invalidTokens
+            )
+            appScope.launch {
+                queueService.sendJob(QueueNames.BAD_TOKEN_JOB, data,  delaySeconds = 0)
+            }
+
         }
     }
 }

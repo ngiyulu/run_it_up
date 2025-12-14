@@ -5,7 +5,6 @@ import com.example.runitup.mobile.model.Phone
 import com.example.runitup.mobile.repository.PhoneRepository
 import com.example.runitup.mobile.rest.v1.dto.FirebaseTokenModel
 import constant.HeaderConstants
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service

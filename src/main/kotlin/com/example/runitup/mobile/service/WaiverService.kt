@@ -1,9 +1,7 @@
 package com.example.runitup.mobile.service
 
 import com.example.runitup.mobile.model.User
-import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.WaiverRepository
-import com.example.runitup.mobile.utility.AgeUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

@@ -1,17 +1,11 @@
 package com.example.runitup.mobile.service
 
-import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.Booking
 import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
-import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 @Service
 class RunSessionTimeWindowService(

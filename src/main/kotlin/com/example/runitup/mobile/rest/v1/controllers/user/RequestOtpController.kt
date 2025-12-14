@@ -8,8 +8,6 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.OtpResponse
 import com.example.runitup.mobile.rest.v1.dto.SendOtpRequest
 import com.example.runitup.mobile.service.EmailService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
