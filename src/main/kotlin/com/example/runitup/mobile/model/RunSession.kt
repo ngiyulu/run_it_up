@@ -114,7 +114,7 @@ data class RunSession(
             UserButtonStatus.NONE
         }
         showUpdatePaymentButton = status == RunStatus.PENDING
-        guestUpdateAllowed = isPendingOrConfirmed
+        guestUpdateAllowed = isPendingOrConfirmed && !isFull
         leaveSessionUpdateAllowed = isPendingOrConfirmed
     }
 

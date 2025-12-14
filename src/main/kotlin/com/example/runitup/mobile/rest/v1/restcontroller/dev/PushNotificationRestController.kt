@@ -35,6 +35,7 @@ class PushNotificationRestController {
             badge = req.badge
         )
         val phones = phoneRepository.findAllByPhoneId(req.phoneId)
+        println(phones)
         return pushService.sendToPhonesAudited(phones, notification, PushTrigger.RUN_SESSION_CREATED, null,  PushTemplateId.RUN_BOOKING_START_NOTIFICATION, null)
     }
 }
