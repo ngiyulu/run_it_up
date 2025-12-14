@@ -38,4 +38,6 @@ interface PhoneRepository : MongoRepository<com.example.runitup.mobile.model.Pho
     fun findAllByUserId(userId: String): List<com.example.runitup.mobile.model.Phone>
 
     fun findAllByUserIdIn(userIds: Collection<String>): List<com.example.runitup.mobile.model.Phone>
+
+    fun deleteAllByTokenIn(tokens: Collection<String>): Long
 }

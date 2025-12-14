@@ -25,6 +25,7 @@ class QueueInitializer(
                 QueueInitializerModel(QueueNames.FIRST_SESSION_JOB),
                 QueueInitializerModel(QueueNames.LOCATION_JOB),
                 QueueInitializerModel(QueueNames.NEW_USER_JOB),
+                QueueInitializerModel(QueueNames.BAD_TOKEN_JOB),
                 QueueInitializerModel(QueueNames.RUN_SESSION_PUSH_JOB),
                 QueueInitializerModel(QueueNames.RUN_CANCELLED_JOB),
                 QueueInitializerModel(QueueNames.RUN_PROCESS_PAYMENT),

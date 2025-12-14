@@ -2,10 +2,8 @@ package com.example.runitup.queueconsumers.run
 
 
 import com.example.runitup.mobile.cache.MyCacheManager
-import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.service.JobTrackerService
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.NearbyUserService

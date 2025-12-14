@@ -1,10 +1,7 @@
 package com.example.runitup.mobile.rest.v1.controllers.booking
 
-import com.example.runitup.mobile.enum.PaymentStatus
 import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.model.Booking
-import com.example.runitup.mobile.model.getAllBookingStatuses
-import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.service.BookingService
 import org.springframework.beans.factory.annotation.Autowired

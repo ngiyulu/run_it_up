@@ -3,14 +3,10 @@ package com.example.runitup.mobile.rest.v1.controllers
 import com.example.runitup.common.model.AdminUser
 import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.enum.PhoneType
-import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.extensions.convertToPhoneType
 import com.example.runitup.mobile.model.User
-import com.example.runitup.mobile.model.WaiverStatus
 import com.example.runitup.mobile.repository.GymRepository
-import com.example.runitup.mobile.repository.UserActionRequiredRepository
 import com.example.runitup.mobile.repository.UserRepository
-import com.example.runitup.mobile.repository.WaiverRepository
 import com.example.runitup.mobile.rest.v1.dto.UserStat
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeRequest
 import com.example.runitup.mobile.rest.v1.dto.initialize.InitializeResponse
@@ -23,8 +19,6 @@ import com.example.runitup.mobile.service.WaiverService
 import com.example.runitup.mobile.utility.AgeUtil
 import com.example.runitup.mobile.utility.GuideLineUtil
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin
-import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 
 @Service

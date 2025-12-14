@@ -1,11 +1,9 @@
 package com.example.runitup.mobile.handler
 
-import com.example.runitup.mobile.exception.ApiRequestException
 import com.example.runitup.mobile.exception.ApiUnauhorizedException
 import com.example.runitup.mobile.rest.v1.dto.ApiError
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler

@@ -15,7 +15,6 @@ import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.JoinSessionModel
 import com.example.runitup.mobile.rest.v1.dto.session.JoinWaitListModel
-import com.example.runitup.mobile.security.UserPrincipal
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.NumberGenerator
 import com.example.runitup.mobile.service.RunSessionService
@@ -28,7 +27,6 @@ import model.messaging.Participant
 import org.bson.types.ObjectId
 import org.jboss.logging.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

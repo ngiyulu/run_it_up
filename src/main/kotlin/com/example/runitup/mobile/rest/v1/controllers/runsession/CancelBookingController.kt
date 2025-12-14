@@ -10,7 +10,6 @@ import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.model.User
 import com.example.runitup.mobile.queue.QueueNames
 import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.service.BookingDbService
 import com.example.runitup.mobile.rest.v1.controllers.BaseController
 import com.example.runitup.mobile.rest.v1.dto.*
 import com.example.runitup.mobile.rest.v1.dto.session.CancelBookingModel

@@ -1,7 +1,6 @@
 package com.example.runitup.mobile.rest.v1.controllers.runsession
 
 import com.example.runitup.mobile.exception.ApiRequestException
-import com.example.runitup.mobile.model.BookingStatus
 import com.example.runitup.mobile.model.RunSession
 import com.example.runitup.mobile.repository.BookingRepository
 import com.example.runitup.mobile.rest.v1.controllers.BaseController

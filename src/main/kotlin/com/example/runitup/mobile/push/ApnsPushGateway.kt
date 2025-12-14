@@ -12,7 +12,6 @@ import com.example.runitup.mobile.service.myLogger
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.io.Resource
 import org.springframework.stereotype.Component
 import java.io.ByteArrayInputStream
 import java.util.*

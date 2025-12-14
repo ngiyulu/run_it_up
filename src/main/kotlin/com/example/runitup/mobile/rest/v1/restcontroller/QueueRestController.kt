@@ -2,8 +2,6 @@ package com.example.runitup.mobile.rest.v1.restcontroller
 
 import com.example.runitup.mobile.model.JobEnvelope
 import com.example.runitup.mobile.queue.QueueNames
-import com.example.runitup.mobile.rest.v1.dto.PushJobModel
-import com.example.runitup.mobile.rest.v1.dto.PushJobType
 import com.example.runitup.mobile.service.LightSqsService
 import com.example.runitup.mobile.service.ReceiveRequest
 import kotlinx.coroutines.runBlocking

@@ -2,20 +2,14 @@ package com.example.runitup.cronjob.jobs
 
 
 import com.example.runitup.cronjob.CronJobRunner
-import com.example.runitup.mobile.cache.MyCacheManager
-import com.example.runitup.mobile.enum.RunStatus
 import com.example.runitup.mobile.model.RunSession
-import com.example.runitup.mobile.repository.BookingRepository
-import com.example.runitup.mobile.repository.RunSessionRepository
 import com.example.runitup.mobile.service.RunSessionTimeWindowService
-import com.example.runitup.mobile.service.TimeService
 import com.example.runitup.mobile.service.myLogger
 import com.example.runitup.mobile.service.push.RunSessionPushNotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.ZoneId
 
 @Component
 class UpcomingJobRunSessionCronJob(
