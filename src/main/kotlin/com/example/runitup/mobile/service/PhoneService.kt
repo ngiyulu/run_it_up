@@ -23,7 +23,7 @@ class PhoneService(private var phoneRepository: PhoneRepository): BaseService() 
             ph =phoneRepository.save(
                 Phone(
                     os = os,
-                    model = "",
+                    model = token.model.orEmpty(),
                     userId = userId,
                     token = token.token,
                     phoneId = token.phoneId,
@@ -43,6 +43,7 @@ class PhoneService(private var phoneRepository: PhoneRepository): BaseService() 
                 ph.phoneId = token.phoneId
                 ph.userId = userId
                 ph.type = phoneType
+                ph.model = token.model.orEmpty()
                 print("update phone")
                 phoneRepository.save(ph)
             }
