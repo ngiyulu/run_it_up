@@ -22,4 +22,5 @@ class AppConfig {
     var showDeleteButton = true
     var waiverAppUrl:String = ""
     var baseProfileImageUrl: String = ""
+    var otpEnabled:Boolean = true
 }
