@@ -1,5 +1,6 @@
 package com.example.runitup.mobile.repository.service
 
+import com.example.runitup.mobile.config.AppConfig
 import com.example.runitup.mobile.model.Otp
 import com.example.runitup.mobile.repository.OtpRepository
 import com.example.runitup.mobile.service.NumberGenerator
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Service
 
 @Service
 class OtpDbService {
+
+    @Autowired
+    lateinit var appConfig: AppConfig
 
     @Autowired
     lateinit var mongoTemplate: MongoTemplate
@@ -35,7 +39,11 @@ class OtpDbService {
         )
         val u = Update().set("isActive", false)
         mongoTemplate.updateFirst(q, u, Otp::class.java)
-        val code = numberGenerator.generateCode(4)
+        // this for app review(apple, google)
+        var code = "0000"
+        if(appConfig.otpEnabled){
+            code = numberGenerator.generateCode(4)
+        }
 
         return  otpRepository.save(
             Otp(
