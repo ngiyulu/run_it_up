@@ -27,10 +27,11 @@ class CompleteSessionController: BaseController<ConfirmSessionModel, RunSession>
         val user =getMyUser()
         var run = cacheManager.getRunSession(request.sessionId) ?: throw ApiRequestException(text("invalid_session_id"))
         if(run.status != RunStatus.ONGOING){
-            throw  ApiRequestException(text("invalid_session_cancel"))
+            return  run
         }
         run.status = RunStatus.COMPLETED
-        bookingDbService.completeAllBooking(run.id.orEmpty())
+        val data = bookingDbService.completeAllBooking(run.id.orEmpty())
+        print(data)
         runSessionEventLogger.log(
             sessionId = run.id.orEmpty(),
             action = RunSessionAction.SESSION_COMPLETED,

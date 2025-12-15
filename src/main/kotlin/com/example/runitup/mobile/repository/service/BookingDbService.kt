@@ -48,14 +48,19 @@ class BookingDbService: BaseService() {
 
     fun completeAllBooking(runId: String): UpdateResult {
         val query = Query.query(
-            Criteria.where("runSessionId").`is`(runId).and("status").`is`(BookingStatus.JOINED)
+            Criteria.where("runSessionId").`is`(runId)
+                .and("status").`in`(
+                    BookingStatus.JOINED,
+                    BookingStatus.WAITLISTED
+                )
         )
-        val u = Update()
+
+        val update = Update()
             .set("status", BookingStatus.COMPLETED)
             .set("completedAt", Instant.now())
-        return  mongoTemplate.updateMulti(query,  u,  Booking::class.java)
-    }
 
+        return mongoTemplate.updateMulti(query, update, Booking::class.java)
+    }
     fun tryLock(bookingId: String, now: Instant): Int {
         val query = Query(
             Criteria.where("_id").`is`(bookingId)
